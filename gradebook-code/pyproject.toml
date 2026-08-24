@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gradebook-code"
-version = "0.1.0"
+version = "0.1.0" # x-release-please-version
 description = "Score a codebase against DRY, YAGNI, GRASP, SOLID and KISS"
 readme = "README.md"
 license = "Apache-2.0"

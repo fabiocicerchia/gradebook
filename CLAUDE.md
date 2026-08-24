@@ -64,6 +64,21 @@ edit here is drift and the next sync overwrites it.
 - CI runs this same `.pre-commit-config.yaml` through `pre-commit/action`, so
   what passes locally is what gates the pull request.
 
+## Releases
+
+release-please runs in **manifest mode**: `release-please-config.json` lists
+every file that carries the version, so merging the release PR moves
+`version.txt`, `CHANGELOG.md`, both `pyproject.toml` files and both module
+`VERSION` constants together. A version string added anywhere else needs an
+`x-release-please-version` annotation on its line and an entry in
+`extra-files`, or it will silently drift from the tag.
+
+**`release-as: "0.1.0"` in that config is for the first release only.** It pins
+the tag to the version the code already claims instead of release-please's
+default of 1.0.0 for an untagged repo. **Delete it once `v0.1.0` is tagged** —
+left in place it pins every future release to 0.1.0 too, and a `feat:` would
+stop bumping anything.
+
 ## Guardrails
 
 - Don't add dependencies. Zero is the number, in both packages.

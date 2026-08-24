@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "release-as": "0.1.0",
+      "extra-files": [
+        "gradebook-tests/pyproject.toml",
+        "gradebook-code/pyproject.toml",
+        "gradebook-tests/gradebook_tests.py",
+        "gradebook-code/gradebook_code.py"
+      ]
+    }
+  }
+}
