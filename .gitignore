@@ -1,0 +1,32 @@
+# Secrets / local env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Build output
+dist/
+build/
+*.egg-info/
+__pycache__/
+.venv/
+venv/
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
+
+# Reports the tools themselves write
+report.json
+baseline.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
