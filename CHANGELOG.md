@@ -9,6 +9,13 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.1.0](https://github.com/fabiocicerchia/gradebook/compare/v0.1.0...v0.1.0) (2026-08-24)
+
+
+### Features
+
+* grade a repository's tests and code against a weighted rubric ([82222f2](https://github.com/fabiocicerchia/gradebook/commit/82222f2d14721d7c6250fbd621e118f7d1df892e))
+
 ## [Unreleased]
 
 ### Added
