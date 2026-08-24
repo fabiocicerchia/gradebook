@@ -1,0 +1,26 @@
+site_name: gradebook
+site_description: Two tools that grade a repository against a weighted rubric and tell you which fix buys the most points.
+repo_url: https://github.com/fabiocicerchia/gradebook
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle: { icon: material/weather-night, name: Dark mode }
+    - scheme: slate
+      toggle: { icon: material/weather-sunny, name: Light mode }
+
+nav:
+  - Home: README.md
+  - Getting Started: getting-started.md
+  - gradebook-tests: gradebook-tests.md
+  - gradebook-code: gradebook-code.md
+  - Anti-patterns: anti-patterns.md
+  - Gating CI: ci.md
+  - Architecture: architecture.md
+  - Status & roadmap: roadmap.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences

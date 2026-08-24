@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Keep GitHub Actions pinned versions fresh.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Both packages declare `dependencies = []`, so these entries exist for the
+  # build backend and the dev extras — and to notice the day that changes.
+  - package-ecosystem: pip
+    directories:
+      - /gradebook-tests
+      - /gradebook-code
+    schedule:
+      interval: weekly

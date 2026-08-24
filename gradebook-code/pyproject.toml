@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gradebook-code"
+version = "0.1.0"
+description = "Score a codebase against DRY, YAGNI, GRASP, SOLID and KISS"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Fabio Cicerchia" }]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[project.scripts]
+gradebook-code = "gradebook_code:main"
+
+[tool.setuptools]
+py-modules = ["gradebook_code"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
