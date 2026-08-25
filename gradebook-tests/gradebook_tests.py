@@ -21,7 +21,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-VERSION = "0.1.0"  # x-release-please-version
+VERSION = "0.2.0"  # x-release-please-version
 MAX_FILE_BYTES = 512 * 1024
 
 # Directories never worth walking into.
