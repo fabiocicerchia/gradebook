@@ -9,6 +9,13 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.2.0](https://github.com/fabiocicerchia/gradebook/compare/v0.1.0...v0.2.0) (2026-08-25)
+
+
+### Features
+
+* **docs:** build the docs site in Actions and drop Read the Docs ([#7](https://github.com/fabiocicerchia/gradebook/issues/7)) ([003f573](https://github.com/fabiocicerchia/gradebook/commit/003f573b17780753b9eef4f5875f3e585b703568))
+
 ## [0.1.0](https://github.com/fabiocicerchia/gradebook/compare/v0.1.0...v0.1.0) (2026-08-24)
 
 
