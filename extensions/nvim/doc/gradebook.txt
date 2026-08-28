@@ -1,0 +1,127 @@
+*gradebook.txt*   Grade a repository against a weighted rubric
+
+==============================================================================
+CONTENTS                                                    *gradebook-contents*
+
+  1. Introduction ......................... |gradebook-introduction|
+  2. Requirements ......................... |gradebook-requirements|
+  3. Setup ................................ |gradebook-setup|
+  4. Commands ............................. |gradebook-commands|
+  5. Options .............................. |gradebook-options|
+  6. Diagnostics .......................... |gradebook-diagnostics|
+  7. Health ............................... |gradebook-health|
+
+==============================================================================
+1. INTRODUCTION                                         *gradebook-introduction*
+
+gradebook.nvim runs two command-line tools over the project you are in:
+
+  gradebook-code    scores the code — SOLID, KISS, DRY, hotspots, duplication
+  gradebook-tests   scores the test suite that covers it
+
+Red flags become |vim.diagnostic| entries on the line that owns them. The
+score, the dimension table and the biggest wins go in a floating report.
+
+There is no LSP server. The plugin shells out and publishes diagnostics.
+
+==============================================================================
+2. REQUIREMENTS                                         *gradebook-requirements*
+
+Neovim 0.10 or newer, and the two tools on $PATH: >
+
+  pipx install gradebook-code gradebook-tests
+<
+==============================================================================
+3. SETUP                                                       *gradebook-setup*
+
+                                                            *gradebook.setup()*
+>lua
+  require('gradebook').setup({})
+<
+From a checkout, point `cmd` at the modules instead: >lua
+
+  require('gradebook').setup({
+    cmd = {
+      code = { 'python3', '/path/to/gradebook_code.py' },
+      tests = { 'python3', '/path/to/gradebook_tests.py' },
+    },
+  })
+<
+==============================================================================
+4. COMMANDS                                                 *gradebook-commands*
+
+                                                                   *:Gradebook*
+:Gradebook              Scan the project now.
+
+                                                             *gradebook.scan()*
+require('gradebook').scan({ on_done = function(ok) ... end })
+                        The same scan, with a callback. The two tools run
+                        concurrently and land independently, so this is the
+                        only way to know the whole scan finished — the report
+                        fills in as each one arrives, which looks the same as
+                        "done" one tool early. `ok` is false if either failed.
+
+                                                             *:GradebookReport*
+:GradebookReport        Open the score report. Close it with `q` or `<Esc>`.
+
+==============================================================================
+5. OPTIONS                                                   *gradebook-options*
+
+enabled                 (boolean, default true)
+                        Turn the plugin off without removing it.
+
+tools                   (list, default { 'code', 'tests' })
+                        Which of the two tools to run.
+
+cmd                     (table of lists, default gradebook-code /
+                        gradebook-tests) The command for each tool. A list, so
+                        { 'python3', '/path/to/gradebook_code.py' } works.
+
+run                     (string, default 'on_save')
+                        'on_save', 'on_type' or 'manual'. A full scan of a
+                        mid-sized repo is about 0.25s.
+
+debounce_ms             (number, default 400)
+                        Idle time before an 'on_type' scan starts.
+
+scan_project_on_startup (boolean, default true)
+                        Scan once when the plugin loads.
+
+timeout_ms              (number, default 30000)
+                        Kill a scan that runs longer than this.
+
+exclude                 (list, default {})
+                        Path prefixes whose findings are dropped.
+
+diagnostics.enabled     (boolean, default true)
+                        Publish diagnostics at all. The report still works.
+
+diagnostics.severity    (table) Maps the tools' high/medium/low buckets onto
+                        |vim.diagnostic.severity|. Defaults to ERROR, WARN and
+                        HINT. `false` for a bucket means "do not report
+                        these"; a bucket left unmapped falls back to the
+                        `low` level rather than vanishing.
+
+==============================================================================
+6. DIAGNOSTICS                                           *gradebook-diagnostics*
+
+Each diagnostic carries a `source` of "gradebook-code" or "gradebook-tests",
+and a `code` naming the kind of red flag ("god-file", "mirror-assertion", …).
+
+Findings with nothing to point at — a `dependency-cycle` names a loop of
+modules, not a line — appear in |:GradebookReport| rather than on a guessed
+file.
+
+Scanning is whole-repo, never per-file: hotspots need `git log` and
+duplication is cross-file, so a single-file score would mean nothing.
+
+==============================================================================
+7. HEALTH                                                     *gradebook-health*
+
+>
+  :checkhealth gradebook
+<
+Checks that each configured command is executable and answers --version, and
+that every severity bucket the tools emit is mapped.
+
+vim:tw=78:ts=8:ft=help:norl:
