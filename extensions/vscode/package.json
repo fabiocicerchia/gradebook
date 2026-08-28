@@ -1,0 +1,256 @@
+{
+  "name": "gradebook",
+  "displayName": "gradebook",
+  "description": "Grade a repository against a weighted rubric and see which fix buys the most points.",
+  "version": "0.2.0",
+  "publisher": "fabiocicerchia",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fabiocicerchia/gradebook.git",
+    "directory": "extensions/vscode"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "code quality",
+    "test quality",
+    "solid",
+    "rubric",
+    "technical debt"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "gradebook.scanWorkspace",
+        "title": "Scan Workspace",
+        "category": "gradebook",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gradebook.showReport",
+        "title": "Open Report",
+        "category": "gradebook",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "gradebook.showOutput",
+        "title": "Show Log",
+        "category": "gradebook"
+      },
+      {
+        "command": "gradebook.restartServer",
+        "title": "Restart Scan Server",
+        "category": "gradebook"
+      },
+      {
+        "command": "gradebook.cancelScan",
+        "title": "Cancel Running Scan",
+        "category": "gradebook",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "gradebook.filterFindings",
+        "title": "Filter Findings",
+        "category": "gradebook",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "gradebook.clearFilter",
+        "title": "Clear the findings filter",
+        "category": "gradebook",
+        "icon": "$(filter-filled)"
+      },
+      {
+        "command": "gradebook.expandAll",
+        "title": "Expand All Findings",
+        "category": "gradebook",
+        "icon": "$(expand-all)"
+      }
+    ],
+    "configuration": {
+      "title": "gradebook",
+      "properties": {
+        "gradebook.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gradebook diagnostics."
+        },
+        "gradebook.run": {
+          "type": "string",
+          "enum": [
+            "onSave",
+            "onType",
+            "manual"
+          ],
+          "default": "onSave",
+          "description": "When to rescan the workspace. A full scan of a mid-sized repo is ~0.25s."
+        },
+        "gradebook.debounceMs": {
+          "type": "number",
+          "default": 400,
+          "description": "Idle time before an onType scan starts."
+        },
+        "gradebook.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Interpreter used to run the scan server."
+        },
+        "gradebook.codePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to gradebook_code.py or the folder holding it. Empty means gradebook-code/gradebook_code.py in the workspace root if there is one, then the installed gradebook-code package."
+        },
+        "gradebook.testsPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to gradebook_tests.py or the folder holding it. Empty means gradebook-tests/gradebook_tests.py in the workspace root if there is one, then the installed gradebook-tests package."
+        },
+        "gradebook.tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "code",
+              "tests"
+            ]
+          },
+          "default": [
+            "code",
+            "tests"
+          ],
+          "description": "Which of the two tools to run."
+        },
+        "gradebook.scanProjectOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Scan the workspace once when the window opens."
+        },
+        "gradebook.failUnder": {
+          "type": "number",
+          "default": 0,
+          "description": "Warn in the status bar when a score falls below this. 0 disables it."
+        },
+        "gradebook.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Path prefixes whose findings are dropped."
+        },
+        "gradebook.trace": {
+          "type": "boolean",
+          "default": false,
+          "description": "Log every request and response to the gradebook output channel."
+        }
+      }
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "gradebook",
+          "title": "gradebook",
+          "icon": "media/rubric.svg"
+        }
+      ]
+    },
+    "views": {
+      "gradebook": [
+        {
+          "id": "gradebook.findings",
+          "name": "Findings",
+          "icon": "media/rubric.svg",
+          "contextualTitle": "gradebook"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "gradebook.findings",
+        "contents": "No scan yet.\n[Scan Workspace](command:gradebook.scanWorkspace)",
+        "when": "!gradebook.scanned"
+      },
+      {
+        "view": "gradebook.findings",
+        "contents": "No red flags in this workspace.\nThe scores and the dimension table are in [the report](command:gradebook.showReport).\n[Scan Again](command:gradebook.scanWorkspace)",
+        "when": "gradebook.scanned && !gradebook.hasFindings"
+      },
+      {
+        "view": "gradebook.findings",
+        "contents": "No findings match the current filter.\n[Clear the filter](command:gradebook.clearFilter)",
+        "when": "gradebook.scanned && gradebook.hasFindings && gradebook.filtered"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "gradebook.filterFindings",
+          "when": "view == gradebook.findings && !gradebook.filtered",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gradebook.clearFilter",
+          "when": "view == gradebook.findings && gradebook.filtered",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gradebook.scanWorkspace",
+          "when": "view == gradebook.findings",
+          "group": "navigation@4"
+        },
+        {
+          "command": "gradebook.showReport",
+          "when": "view == gradebook.findings",
+          "group": "navigation@5"
+        },
+        {
+          "command": "gradebook.expandAll",
+          "when": "view == gradebook.findings",
+          "group": "navigation@9"
+        },
+        {
+          "command": "gradebook.showOutput",
+          "when": "view == gradebook.findings",
+          "group": "9_admin"
+        }
+      ],
+      "commandPalette": []
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc -p ./ --noEmit",
+    "test": "tsc -p ./ && node --test --require ./out-tsc/test/hook.js \"out-tsc/test/*.test.js\"",
+    "copy-legal": "node -e \"const f=require('node:fs');for(const n of ['LICENSE','CHANGELOG.md'])f.copyFileSync('../../'+n,n)\"",
+    "vscode:prepublish": "npm run typecheck && npm test && npm run build && npm run copy-legal",
+    "package": "npx --yes @vscode/vsce@3.9.2 package --no-dependencies",
+    "publish": "npx --yes @vscode/vsce@3.9.2 publish --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2"
+  },
+  "homepage": "https://github.com/fabiocicerchia/gradebook",
+  "bugs": {
+    "url": "https://github.com/fabiocicerchia/gradebook/issues"
+  },
+  "qna": "https://github.com/fabiocicerchia/gradebook/issues",
+  "pricing": "Free",
+  "sponsor": {
+    "url": "https://github.com/sponsors/fabiocicerchia"
+  }
+}

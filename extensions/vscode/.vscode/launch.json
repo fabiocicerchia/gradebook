@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // F5 from this folder. Loads the extension from source into a second
+      // window — no install, no VSIX, and it works regardless of where the
+      // `code` CLI would have put an installed copy.
+      "name": "Run Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        // Opens the repo itself, which is a gradebook checkout, so the module
+        // paths resolve with nothing installed.
+        "${workspaceFolder}/../.."
+      ],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "npm: build"
+    }
+  ]
+}
