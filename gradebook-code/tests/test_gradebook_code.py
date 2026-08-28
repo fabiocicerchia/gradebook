@@ -7,6 +7,7 @@ import pytest
 
 from gradebook_code import (
     DEFAULT_PROFILE,
+    FLAG_ORDER,
     analyse_file,
     blend_profile,
     body_of,
@@ -873,6 +874,16 @@ def test_unscored_rows_line_up_with_scored_ones(tmp_path):
     for line in rows:
         bar = min(line.index(c) for c in "░█·" if c in line)
         assert line[bar + 26] == "/", line
+
+
+def test_every_finding_carries_a_known_severity(tmp_path):
+    flagged_repo(tmp_path)
+    write(tmp_path, "src/b.py", "def _unused_helper():\n    return 1\n")
+    findings = collect(tmp_path)["findings"]
+    assert findings
+    for finding in findings:
+        assert finding["kind"] in FLAG_ORDER, finding["kind"]
+        assert finding["severity"] in {"high", "medium", "low"}
 
 
 def test_by_dir_ranks_the_worst_first(tmp_path):

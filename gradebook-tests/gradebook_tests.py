@@ -2114,19 +2114,9 @@ def collect(root: Path, use_git=True):
     stats["suppressed_failures"] = sum(
         1 for f in stats["findings"] if f["kind"] == "suppressed-failure"
     )
-    order = {
-        "phantom-symbol": 0,
-        "suppressed-failure": 1,
-        "untested-hotspot": 2,
-        "mirror-assertion": 3,
-        "conjoined-twin": 4,
-        "decorative-test": 5,
-        "implementation-access": 6,
-        "brittle-selector": 7,
-        "duplicate-case": 8,
-        "stale-test": 9,
-    }
-    stats["findings"].sort(key=lambda f: (order.get(f["kind"], 9), f["file"], f["line"]))
+    stats["findings"].sort(key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"], f["line"]))
+    for finding in stats["findings"]:
+        finding["severity"] = severity_for(finding["kind"])
     return stats
 
 
@@ -3056,6 +3046,14 @@ FLAG_ORDER = {
     "duplicate-case": 8,
     "stale-test": 9,
 }
+
+
+def severity_for(kind):
+    """One ranking, three buckets — editors read this, they don't re-derive it."""
+    rank = FLAG_ORDER.get(kind, 9)
+    if rank <= 2:
+        return "high"
+    return "medium" if rank <= 6 else "low"
 
 
 def render_flags(findings, limit):

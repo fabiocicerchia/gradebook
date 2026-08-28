@@ -1192,6 +1192,8 @@ def collect(root: Path):
         stats["findings"].extend(hotspots["findings"])
 
     stats["findings"].sort(key=lambda f: (f["kind"], f["file"], f["line"]))
+    for finding in stats["findings"]:
+        finding["severity"] = severity_for(finding["kind"])
     return stats
 
 
@@ -1713,6 +1715,14 @@ FLAG_ORDER = {
 }
 
 
+def severity_for(kind):
+    """One ranking, three buckets — editors read this, they don't re-derive it."""
+    rank = FLAG_ORDER.get(kind, 9)
+    if rank <= 2:
+        return "high"
+    return "medium" if rank <= 6 else "low"
+
+
 def render_directories(directories):
     if not directories:
         return []
@@ -1871,7 +1881,6 @@ def main(argv=None):
     parser.add_argument(
         "--list-dimensions", action="store_true", help="print the scoring model and exit"
     )
-
     parser.add_argument("--version", action="version", version=f"gradebook-code {VERSION}")
     args = parser.parse_args(argv)
 

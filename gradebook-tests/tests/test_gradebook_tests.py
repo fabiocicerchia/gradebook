@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from gradebook_tests import (
+    FLAG_ORDER,
     blend_profile,
     classify_name,
     cobertura_files,
@@ -1009,6 +1010,22 @@ def test_unscored_rows_line_up_with_scored_ones(tmp_path):
     for line in rows:
         bar = min(line.index(c) for c in "░█·" if c in line)
         assert line[bar + 26] == "/", line
+
+
+def test_every_finding_carries_a_known_severity(tmp_path):
+    write(tmp_path, "src/a.py", "x = 1\n")
+    write(
+        tmp_path,
+        "tests/test_a.py",
+        "from src.a import nowhere\n\n"
+        "def test_a():\n    # assert charge(1) == 1\n    obj._private\n"
+        "def test_b():\n    assert compute(2) == 2 * 1\n",
+    )
+    findings = collect(tmp_path)["findings"]
+    assert findings
+    for finding in findings:
+        assert finding["kind"] in FLAG_ORDER, finding["kind"]
+        assert finding["severity"] in {"high", "medium", "low"}
 
 
 # ------------------------------------------------------- per-file coverage
