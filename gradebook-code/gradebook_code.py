@@ -1734,7 +1734,7 @@ def render_text(report, top=5, max_flags=10):
     out.append(counts)
     out.append("")
     for dim in report["dimensions"]:
-        points = "  n/a " if dim["score"] is None else f"{dim['points']:5.1f}"
+        points = "  n/a" if dim["score"] is None else f"{dim['points']:5.1f}"
         out.append(
             f"  {dim['title']:<30} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} "
             f"{dim['detail']}"

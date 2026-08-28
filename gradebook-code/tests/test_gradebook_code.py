@@ -825,6 +825,24 @@ def test_renderers_contain_the_essentials(tmp_path):
     assert "| Principle |" in markdown and "Code score" in markdown
 
 
+def test_unscored_rows_line_up_with_scored_ones(tmp_path):
+    write(tmp_path, "src/a.py", "def a(value):\n    return value\n")
+    report = report_for(tmp_path)
+    assert any(d["score"] is None for d in report["dimensions"])
+    rows = [
+        line
+        for line in render_text(report).splitlines()
+        if any(line.startswith(f"  {d['title']} ") for d in report["dimensions"])
+    ]
+    assert len(rows) == len(report["dimensions"])
+    # The bar is a fixed 20 chars and the points field a fixed 5, so the
+    # points/weight slash lands 26 past the bar on every row, n/a included.
+    # ("n/a" carries a slash of its own — measure the column, not the first one.)
+    for line in rows:
+        bar = min(line.index(c) for c in "░█·" if c in line)
+        assert line[bar + 26] == "/", line
+
+
 def test_by_dir_ranks_the_worst_first(tmp_path):
     good = tmp_path / "good"
     write(good, "a.py", "def add(a, b):\n    return a + b\n")

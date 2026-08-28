@@ -987,6 +987,25 @@ def test_render_flags_is_empty_without_findings():
     assert render_flags([], 10) == []
 
 
+def test_unscored_rows_line_up_with_scored_ones(tmp_path):
+    write(tmp_path, "src/a.py", "x = 1\n")
+    write(tmp_path, "tests/test_a.py", "def test_a():\n    assert 1 == 1\n")
+    report = report_for(tmp_path)
+    assert any(d["score"] is None for d in report["dimensions"])
+    rows = [
+        line
+        for line in render_text(report).splitlines()
+        if any(line.startswith(f"  {d['title']} ") for d in report["dimensions"])
+    ]
+    assert len(rows) == len(report["dimensions"])
+    # The bar is a fixed 20 chars and the points field a fixed 5, so the
+    # points/weight slash lands 26 past the bar on every row, n/a included.
+    # ("n/a" carries a slash of its own — measure the column, not the first one.)
+    for line in rows:
+        bar = min(line.index(c) for c in "░█·" if c in line)
+        assert line[bar + 26] == "/", line
+
+
 # ------------------------------------------------------- per-file coverage
 
 

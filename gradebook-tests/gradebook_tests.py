@@ -2998,10 +2998,7 @@ def render_text(report, top=5, max_flags=10):
     out.append("")
     show_delta = "baseline" in report
     for dim in report["dimensions"]:
-        if dim["score"] is None:
-            points = "  n/a "
-        else:
-            points = f"{dim['points']:5.1f}"
+        points = "  n/a" if dim["score"] is None else f"{dim['points']:5.1f}"
         delta = ""
         if show_delta:
             value = dim.get("delta")
