@@ -1,0 +1,72 @@
+name: nvim
+
+# The plugin shells out to the two Python modules, so a change to either can
+# break it — both are in the path filter, and Python is installed for the
+# severity drift guard.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - extensions/nvim/**
+      - gradebook-code/gradebook_code.py
+      - gradebook-tests/gradebook_tests.py
+      - .github/workflows/nvim.yml
+  pull_request:
+    paths:
+      - extensions/nvim/**
+      - gradebook-code/gradebook_code.py
+      - gradebook-tests/gradebook_tests.py
+      - .github/workflows/nvim.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nvim-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        neovim: [stable, nightly]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7  # v1.6.1
+        with:
+          neovim: true
+          version: ${{ matrix.neovim }}
+
+      - name: Plenary specs
+        working-directory: extensions/nvim
+        run: make test
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          # The smoke test scores this repo, and hotspots need history.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7  # v1.6.1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Drive the plugin against real files
+        working-directory: extensions/nvim
+        run: nvim --headless --clean -u tests/smoke.lua

@@ -32,8 +32,8 @@ repos:
         exclude: (^|/)templates/|^mkdocs\.yml$
       - id: check-json
         # A TypeScript project keeps comments in tsconfig.json (JSONC), which is
-        # not JSON — exclude it there:
-        # exclude: ^tsconfig.*\.json$
+        # not JSON — extensions/vscode has two of them.
+        exclude: (^|/)tsconfig.*\.json$
       - id: check-toml
       # Python only (types: [python]) — a no-op in a repo with no .py files, so
       # it stays in the baseline rather than the language block below.
