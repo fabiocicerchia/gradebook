@@ -39,7 +39,7 @@ Read the red flags, not just the number: each one carries a `file:line`, and
 they are ranked by severity.
 
 ```sh
-gradebook-tests . --max-flags 30       # list more of them
+gradebook-tests . --max-flags 10       # cap the list (default: all)
 gradebook-tests . --list-dimensions    # the scoring model, weight by weight
 gradebook-tests . --by-dir             # per subproject, worst first — for monorepos
 ```

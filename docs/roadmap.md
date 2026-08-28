@@ -15,6 +15,8 @@
       locators, mirrored expectations
 - [x] Suite shape, determinism/isolation and test focus dimensions from the
       testing anti-pattern literature
+- [x] Editor integration — VS Code and Neovim, diagnostics plus a score view
+      ([Editor integration](editors.md))
 - [ ] Per-repo config (`.gradebook-tests.toml`: weights, ignores, custom test
       globs, overriding the language profile)
 - [ ] mutmut report support (its cache is sqlite, not a file we can read yet)
@@ -34,6 +36,8 @@
 - [x] `--fail-under` and `--baseline` regression gates, text/JSON/Markdown
 - [x] Cross-language comment/string scanner, validated against Python's `ast`
 - [x] Churn-weighted hotspots from `git log`
+- [x] Editor integration — VS Code and Neovim, diagnostics plus a score view
+      ([Editor integration](editors.md))
 - [ ] Real call-graph fan-in/fan-out instead of import edges
 - [ ] Per-repo config (`.gradebook-code.toml`: weights, ignores, thresholds)
 - [ ] Fan-in and instability (`I = Ce/(Ca+Ce)`) from the import graph already
