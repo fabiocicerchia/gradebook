@@ -981,10 +981,15 @@ def test_flags_can_be_hidden_and_truncated(tmp_path):
     assert "1 more" in render_text(report, max_flags=3)
     assert "Red flags" in render_markdown(report)
     assert "Red flags" not in render_markdown(report, max_flags=0)
+    # ... and by default every one of them is listed.
+    assert len(report["findings"]) == 4
+    assert "more (raise --max-flags)" not in render_text(report)
+    assert "more" not in render_markdown(report).rsplit("\n", 1)[-1]
 
 
 def test_render_flags_is_empty_without_findings():
     assert render_flags([], 10) == []
+    assert render_flags([], None) == []
 
 
 def test_unscored_rows_line_up_with_scored_ones(tmp_path):

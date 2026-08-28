@@ -825,6 +825,38 @@ def test_renderers_contain_the_essentials(tmp_path):
     assert "| Principle |" in markdown and "Code score" in markdown
 
 
+def flagged_repo(root):
+    """A repo with more red flags than the old default of 10."""
+    for i in range(12):
+        body = "".join(f"    if x == {j}:\n        y()\n" for j in range(30))
+        write(root, f"src/a{i}.py", f"def big{i}(x):\n{body}    return 1\n")
+
+
+def test_every_red_flag_is_listed_by_default(tmp_path):
+    flagged_repo(tmp_path)
+    report = report_for(tmp_path)
+    assert len(report["findings"]) > 10
+    text = render_text(report)
+    assert "more (raise --max-flags)" not in text
+    assert all(f["file"] in text for f in report["findings"])
+    assert "more" not in render_markdown(report).rsplit("\n", 1)[-1]
+
+
+def test_max_flags_caps_and_names_the_remainder(tmp_path):
+    flagged_repo(tmp_path)
+    report = report_for(tmp_path)
+    left = len(report["findings"]) - 3
+    assert f"… {left} more (raise --max-flags)" in render_text(report, max_flags=3)
+    assert f"- … {left} more" in render_markdown(report, max_flags=3)
+
+
+def test_max_flags_zero_hides_the_section(tmp_path):
+    flagged_repo(tmp_path)
+    report = report_for(tmp_path)
+    assert "Red flags" not in render_text(report, max_flags=0)
+    assert "Red flags" not in render_markdown(report, max_flags=0)
+
+
 def test_unscored_rows_line_up_with_scored_ones(tmp_path):
     write(tmp_path, "src/a.py", "def a(value):\n    return value\n")
     report = report_for(tmp_path)
