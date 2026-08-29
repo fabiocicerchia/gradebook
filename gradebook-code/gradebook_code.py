@@ -21,7 +21,7 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-VERSION = "0.2.0"  # x-release-please-version
+VERSION = "0.2.1"  # x-release-please-version
 MAX_FILE_BYTES = 512 * 1024
 
 SKIP_DIRS = {
