@@ -9,6 +9,13 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.2.1](https://github.com/fabiocicerchia/gradebook/compare/v0.2.0...v0.2.1) (2026-08-29)
+
+
+### Bug Fixes
+
+* **docs:** hash-pin the docs toolchain and require hashes on install ([#10](https://github.com/fabiocicerchia/gradebook/issues/10)) ([37c9816](https://github.com/fabiocicerchia/gradebook/commit/37c9816abba229a4578c1af5c742e63d1d9c66ed))
+
 ## [0.2.0](https://github.com/fabiocicerchia/gradebook/compare/v0.1.0...v0.2.0) (2026-08-25)
 
 
