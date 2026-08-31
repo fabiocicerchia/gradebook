@@ -68,7 +68,14 @@ def _from_path(name, path):
 # discovered when a scan fails: an older gradebook imports perfectly and then
 # raises `has no attribute 'severity_for'` on the first scan, which reads like a
 # bug in the extension rather than a version to upgrade.
-REQUIRED_API = ("collect", "evaluate", "recommendations", "FLAG_ORDER", "severity_for", "VERSION")
+REQUIRED_API = (
+    "collect",
+    "evaluate",
+    "recommendations",
+    "FLAG_ORDER",
+    "severity_for",
+    "VERSION",
+)
 
 
 def missing_api(module):
@@ -128,7 +135,7 @@ class Server:
                     f"gradebook-{tool} at {getattr(module, '__file__', '?')} is too old for "
                     f"this extension: it has no {', '.join(missing)}"
                 )
-        except Exception as exc:  # noqa: BLE001 - turned into advice below
+        except Exception as exc:  # turned into advice below
             self.failures[tool] = (
                 f"gradebook-{tool} is not available ({exc}). Install it with "
                 f"`pip install gradebook-{tool}`, or set `gradebook.{tool}Path` to the "
@@ -190,7 +197,9 @@ class Server:
                 "protocol": PROTOCOL_VERSION,
                 "python": sys.version.split()[0],
                 "versions": {tool: m.VERSION for tool, m in loaded.items()},
-                "modules": {tool: getattr(m, "__file__", None) for tool, m in loaded.items()},
+                "modules": {
+                    tool: getattr(m, "__file__", None) for tool, m in loaded.items()
+                },
                 # Named rather than implied by absence: "not installed" and
                 # "installed but broken" need different advice, and a client
                 # that cannot tell them apart says neither.
@@ -279,7 +288,9 @@ def main(argv=None):
     try:
         server = Server(hints, out)
     except Exception as exc:  # noqa: BLE001 - the extension turns this into a prompt
-        out.write(json.dumps({"id": 0, "ok": False, "fatal": True, "error": f"{exc}"}) + "\n")
+        out.write(
+            json.dumps({"id": 0, "ok": False, "fatal": True, "error": f"{exc}"}) + "\n"
+        )
         out.flush()
         return 1
 
