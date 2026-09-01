@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gradebook-tests"
-version = "0.2.1" # x-release-please-version
+version = "0.3.0" # x-release-please-version
 description = "Score how effective a repository's test suite actually is"
 readme = "README.md"
 license = "Apache-2.0"

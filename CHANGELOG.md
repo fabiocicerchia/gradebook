@@ -9,6 +9,13 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.3.0](https://github.com/fabiocicerchia/gradebook/compare/v0.2.1...v0.3.0) (2026-09-01)
+
+
+### Features
+
+* add editor extensions and list every red flag by default ([#9](https://github.com/fabiocicerchia/gradebook/issues/9)) ([b827ed3](https://github.com/fabiocicerchia/gradebook/commit/b827ed3b21a88ef0bd84e5bc51dff2843592d35a))
+
 ## [0.2.1](https://github.com/fabiocicerchia/gradebook/compare/v0.2.0...v0.2.1) (2026-08-29)
 
 
