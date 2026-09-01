@@ -2,7 +2,7 @@
   "name": "gradebook",
   "displayName": "gradebook",
   "description": "Grade a repository against a weighted rubric and see which fix buys the most points.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "fabiocicerchia",
   "license": "MIT",
   "icon": "media/icon.png",
