@@ -41,14 +41,6 @@ jobs:
       # accessible by integration", so publish-release never runs, no tag is
       # made, and the next push cuts a second draft for the same version.
       pull-requests: write
-      # Immutable releases: GitHub signs each release with an attestation as it
-      # is created, and GITHUB_TOKEN cannot mint one without these two. Without
-      # them contents: write is granted and POST /releases is still refused with
-      # "Resource not accessible by integration" — the token is allowed to
-      # create the release and not allowed to sign it, which reads as a
-      # permissions bug in this workflow and is not one.
-      attestations: write
-      id-token: write
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
       tag_name: ${{ steps.rp.outputs.tag_name }}
