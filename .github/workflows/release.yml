@@ -35,6 +35,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # create tags & releases
+      # Needed even with skip-github-pull-request: after cutting the release,
+      # release-please relabels the release PR autorelease: pending -> tagged.
+      # Without it the draft is created and the step then dies on "Resource not
+      # accessible by integration", so publish-release never runs, no tag is
+      # made, and the next push cuts a second draft for the same version.
+      pull-requests: write
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
       tag_name: ${{ steps.rp.outputs.tag_name }}
