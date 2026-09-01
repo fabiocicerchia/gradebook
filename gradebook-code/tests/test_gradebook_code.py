@@ -7,6 +7,7 @@ import pytest
 
 from gradebook_code import (
     DEFAULT_PROFILE,
+    FLAG_ORDER,
     analyse_file,
     blend_profile,
     body_of,
@@ -823,6 +824,66 @@ def test_renderers_contain_the_essentials(tmp_path):
     assert "gradebook-code" in text and "SCORE" in text and "Simplicity (KISS)" in text
     markdown = render_markdown(report)
     assert "| Principle |" in markdown and "Code score" in markdown
+
+
+def flagged_repo(root):
+    """A repo with more red flags than the old default of 10."""
+    for i in range(12):
+        body = "".join(f"    if x == {j}:\n        y()\n" for j in range(30))
+        write(root, f"src/a{i}.py", f"def big{i}(x):\n{body}    return 1\n")
+
+
+def test_every_red_flag_is_listed_by_default(tmp_path):
+    flagged_repo(tmp_path)
+    report = report_for(tmp_path)
+    assert len(report["findings"]) > 10
+    text = render_text(report)
+    assert "more (raise --max-flags)" not in text
+    assert all(f["file"] in text for f in report["findings"])
+    assert "more" not in render_markdown(report).rsplit("\n", 1)[-1]
+
+
+def test_max_flags_caps_and_names_the_remainder(tmp_path):
+    flagged_repo(tmp_path)
+    report = report_for(tmp_path)
+    left = len(report["findings"]) - 3
+    assert f"… {left} more (raise --max-flags)" in render_text(report, max_flags=3)
+    assert f"- … {left} more" in render_markdown(report, max_flags=3)
+
+
+def test_max_flags_zero_hides_the_section(tmp_path):
+    flagged_repo(tmp_path)
+    report = report_for(tmp_path)
+    assert "Red flags" not in render_text(report, max_flags=0)
+    assert "Red flags" not in render_markdown(report, max_flags=0)
+
+
+def test_unscored_rows_line_up_with_scored_ones(tmp_path):
+    write(tmp_path, "src/a.py", "def a(value):\n    return value\n")
+    report = report_for(tmp_path)
+    assert any(d["score"] is None for d in report["dimensions"])
+    rows = [
+        line
+        for line in render_text(report).splitlines()
+        if any(line.startswith(f"  {d['title']} ") for d in report["dimensions"])
+    ]
+    assert len(rows) == len(report["dimensions"])
+    # The bar is a fixed 20 chars and the points field a fixed 5, so the
+    # points/weight slash lands 26 past the bar on every row, n/a included.
+    # ("n/a" carries a slash of its own — measure the column, not the first one.)
+    for line in rows:
+        bar = min(line.index(c) for c in "░█·" if c in line)
+        assert line[bar + 26] == "/", line
+
+
+def test_every_finding_carries_a_known_severity(tmp_path):
+    flagged_repo(tmp_path)
+    write(tmp_path, "src/b.py", "def _unused_helper():\n    return 1\n")
+    findings = collect(tmp_path)["findings"]
+    assert findings
+    for finding in findings:
+        assert finding["kind"] in FLAG_ORDER, finding["kind"]
+        assert finding["severity"] in {"high", "medium", "low"}
 
 
 def test_by_dir_ranks_the_worst_first(tmp_path):

@@ -1192,6 +1192,8 @@ def collect(root: Path):
         stats["findings"].extend(hotspots["findings"])
 
     stats["findings"].sort(key=lambda f: (f["kind"], f["file"], f["line"]))
+    for finding in stats["findings"]:
+        finding["severity"] = severity_for(finding["kind"])
     return stats
 
 
@@ -1671,17 +1673,30 @@ def location(finding):
     return f"{finding['file']}:{finding['line']}" if finding["line"] else finding["file"]
 
 
+def capped(findings, limit):
+    """None lists every finding; 0 or less hides the section."""
+    if limit is None:
+        return list(findings)
+    return findings[:limit] if limit > 0 else []
+
+
+def rank_flags(findings):
+    return sorted(
+        findings or [], key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"], f["line"])
+    )
+
+
 def render_flags(findings, limit):
-    if not findings or limit <= 0:
+    findings = findings or []
+    shown = capped(rank_flags(findings), limit)
+    if not shown:
         return []
-    ranked = sorted(findings, key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"], f["line"]))
-    shown = ranked[:limit]
     width = max(len(location(f)) for f in shown)
     out = ["", f"Red flags ({len(findings)}):"]
     for finding in shown:
         out.append(f"  {location(finding):<{width}}  {finding['kind']:<18} {finding['message']}")
-    if len(findings) > limit:
-        out.append(f"  … {len(findings) - limit} more (see --format json)")
+    if len(findings) > len(shown):
+        out.append(f"  … {len(findings) - len(shown)} more (raise --max-flags)")
     return out
 
 
@@ -1700,6 +1715,14 @@ FLAG_ORDER = {
 }
 
 
+def severity_for(kind):
+    """One ranking, three buckets — editors read this, they don't re-derive it."""
+    rank = FLAG_ORDER.get(kind, 9)
+    if rank <= 2:
+        return "high"
+    return "medium" if rank <= 6 else "low"
+
+
 def render_directories(directories):
     if not directories:
         return []
@@ -1713,7 +1736,7 @@ def render_directories(directories):
     return out
 
 
-def render_text(report, top=5, max_flags=10):
+def render_text(report, top=5, max_flags=None):
     stats = report["stats"]
     out = [f"gradebook-code {VERSION} — {report['root']}"]
     langs = ", ".join(f"{k} ({v})" for k, v in list(stats["languages"].items())[:5]) or "none"
@@ -1734,7 +1757,7 @@ def render_text(report, top=5, max_flags=10):
     out.append(counts)
     out.append("")
     for dim in report["dimensions"]:
-        points = "  n/a " if dim["score"] is None else f"{dim['points']:5.1f}"
+        points = "  n/a" if dim["score"] is None else f"{dim['points']:5.1f}"
         out.append(
             f"  {dim['title']:<30} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} "
             f"{dim['detail']}"
@@ -1754,7 +1777,7 @@ def render_text(report, top=5, max_flags=10):
     return "\n".join(out)
 
 
-def render_markdown(report, top=5, max_flags=10):
+def render_markdown(report, top=5, max_flags=None):
     stats = report["stats"]
     out = [f"## Code score: **{report['score']:.1f}/100** (grade {report['grade']})", ""]
     out.append(
@@ -1777,14 +1800,14 @@ def render_markdown(report, top=5, max_flags=10):
         for dim in wins:
             out.append(f"- **+{dim['lost']:.1f} {dim['title']}** — {dim['advice']}")
     findings = report.get("findings") or []
-    if findings and max_flags > 0:
+    shown = capped(rank_flags(findings), max_flags)
+    if shown:
         out.append("")
         out.append(f"### Red flags ({len(findings)})")
-        ranked = sorted(findings, key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"]))
-        for finding in ranked[:max_flags]:
+        for finding in shown:
             out.append(f"- `{location(finding)}` **{finding['kind']}** — {finding['message']}")
-        if len(findings) > max_flags:
-            out.append(f"- … {len(findings) - max_flags} more")
+        if len(findings) > len(shown):
+            out.append(f"- … {len(findings) - len(shown)} more")
     return "\n".join(out)
 
 
@@ -1841,9 +1864,23 @@ def main(argv=None):
         action="store_true",
         help="also score each immediate subdirectory that holds code",
     )
-    parser.add_argument("--top", type=int, default=5, metavar="N")
-    parser.add_argument("--max-flags", type=int, default=10, metavar="N")
-    parser.add_argument("--list-dimensions", action="store_true")
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=5,
+        metavar="N",
+        help="how many recommendations to show (default 5)",
+    )
+    parser.add_argument(
+        "--max-flags",
+        type=int,
+        default=None,
+        metavar="N",
+        help="cap the red flags listed (default: all, 0 to hide)",
+    )
+    parser.add_argument(
+        "--list-dimensions", action="store_true", help="print the scoring model and exit"
+    )
     parser.add_argument("--version", action="version", version=f"gradebook-code {VERSION}")
     args = parser.parse_args(argv)
 

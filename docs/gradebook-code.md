@@ -34,7 +34,7 @@ languages: go (22)  ·  calibrated for go: 60 lines, complexity 12, 5 params
   Interface segregation          ████████████████████   6.0/6   5 interface(s), none oversized
   Dependency inversion           ████████████████░░░░   6.5/8   9% of files touch a database, HTTP client or filesystem directly
   Coupling (GRASP)               ████████████████████   9.8/10  0.4 internal imports per module
-  Cohesion (GRASP)               ····················   n/a /7   no classes with shared state to judge
+  Cohesion (GRASP)               ····················   n/a/7   no classes with shared state to judge
   Law of Demeter                 ███████████████████░   4.8/5   2 chains of 3+ dots (0.1 per 100 lines)
   Speculative generality (YAGNI) ████████████████████   8.8/9   4 block(s) of commented-out code
   Naming & intent                █████████████░░░░░░░   4.0/6   7/141 vague names (manager, helper, data, process, …)
@@ -60,6 +60,7 @@ gradebook-code . --by-dir                 # score each subproject, worst first
 gradebook-code . --format markdown        # paste-ready PR comment
 gradebook-code . --format json            # tooling integration
 gradebook-code . --fail-under 60          # absolute CI gate
+gradebook-code . --max-flags 10           # cap the red flags listed (default: all)
 gradebook-code . --list-dimensions        # the scoring model
 ```
 

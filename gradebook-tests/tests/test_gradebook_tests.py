@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from gradebook_tests import (
+    FLAG_ORDER,
     blend_profile,
     classify_name,
     cobertura_files,
@@ -981,10 +982,50 @@ def test_flags_can_be_hidden_and_truncated(tmp_path):
     assert "1 more" in render_text(report, max_flags=3)
     assert "Red flags" in render_markdown(report)
     assert "Red flags" not in render_markdown(report, max_flags=0)
+    # ... and by default every one of them is listed.
+    assert len(report["findings"]) == 4
+    assert "more (raise --max-flags)" not in render_text(report)
+    assert "more" not in render_markdown(report).rsplit("\n", 1)[-1]
 
 
 def test_render_flags_is_empty_without_findings():
     assert render_flags([], 10) == []
+    assert render_flags([], None) == []
+
+
+def test_unscored_rows_line_up_with_scored_ones(tmp_path):
+    write(tmp_path, "src/a.py", "x = 1\n")
+    write(tmp_path, "tests/test_a.py", "def test_a():\n    assert 1 == 1\n")
+    report = report_for(tmp_path)
+    assert any(d["score"] is None for d in report["dimensions"])
+    rows = [
+        line
+        for line in render_text(report).splitlines()
+        if any(line.startswith(f"  {d['title']} ") for d in report["dimensions"])
+    ]
+    assert len(rows) == len(report["dimensions"])
+    # The bar is a fixed 20 chars and the points field a fixed 5, so the
+    # points/weight slash lands 26 past the bar on every row, n/a included.
+    # ("n/a" carries a slash of its own — measure the column, not the first one.)
+    for line in rows:
+        bar = min(line.index(c) for c in "░█·" if c in line)
+        assert line[bar + 26] == "/", line
+
+
+def test_every_finding_carries_a_known_severity(tmp_path):
+    write(tmp_path, "src/a.py", "x = 1\n")
+    write(
+        tmp_path,
+        "tests/test_a.py",
+        "from src.a import nowhere\n\n"
+        "def test_a():\n    # assert charge(1) == 1\n    obj._private\n"
+        "def test_b():\n    assert compute(2) == 2 * 1\n",
+    )
+    findings = collect(tmp_path)["findings"]
+    assert findings
+    for finding in findings:
+        assert finding["kind"] in FLAG_ORDER, finding["kind"]
+        assert finding["severity"] in {"high", "medium", "low"}
 
 
 # ------------------------------------------------------- per-file coverage

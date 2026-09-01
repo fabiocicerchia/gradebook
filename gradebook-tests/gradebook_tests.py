@@ -2114,19 +2114,9 @@ def collect(root: Path, use_git=True):
     stats["suppressed_failures"] = sum(
         1 for f in stats["findings"] if f["kind"] == "suppressed-failure"
     )
-    order = {
-        "phantom-symbol": 0,
-        "suppressed-failure": 1,
-        "untested-hotspot": 2,
-        "mirror-assertion": 3,
-        "conjoined-twin": 4,
-        "decorative-test": 5,
-        "implementation-access": 6,
-        "brittle-selector": 7,
-        "duplicate-case": 8,
-        "stale-test": 9,
-    }
-    stats["findings"].sort(key=lambda f: (order.get(f["kind"], 9), f["file"], f["line"]))
+    stats["findings"].sort(key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"], f["line"]))
+    for finding in stats["findings"]:
+        finding["severity"] = severity_for(finding["kind"])
     return stats
 
 
@@ -2973,7 +2963,7 @@ def bar(score, width=20):
     return "█" * filled + "░" * (width - filled)
 
 
-def render_text(report, top=5, max_flags=10):
+def render_text(report, top=5, max_flags=None):
     stats = report["stats"]
     out = [f"gradebook-tests {VERSION} — {report['root']}"]
     langs = ", ".join(f"{k} ({v})" for k, v in list(stats["languages"].items())[:5]) or "none"
@@ -2998,10 +2988,7 @@ def render_text(report, top=5, max_flags=10):
     out.append("")
     show_delta = "baseline" in report
     for dim in report["dimensions"]:
-        if dim["score"] is None:
-            points = "  n/a "
-        else:
-            points = f"{dim['points']:5.1f}"
+        points = "  n/a" if dim["score"] is None else f"{dim['points']:5.1f}"
         delta = ""
         if show_delta:
             value = dim.get("delta")
@@ -3039,16 +3026,47 @@ def location(finding):
     return f"{finding['file']}:{finding['line']}" if finding["line"] else finding["file"]
 
 
+def capped(findings, limit):
+    """None lists every finding; 0 or less hides the section."""
+    if limit is None:
+        return list(findings)
+    return findings[:limit] if limit > 0 else []
+
+
+# Findings arrive from `collect` already in this order.
+FLAG_ORDER = {
+    "phantom-symbol": 0,
+    "suppressed-failure": 1,
+    "untested-hotspot": 2,
+    "mirror-assertion": 3,
+    "conjoined-twin": 4,
+    "decorative-test": 5,
+    "implementation-access": 6,
+    "brittle-selector": 7,
+    "duplicate-case": 8,
+    "stale-test": 9,
+}
+
+
+def severity_for(kind):
+    """One ranking, three buckets — editors read this, they don't re-derive it."""
+    rank = FLAG_ORDER.get(kind, 9)
+    if rank <= 2:
+        return "high"
+    return "medium" if rank <= 6 else "low"
+
+
 def render_flags(findings, limit):
-    if not findings or limit <= 0:
+    findings = findings or []
+    shown = capped(findings, limit)
+    if not shown:
         return []
-    shown = findings[:limit]
     width = max(len(location(f)) for f in shown)
     out = ["", f"Red flags ({len(findings)}):"]
     for finding in shown:
         out.append(f"  {location(finding):<{width}}  {finding['kind']:<18} {finding['message']}")
-    if len(findings) > limit:
-        out.append(f"  … {len(findings) - limit} more (see --format json)")
+    if len(findings) > len(shown):
+        out.append(f"  … {len(findings) - len(shown)} more (raise --max-flags)")
     return out
 
 
@@ -3066,7 +3084,7 @@ def render_directories(directories):
     return out
 
 
-def render_markdown(report, top=5, max_flags=10):
+def render_markdown(report, top=5, max_flags=None):
     stats = report["stats"]
     out = [f"## Test suite score: **{report['score']:.1f}/100** (grade {report['grade']})", ""]
     out.append(
@@ -3109,13 +3127,14 @@ def render_markdown(report, top=5, max_flags=10):
         for dim in wins:
             out.append(f"- **+{dim['lost']:.1f} {dim['title']}** — {dim['advice']}")
     findings = report.get("findings") or []
-    if findings and max_flags > 0:
+    shown = capped(findings, max_flags)
+    if shown:
         out.append("")
         out.append(f"### Red flags ({len(findings)})")
-        for finding in findings[:max_flags]:
+        for finding in shown:
             out.append(f"- `{location(finding)}` **{finding['kind']}** — {finding['message']}")
-        if len(findings) > max_flags:
-            out.append(f"- … {len(findings) - max_flags} more")
+        if len(findings) > len(shown):
+            out.append(f"- … {len(findings) - len(shown)} more")
     if report.get("directories"):
         out.append("")
         out.append("### By directory")
@@ -3157,9 +3176,9 @@ def main(argv=None):
     parser.add_argument(
         "--max-flags",
         type=int,
-        default=10,
+        default=None,
         metavar="N",
-        help="how many red flags to list (default 10, 0 to hide)",
+        help="cap the red flags listed (default: all, 0 to hide)",
     )
     parser.add_argument(
         "--by-dir",

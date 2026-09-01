@@ -29,7 +29,7 @@ languages: go (22)  ·  calibrated for go: 60 lines, complexity 12, 5 params
 
   Simplicity (KISS)              ████████████████████  13.7/14  3.9 average complexity over 100 functions
   Duplication (DRY)              ████████████████████  12.0/12  0.0% of lines duplicated elsewhere
-  Cohesion (GRASP)               ····················   n/a /7   no classes with shared state to judge
+  Cohesion (GRASP)               ····················   n/a/7   no classes with shared state to judge
   Naming & intent                █████████████░░░░░░░   4.0/6   7/141 vague names (manager, helper, data, …)
   ...
 

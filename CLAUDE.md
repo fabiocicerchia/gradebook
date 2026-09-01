@@ -24,7 +24,12 @@ make install     # pip install both
 make test        # both suites
 make test-tests  # just gradebook-tests
 make test-code   # just gradebook-code
+make test-nvim   # the Neovim plugin specs (needs nvim)
 make lint        # ruff over both
+make ext-build   # build the VS Code extension bundle
+make ext-package # build gradebook.vsix
+make ext-install # side-load the vsix into VS Code
+make ext-publish # publish to the marketplace (needs VSCE_PAT)
 make setup       # install the pre-commit hook
 make check       # run all pre-commit checks on the whole tree
 make clean       # caches and egg-info
@@ -73,12 +78,47 @@ every file that carries the version, so merging the release PR moves
 `x-release-please-version` annotation on its line and an entry in
 `extra-files`, or it will silently drift from the tag.
 
+`release.yml` runs release-please **twice** on purpose — phase 1 cuts the draft
+release, the extension job attaches the VSIX, `publish-release` publishes the
+draft (which is what creates the tag), and only then does phase 2 open the next
+release PR. Collapsing them back into one job leaves release-please computing
+the next PR while the release is still a draft, so there is no tag for the
+version already in the manifest: it loses its anchor, walks the whole history
+and opens a PR re-releasing everything, forever.
+
 The first release was pinned to 0.1.0 with `release-as`, because release-please
 defaults an untagged repo to 1.0.0. That pin is gone now that `v0.1.0` exists —
 left in place it would have pinned every later release to the same number
 and stopped `feat:` bumping anything. Versions are ordinary semver from
 here: `fix:` patch, `feat:` minor, and while this is 0.x a breaking change
 does not need a major bump.
+
+## Editors
+
+`extensions/vscode` and `extensions/nvim` are thin clients: the scoring lives
+in the two modules and nowhere else. No LSP — VS Code talks to
+`server/gradebook_server.py` over newline-delimited JSON on stdio, and the
+nvim plugin shells out to the two CLIs.
+
+- The scan server is **standard library Python**, and it imports the two
+  modules rather than re-implementing anything, so `dependencies = []` still
+  describes everything that ships to PyPI. The Node toolchain is build-time,
+  for `extensions/vscode` only.
+- Scanning is whole-repo, never per-file: hotspots need `git log` and
+  duplication is cross-file, so `collect()` takes a directory.
+- Findings with no line to point at — `dependency-cycle` puts `a -> b -> a` in
+  `file` with `line: 0` — go to the score view and the Findings panel, never
+  onto a guessed path. Nothing is dropped on the way there: the flags are the
+  product.
+- The scan server's protocol is the portfolio's: newline-delimited JSON, the
+  result flattened into `{id, ok, ...}`, a `ready` event on `id: 0`, and
+  `sys.stdout` swapped for stderr so a stray print cannot desynchronise the
+  stream.
+- Severity comes from `severity_for(kind)` in each tool, bucketed from
+  `FLAG_ORDER`. A new detector needs an entry in `FLAG_ORDER`; the tests fail
+  otherwise, and so does `extensions/nvim/tests/severity_order_spec.lua`.
+- `lua/gradebook/core.lua` has no `vim.` calls, on purpose — that is what lets
+  the specs cover it without an editor.
 
 ## Guardrails
 

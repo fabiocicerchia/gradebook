@@ -20,7 +20,7 @@ languages: javascript (15)  ·  calibrated for javascript: 0.60x test:code, 2.0 
 15 source files · 16 test files · 25 test cases · 25 assertions · 84 test lines / 39 source lines (2.15x)
 
   Coverage               ████████████████████  12.0/12  measured 91.3% (coverage/coverage-summary.json), gate 85%
-  Mutation score         ····················   n/a /8   no mutation report found
+  Mutation score         ····················   n/a/8   no mutation report found
   Unit tests             ██████████████████░░   7.9/9   13 file(s), 20 case(s) for 15 source files, 2.15x test:code lines (target 0.60x)
   Integration tests      ████████████░░░░░░░░   4.2/7   1 file(s), 2 case(s) (8% of all cases)
   Functional / E2E       █████████████████░░░   5.0/6   2 file(s), 3 case(s) (12% of all cases)
@@ -28,7 +28,7 @@ languages: javascript (15)  ·  calibrated for javascript: 0.60x test:code, 2.0 
   TDD discipline         ████████████████████   7.0/7   70% of 10 source commits also touched tests (1 test-only)
   Assertion quality      █████████████████░░░   6.0/7   1.0 assertions/case, 1 assert only truthy/not-null/snapshot
   Edge & failure paths   █████░░░░░░░░░░░░░░░   1.2/5   0/25 cases (0%) exercise a failure path, 6 (24%) touch a boundary value
-  Risk targeting         ····················   n/a /5   no churn history to rank by
+  Risk targeting         ····················   n/a/5   no churn history to rank by
   Test substance         ███████████████████░   5.6/6   1 phantom symbol(s)
   Determinism & isolation ████████████████████   6.0/6   no clock, randomness, host or ordering dependencies
   Test focus             ████████████████████   5.0/5   cases are small, linear and focused
@@ -61,7 +61,7 @@ gradebook-tests . --format markdown        # paste-ready PR comment
 gradebook-tests . --format json            # tooling integration
 gradebook-tests . --fail-under 60          # absolute CI gate
 gradebook-tests . --no-git                 # skip the git-history analysis
-gradebook-tests . --max-flags 30           # list more of the red flags
+gradebook-tests . --max-flags 10           # cap the red flags listed (default: all)
 gradebook-tests . --list-dimensions        # the scoring model
 ```
 
