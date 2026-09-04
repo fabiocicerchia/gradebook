@@ -1,0 +1,9 @@
+{
+  "Exclude": [
+    "^LICENSE$",
+    "^Makefile$"
+  ],
+  "Disable": {
+    "IndentSize": true
+  }
+}
