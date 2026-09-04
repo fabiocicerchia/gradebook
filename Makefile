@@ -12,7 +12,7 @@ VSIX := $(EXT_DIR)/gradebook-$(EXT_VERSION).vsix
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-	  awk 'BEGIN {FS = ":.*?## "}; {printf "  %-11s %s\n", $$1, $$2}'
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-11s %s\n", $$1, $$2}'
 
 install: ## pip install both tools
 	@for tool in $(TOOLS); do $(MAKE) -C . install-$$tool; done
@@ -54,10 +54,10 @@ ext-package: ext-build ## Build the VS Code extension into a .vsix
 
 ext-install: ext-package ## Build the VS Code extension and install it
 	@command -v code >/dev/null 2>&1 || { \
-	  echo "make: the 'code' CLI is not on PATH."; \
-	  echo "In VS Code run: Shell Command: Install 'code' command in PATH,"; \
-	  echo "or install $(VSIX) from the Extensions view (... > Install from VSIX)."; \
-	  exit 1; }
+		echo "make: the 'code' CLI is not on PATH."; \
+		echo "In VS Code run: Shell Command: Install 'code' command in PATH,"; \
+		echo "or install $(VSIX) from the Extensions view (... > Install from VSIX)."; \
+		exit 1; }
 	code --install-extension $(VSIX) --force
 
 # Normally CI's business: publishing happens in publish-extension.yml, called by
@@ -75,7 +75,7 @@ check: ## Run all pre-commit checks on the whole tree
 
 clean: ## Remove caches and build artifacts
 	rm -rf gradebook-*/.pytest_cache gradebook-*/.ruff_cache gradebook-*/__pycache__ \
-	       gradebook-*/tests/__pycache__ gradebook-*/*.egg-info \
-	       $(EXT_DIR)/node_modules $(EXT_DIR)/out $(EXT_DIR)/out-tsc \
-	       $(EXT_DIR)/*.vsix $(EXT_DIR)/LICENSE $(EXT_DIR)/CHANGELOG.md \
-	       extensions/nvim/.deps
+		gradebook-*/tests/__pycache__ gradebook-*/*.egg-info \
+		$(EXT_DIR)/node_modules $(EXT_DIR)/out $(EXT_DIR)/out-tsc \
+		$(EXT_DIR)/*.vsix $(EXT_DIR)/LICENSE $(EXT_DIR)/CHANGELOG.md \
+		extensions/nvim/.deps
