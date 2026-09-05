@@ -40,32 +40,32 @@ Working from a checkout instead? Point `gradebook.codePath` and
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `gradebook: Scan Workspace` | Rescan now |
-| `gradebook: Open Report` | Open the score view |
-| `gradebook: Filter Findings` | Narrow the panel by severity and tool |
-| `gradebook: Clear the findings filter` | Show everything again |
-| `gradebook: Expand All Findings` | Open every group (collapse uses the view's own button) |
-| `gradebook: Show Log` | Open the log channel |
-| `gradebook: Restart Scan Server` | Restart the Python scan server |
-| `gradebook: Cancel Running Scan` | Drop the answer to a scan in flight |
+| Command                                | What it does                                           |
+| -------------------------------------- | ------------------------------------------------------ |
+| `gradebook: Scan Workspace`            | Rescan now                                             |
+| `gradebook: Open Report`               | Open the score view                                    |
+| `gradebook: Filter Findings`           | Narrow the panel by severity and tool                  |
+| `gradebook: Clear the findings filter` | Show everything again                                  |
+| `gradebook: Expand All Findings`       | Open every group (collapse uses the view's own button) |
+| `gradebook: Show Log`                  | Open the log channel                                   |
+| `gradebook: Restart Scan Server`       | Restart the Python scan server                         |
+| `gradebook: Cancel Running Scan`       | Drop the answer to a scan in flight                    |
 
 ## Settings
 
-| Setting | Default | What it does |
-|---|---|---|
-| `gradebook.enable` | `true` | Turn the extension off without uninstalling it |
-| `gradebook.run` | `onSave` | `onSave`, `onType` or `manual` |
-| `gradebook.debounceMs` | `400` | Idle time before an `onType` scan |
-| `gradebook.pythonPath` | `python3` | Interpreter for the scan server |
-| `gradebook.codePath` | `""` | `gradebook_code.py` or its folder. Empty finds a checkout in the workspace, then the installed package |
-| `gradebook.testsPath` | `""` | `gradebook_tests.py` or its folder, same fallback |
-| `gradebook.tools` | `["code","tests"]` | Which tools to run |
-| `gradebook.scanProjectOnStartup` | `true` | Scan once when the window opens |
-| `gradebook.failUnder` | `0` | Flag the status bar below this score |
-| `gradebook.exclude` | `[]` | Path prefixes whose findings are dropped |
-| `gradebook.trace` | `false` | Log every request and response |
+| Setting                          | Default            | What it does                                                                                           |
+| -------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `gradebook.enable`               | `true`             | Turn the extension off without uninstalling it                                                         |
+| `gradebook.run`                  | `onSave`           | `onSave`, `onType` or `manual`                                                                         |
+| `gradebook.debounceMs`           | `400`              | Idle time before an `onType` scan                                                                      |
+| `gradebook.pythonPath`           | `python3`          | Interpreter for the scan server                                                                        |
+| `gradebook.codePath`             | `""`               | `gradebook_code.py` or its folder. Empty finds a checkout in the workspace, then the installed package |
+| `gradebook.testsPath`            | `""`               | `gradebook_tests.py` or its folder, same fallback                                                      |
+| `gradebook.tools`                | `["code","tests"]` | Which tools to run                                                                                     |
+| `gradebook.scanProjectOnStartup` | `true`             | Scan once when the window opens                                                                        |
+| `gradebook.failUnder`            | `0`                | Flag the status bar below this score                                                                   |
+| `gradebook.exclude`              | `[]`               | Path prefixes whose findings are dropped                                                               |
+| `gradebook.trace`                | `false`            | Log every request and response                                                                         |
 
 ## Development
 

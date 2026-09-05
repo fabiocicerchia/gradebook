@@ -68,21 +68,21 @@ The regression gate is in [Gating CI](ci.md).
 
 ## The scoring model
 
-| Principle | Pts | What is measured |
-|---|---:|---|
-| Simplicity (KISS) | 13 | cyclomatic complexity, function length, nesting depth and parameter count per function, against per-language limits |
-| Duplication (DRY) | 11 | windows of 8+ consecutive statement lines that appear verbatim elsewhere (identifiers kept, literals masked), plus magic literals repeated across the codebase |
-| Single responsibility | 9 | god files (400+ lines or 20+ functions), files mixing three or more concerns (database, HTTP, filesystem, UI, crypto, queue), classes past 15 methods |
-| Coupling (GRASP) | 9 | import cycles between the repo's own modules, and average internal fan-out |
-| Open/closed | 8 | branching on a `type`/`kind`/`status` field, and runtime type checks (`isinstance`, `instanceof`, `reflect.TypeOf`) — every new case editing the same three functions |
-| Dependency inversion | 8 | how far infrastructure has spread: the share of files reaching a database driver, HTTP client or filesystem directly, plus mutable global state |
-| Speculative generality (YAGNI) | 8 | private symbols nothing references, abstractions with exactly one implementer, unimplemented stubs, commented-out code, TODO/FIXME markers |
-| Cohesion (GRASP) | 7 | the share of a class's methods that touch its own fields. **Scored only where classes hold state.** |
-| Hotspots (churn × complexity) | 6 | complexity weighted by how often the file actually changes, from `git log`. Complexity in a file nobody touches is a fact; complexity in one that changes weekly is a bill. **Scored only where there is churn history.** |
-| Interface segregation | 6 | interfaces, protocols, traits and abstract classes declaring 8+ methods. **Scored only where interfaces exist.** |
-| Liskov substitution | 5 | overrides that raise `NotImplementedError`, and type checks around a hierarchy. **Scored only where inheritance exists.** |
-| Law of Demeter | 5 | `a.b.c.d` chains per 100 lines — reaching through objects you do not own |
-| Naming & intent | 5 | vague names (`data`, `process`, `Manager`, `Helper`, `util`) and boolean flag parameters, which hide two functions in one |
+| Principle                      | Pts | What is measured                                                                                                                                                                                                          |
+| ------------------------------ | --: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Simplicity (KISS)              | 13  | cyclomatic complexity, function length, nesting depth and parameter count per function, against per-language limits                                                                                                       |
+| Duplication (DRY)              | 11  | windows of 8+ consecutive statement lines that appear verbatim elsewhere (identifiers kept, literals masked), plus magic literals repeated across the codebase                                                            |
+| Single responsibility          | 9   | god files (400+ lines or 20+ functions), files mixing three or more concerns (database, HTTP, filesystem, UI, crypto, queue), classes past 15 methods                                                                     |
+| Coupling (GRASP)               | 9   | import cycles between the repo's own modules, and average internal fan-out                                                                                                                                                |
+| Open/closed                    | 8   | branching on a `type`/`kind`/`status` field, and runtime type checks (`isinstance`, `instanceof`, `reflect.TypeOf`) — every new case editing the same three functions                                                     |
+| Dependency inversion           | 8   | how far infrastructure has spread: the share of files reaching a database driver, HTTP client or filesystem directly, plus mutable global state                                                                           |
+| Speculative generality (YAGNI) | 8   | private symbols nothing references, abstractions with exactly one implementer, unimplemented stubs, commented-out code, TODO/FIXME markers                                                                                |
+| Cohesion (GRASP)               | 7   | the share of a class's methods that touch its own fields. **Scored only where classes hold state.**                                                                                                                       |
+| Hotspots (churn × complexity)  | 6   | complexity weighted by how often the file actually changes, from `git log`. Complexity in a file nobody touches is a fact; complexity in one that changes weekly is a bill. **Scored only where there is churn history.** |
+| Interface segregation          | 6   | interfaces, protocols, traits and abstract classes declaring 8+ methods. **Scored only where interfaces exist.**                                                                                                          |
+| Liskov substitution            | 5   | overrides that raise `NotImplementedError`, and type checks around a hierarchy. **Scored only where inheritance exists.**                                                                                                 |
+| Law of Demeter                 | 5   | `a.b.c.d` chains per 100 lines — reaching through objects you do not own                                                                                                                                                  |
+| Naming & intent                | 5   | vague names (`data`, `process`, `Manager`, `Helper`, `util`) and boolean flag parameters, which hide two functions in one                                                                                                 |
 
 The thirteen dimensions add up to 100. Grades: **A** ≥85, **B** ≥70, **C** ≥55,
 **D** ≥40, **F** below.
@@ -97,7 +97,7 @@ never quietly inflates or sinks the number.
 Thresholds are weighted by how much of the codebase each language is, and the
 calibration is printed with the languages:
 
-```
+```text
 languages: go (22)  ·  calibrated for go: 60 lines, complexity 12, 5 params
 ```
 
@@ -115,7 +115,7 @@ a line, ordered by how much they matter:
 `duplicate-block` · `deep-nesting` · `mixed-concerns` · `fat-interface` ·
 `dead-code` · `long-function` · `many-parameters`
 
-```
+```text
 src/billing.py:1  hotspot  changed 8 times and carries 25 complexity
                            (codebase average 7) — the expensive kind
 ```
