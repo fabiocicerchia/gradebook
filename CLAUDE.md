@@ -19,19 +19,20 @@ runs on a whim.
 
 ```sh
 make help        # every verb this repo exposes
-make dev         # editable installs of both, plus pytest and ruff
+make setup       # editable installs of both, dev tooling, the pre-commit hook
 make install     # pip install both
+make run         # TOOL=gradebook-code ARGS=--help — one tool from the checkout
 make test        # both suites
 make test-tests  # just gradebook-tests
 make test-code   # just gradebook-code
 make test-nvim   # the Neovim plugin specs (needs nvim)
-make lint        # ruff over both
+make lint        # pre-commit run --all-files — the whole gate
+make format      # ruff format over both tools
+make analyze     # trivy fs
 make ext-build   # build the VS Code extension bundle
 make ext-package # build gradebook.vsix
 make ext-install # side-load the vsix into VS Code
 make ext-publish # publish to the marketplace (needs VSCE_PAT)
-make setup       # install the pre-commit hook
-make check       # run all pre-commit checks on the whole tree
 make clean       # caches and egg-info
 ```
 
