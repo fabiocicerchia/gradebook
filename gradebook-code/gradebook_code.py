@@ -16,13 +16,63 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from collections import Counter, defaultdict
+from collections.abc import Callable, Iterator
 from pathlib import Path
+from typing import Any
 
 VERSION = "0.3.0"  # x-release-please-version
+
+# The shapes this module passes around. All JSON-shaped: the report is written
+# out as JSON and read back by the extension, so nothing here is richer than
+# what survives that round trip.
+Stats = dict[str, Any]
+Report = dict[str, Any]
+Finding = dict[str, Any]
+FileInfo = dict[str, Any]
+Profile = dict[str, Any]
 MAX_FILE_BYTES = 512 * 1024
+
+# The defaults the analysis runs with. Named because each is a judgement about
+# what is worth reporting, not an arbitrary number: a signature longer than
+# SIGNATURE_SPAN is not a signature, eight identical lines is a copy rather
+# than a coincidence, and a list of twenty is as much as anyone acts on.
+SIGNATURE_SPAN = 400
+DUPE_WINDOW = 8
+DUPE_LIMIT = 20
+CYCLE_LIMIT = 10
+HOTSPOT_LIMIT = 10
+TOP_RECOMMENDATIONS = 5
+BAR_WIDTH = 20
+
+# The thresholds the rubric judges by. Each is a claim about what counts as bad
+# enough to report, so each gets a name instead of appearing as a number in the
+# middle of a condition.
+MINIFIED_LINE_CHARS = 500  # one line this long is a bundle, not code
+SIGNATURE_SCAN_CHARS = 400  # past this, the "(" found is not this signature
+MIN_FILES_FOR_HOTSPOTS = 5  # fewer, and the average means nothing
+MIN_CHANGED_FOR_HOTSPOTS = 3
+MAX_CONCERNS_PER_FILE = 3  # a fourth concern is a module doing four jobs
+MIN_NAME_CHARS = 2  # `i`, `x`, `db` — anything shorter says nothing
+GOD_FILE_LINES = 400
+GOD_FILE_FUNCTIONS = 20
+WIDE_INTERFACE_METHODS = 7  # an interface this wide has more than one client
+GOD_CLASS_METHODS = 15
+REPEATED_LITERAL_USES = 4  # the fourth copy is a constant waiting to happen
+DEAD_NAME_CHARS = 3  # shorter names collide with words in prose
+MAX_DEAD_CODE_FINDINGS = 20
+MIN_FUNCTIONS_FOR_COHESION = 3
+MIN_MODULES_FOR_COUPLING = 3
+MIN_POINTS_LOST_TO_RECOMMEND = 0.5
+HIGH_SEVERITY_RANK = 2
+MEDIUM_SEVERITY_RANK = 6
+
+# 10/100/1000 and 24/60 are units, not magic numbers: they read as themselves
+# wherever they appear.
+UNIT_LITERALS = {"10", "100", "1000", "24", "60"}
 
 SKIP_DIRS = {
     ".git",
@@ -84,13 +134,13 @@ GENERATED_NAME_RE = re.compile(
 )
 
 
-def is_generated(rel: Path, text: str):
+def is_generated(rel: Path, text: str) -> bool:
     if GENERATED_NAME_RE.search(rel.name):
         return True
     if GENERATED_RE.search(text[:2000]):
         return True
     # A minified bundle: one enormous line rather than code anyone reads.
-    return any(len(line) > 500 for line in text.splitlines()[:50])
+    return any(len(line) > MINIFIED_LINE_CHARS for line in text.splitlines()[:50])
 
 
 LANG_BY_EXT = {
@@ -160,9 +210,7 @@ FUNC_RE = {
         r"function[ \t]+(\w+)[ \t]*\(",
         re.MULTILINE,
     ),
-    "rust": re.compile(
-        r"^([ \t]*)(?:pub(?:\([^)]*\))?[ \t]+)?(?:async[ \t]+)?fn[ \t]+(\w+)", re.MULTILINE
-    ),
+    "rust": re.compile(r"^([ \t]*)(?:pub(?:\([^)]*\))?[ \t]+)?(?:async[ \t]+)?fn[ \t]+(\w+)", re.MULTILINE),
     "csharp": re.compile(
         r"^([ \t]*)(?:\[[^\]]*\][ \t]*)*(?:public|private|protected|internal"
         r"|static|async|override|virtual)[\w<>\[\], \t]*[ \t](\w+)[ \t]*\("
@@ -170,9 +218,7 @@ FUNC_RE = {
         re.MULTILINE,
     ),
     "elixir": re.compile(r"^([ \t]*)defp?[ \t]+(\w+[?!]?)", re.MULTILINE),
-    "scala": re.compile(
-        r"^([ \t]*)(?:override[ \t]+)?(?:private[ \t]+)?def[ \t]+(\w+)", re.MULTILINE
-    ),
+    "scala": re.compile(r"^([ \t]*)(?:override[ \t]+)?(?:private[ \t]+)?def[ \t]+(\w+)", re.MULTILINE),
     "shell": re.compile(r"^()(?:function[ \t]+)?(\w+)[ \t]*\(\)[ \t]*\{", re.MULTILINE),
     "lua": re.compile(r"^([ \t]*)(?:local[ \t]+)?function[ \t]+([\w.:]+)", re.MULTILINE),
 }
@@ -183,9 +229,7 @@ FUNC_RE["kotlin"] = re.compile(
     re.MULTILINE,
 )
 for _lang in ("c", "cpp", "swift"):
-    FUNC_RE.setdefault(
-        _lang, re.compile(r"^()[\w:<>*&\[\] \t]+?(\w+)[ \t]*\([^;]*\)[ \t]*\{", re.MULTILINE)
-    )
+    FUNC_RE.setdefault(_lang, re.compile(r"^()[\w:<>*&\[\] \t]+?(\w+)[ \t]*\([^;]*\)[ \t]*\{", re.MULTILINE))
 
 CLASS_RE = {
     "python": re.compile(r"^[ \t]*class[ \t]+(\w+)[ \t]*(?:\(([^)]*)\))?", re.MULTILINE),
@@ -201,9 +245,7 @@ CLASS_RE = {
         re.MULTILINE,
     ),
     "go": re.compile(r"^type[ \t]+(\w+)[ \t]+(struct|interface)", re.MULTILINE),
-    "ruby": re.compile(
-        r"^[ \t]*(?:class|module)[ \t]+(\w+)(?:[ \t]*<[ \t]*([\w:]+))?", re.MULTILINE
-    ),
+    "ruby": re.compile(r"^[ \t]*(?:class|module)[ \t]+(\w+)(?:[ \t]*<[ \t]*([\w:]+))?", re.MULTILINE),
     "php": re.compile(
         r"^[ \t]*(?:final[ \t]+|abstract[ \t]+)?(?:class|interface|trait)[ \t]+(\w+)"
         r"((?:[ \t]+(?:extends|implements)[ \t]+[\w, \\]+)?)",
@@ -298,7 +340,7 @@ DEFAULT_BLOCK_COMMENTS = (("/*", "*/"),)
 DEFAULT_QUOTES = ('"', "'")
 
 
-def strip_noise(text: str, lang: str):
+def strip_noise(text: str, lang: str) -> str:
     """Blank comments and string contents, preserving length and line numbers.
 
     Offsets are unchanged, so every line number reported against the result is
@@ -311,7 +353,7 @@ def strip_noise(text: str, lang: str):
     out = list(text)
     size = len(text)
 
-    def blank(start, end):
+    def blank(start: int, end: int) -> None:
         for index in range(max(start, 0), min(end, size)):
             if out[index] != "\n":
                 out[index] = " "
@@ -375,12 +417,8 @@ STUB_RE = re.compile(
     re.IGNORECASE,
 )
 GLOBAL_STATE_RE = {
-    "python": re.compile(
-        r"^[A-Za-z_]\w*[ \t]*=[ \t]*(?:\[\]|\{\}|set\(\)|dict\(|list\(|defaultdict)", re.MULTILINE
-    ),
-    "javascript": re.compile(
-        r"^(?:export[ \t]+)?(?:let|var)[ \t]+\w+[ \t]*=[ \t]*(?:\[|\{)", re.MULTILINE
-    ),
+    "python": re.compile(r"^[A-Za-z_]\w*[ \t]*=[ \t]*(?:\[\]|\{\}|set\(\)|dict\(|list\(|defaultdict)", re.MULTILINE),
+    "javascript": re.compile(r"^(?:export[ \t]+)?(?:let|var)[ \t]+\w+[ \t]*=[ \t]*(?:\[|\{)", re.MULTILINE),
     "go": re.compile(r"^var[ \t]+\w+[ \t]+(?:map\[|\[\]|\*)", re.MULTILINE),
 }
 GLOBAL_STATE_RE["typescript"] = GLOBAL_STATE_RE["javascript"]
@@ -405,9 +443,7 @@ CONCERN_RE = {
         r"|fastapi|express|gin-gonic|spring",
         re.IGNORECASE,
     ),
-    "filesystem": re.compile(
-        r"\bos\.path|pathlib|fs\.readFile|ioutil|File\.Open|fopen", re.IGNORECASE
-    ),
+    "filesystem": re.compile(r"\bos\.path|pathlib|fs\.readFile|ioutil|File\.Open|fopen", re.IGNORECASE),
     "ui": re.compile(r"react|vue|angular|swing|tkinter|template|render\(|jsx", re.IGNORECASE),
     "crypto": re.compile(r"hashlib|bcrypt|jwt|crypto\.|openssl|argon2", re.IGNORECASE),
     "queue": re.compile(r"kafka|rabbitmq|celery|sqs|pubsub|amqp", re.IGNORECASE),
@@ -490,7 +526,7 @@ LANGUAGE_PROFILES = {
 DEFAULT_PROFILE = (45, 11, 5, 4)
 
 
-def blend_profile(language_lines):
+def blend_profile(language_lines: dict[str, int]) -> Profile:
     """Weight each ecosystem's tolerances by how much of the code it is."""
     total = sum(language_lines.values())
     if not total:
@@ -505,7 +541,7 @@ def blend_profile(language_lines):
     for lang, lines in language_lines.items():
         profile = LANGUAGE_PROFILES.get(lang, DEFAULT_PROFILE)
         share = lines / total
-        values = [v + p * share for v, p in zip(values, profile)]
+        values = [v + p * share for v, p in zip(values, profile, strict=True)]
     return {
         "max_lines": round(values[0]),
         "max_complexity": round(values[1]),
@@ -515,7 +551,7 @@ def blend_profile(language_lines):
     }
 
 
-def read_text(path: Path):
+def read_text(path: Path) -> str | None:
     try:
         if path.stat().st_size > MAX_FILE_BYTES:
             return None
@@ -524,7 +560,7 @@ def read_text(path: Path):
         return None
 
 
-def walk(root: Path):
+def walk(root: Path) -> Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
         for name in sorted(filenames):
@@ -535,35 +571,39 @@ def walk(root: Path):
             yield abs_path, rel
 
 
-def is_test_file(rel: Path):
+# How each ecosystem spells a test file, by suffix. A table rather than a
+# chain of returns: adding a language is a row, and the rules sit side by side
+# where they can be compared.
+_TEST_STEM_RULES: dict[str, Callable[[str], bool]] = {
+    ".py": lambda stem: stem.startswith("test_") or stem.endswith("_test") or stem == "conftest",
+    ".go": lambda stem: stem.endswith("_test"),
+    ".java": lambda stem: stem.endswith(("Test", "Tests", "Spec")),
+    ".kt": lambda stem: stem.endswith(("Test", "Tests", "Spec")),
+    ".cs": lambda stem: stem.endswith(("Test", "Tests", "Spec")),
+    ".rb": lambda stem: stem.endswith(("_spec", "_test")),
+    ".php": lambda stem: stem.endswith("Test"),
+    **{ext: lambda stem: bool(re.search(r"\.(test|spec)$", stem)) for ext in JS_EXT},
+}
+
+
+def is_test_file(rel: Path) -> bool:
     stem, suffix = rel.stem, rel.suffix
     parts = {p.lower() for p in rel.parts[:-1]}
     if parts & TEST_DIR_NAMES or suffix == ".feature":
         return True
-    if suffix == ".py":
-        return stem.startswith("test_") or stem.endswith("_test") or stem == "conftest"
-    if suffix in JS_EXT:
-        return bool(re.search(r"\.(test|spec)$", stem))
-    if suffix == ".go":
-        return stem.endswith("_test")
-    if suffix in {".java", ".kt", ".cs"}:
-        return stem.endswith(("Test", "Tests", "Spec"))
-    if suffix == ".rb":
-        return stem.endswith(("_spec", "_test"))
-    if suffix == ".php":
-        return stem.endswith("Test")
-    return False
+    rule = _TEST_STEM_RULES.get(suffix)
+    return bool(rule and rule(stem))
 
 
-def line_of(text: str, offset: int):
+def line_of(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
 
 
-def body_of(text: str, start: int, lang: str):
+def body_of(text: str, start: int, lang: str) -> str:
     """The source of one function, by brace matching or by indentation."""
     if lang in BRACE_LANGS:
         opening = text.find("{", start)
-        if opening == -1 or opening - start > 400:
+        if opening == -1 or opening - start > SIGNATURE_SCAN_CHARS:
             return text[start : start + 400]
         depth = 0
         for index in range(opening, len(text)):
@@ -587,7 +627,7 @@ def body_of(text: str, start: int, lang: str):
     return "\n".join(body)
 
 
-def signature_window(body: str, name: str, span=400):
+def signature_window(body: str, name: str, span: int = SIGNATURE_SPAN) -> str:
     """The text just after a function's name, where its parameters live."""
     position = body.find(name)
     if position == -1:
@@ -596,7 +636,7 @@ def signature_window(body: str, name: str, span=400):
     return body[start : start + span]
 
 
-def nesting_depth(body: str, lang: str):
+def nesting_depth(body: str, lang: str) -> int:
     if lang in BRACE_LANGS:
         depth = peak = 0
         for char in body:
@@ -622,7 +662,7 @@ IMPLICIT_FIRST_PARAM = {"python"}
 IMPLICIT_NAMES = {"self", "cls", "this", "$this"}
 
 
-def count_params(signature: str, implicit_self=False):
+def count_params(signature: str, *, implicit_self: bool = False) -> int:
     """Count declared parameters, across line breaks and nested generics."""
     start = signature.find("(")
     if start == -1:
@@ -639,11 +679,7 @@ def count_params(signature: str, implicit_self=False):
             if depth == 0:
                 break
         collected.append(char)
-    parts = [
-        part.strip()
-        for part in re.split(r",(?![^(\[{<]*[)\]}>])", "".join(collected))
-        if part.strip()
-    ]
+    parts = [part.strip() for part in re.split(r",(?![^(\[{<]*[)\]}>])", "".join(collected)) if part.strip()]
     if implicit_self and parts and parts[0].split(":")[0].strip() in IMPLICIT_NAMES:
         parts = parts[1:]
     return len(parts)
@@ -652,7 +688,23 @@ def count_params(signature: str, implicit_self=False):
 # ------------------------------------------------------------- file analysis
 
 
-def analyse_file(rel: Path, text: str, lang: str, profile):
+def _imports_in(text: str, lang: str) -> list[str]:
+    """Every module name this file imports, in the spelling it used."""
+    out: list[str] = []
+    import_re = IMPORT_RE.get(lang)
+    if import_re:
+        for match in import_re.finditer(text):
+            for group in match.groups():
+                if not group:
+                    continue
+                for part in group.split(","):
+                    target = part.strip().strip("()").split(" as ")[0].strip()
+                    if target:
+                        out.append(target)
+    return out
+
+
+def analyse_file(rel: Path, text: str, lang: str, profile: Profile) -> FileInfo:
     """Per-function and per-class measurements for one source file.
 
     Structure is read from `code` — the source with comments and string
@@ -682,26 +734,13 @@ def analyse_file(rel: Path, text: str, lang: str, profile):
         "imports": [],
     }
 
-    import_re = IMPORT_RE.get(lang)
-    if import_re:
-        for match in import_re.finditer(text):
-            for group in match.groups():
-                if not group:
-                    continue
-                for part in group.split(","):
-                    target = part.strip().strip("()").split(" as ")[0].strip()
-                    if target:
-                        info["imports"].append(target)
+    info["imports"] = _imports_in(text, lang)
 
     if class_re:
         for match in class_re.finditer(code):
             name = match.group(1)
-            bases = (
-                (match.group(2) or "").strip() if match.lastindex and match.lastindex > 1 else ""
-            )
-            info["classes"].append(
-                {"name": name, "bases": bases, "line": line_of(code, match.start())}
-            )
+            bases = (match.group(2) or "").strip() if match.lastindex and match.lastindex > 1 else ""
+            info["classes"].append({"name": name, "bases": bases, "line": line_of(code, match.start())})
 
     if func_re:
         for match in func_re.finditer(code):
@@ -717,12 +756,8 @@ def analyse_file(rel: Path, text: str, lang: str, profile):
                 "lines": len(body_lines),
                 "complexity": 1 + len(DECISION_RE.findall(body)),
                 "nesting": nesting_depth(body, lang),
-                "params": count_params(
-                    signature_window(body, name), implicit_self=lang in IMPLICIT_FIRST_PARAM
-                ),
-                "flag_params": len(
-                    re.findall(r"=\s*(?:True|False|true|false)\b", body.split("\n", 1)[0])
-                ),
+                "params": count_params(signature_window(body, name), implicit_self=lang in IMPLICIT_FIRST_PARAM),
+                "flag_params": len(re.findall(r"=\s*(?:True|False|true|false)\b", body.split("\n", 1)[0])),
                 "body": body,
             }
             info["functions"].append(function)
@@ -753,7 +788,7 @@ NORMALISE_RE = re.compile(r"'[^'\n]*'|\"[^\"\n]*\"|`[^`\n]*`|\b\d+(?:\.\d+)?\b")
 COMMENT_LINE_RE = re.compile(r"^[ \t]*(?:#|//|\*|/\*)")
 
 
-def normalise_line(line: str):
+def normalise_line(line: str) -> str:
     return re.sub(r"\s+", " ", NORMALISE_RE.sub("@", line)).strip()
 
 
@@ -761,7 +796,9 @@ STATEMENT_RE = re.compile(r"[-+*/%=<>!]=?|\breturn\b|\bif\b|\bfor\b|\bwhile\b|\w
 DECLARATION_RE = re.compile(r"^\s*(?:import|from|package|use|require|#include|\w+\s*:\s*[\"'@])")
 
 
-def find_duplicate_blocks(files, window=8, limit=20):
+def find_duplicate_blocks(
+    files: list[FileInfo], window: int = DUPE_WINDOW, limit: int = DUPE_LIMIT
+) -> tuple[int, list[Finding]]:
     """Windows of consecutive lines that appear verbatim somewhere else.
 
     Framework boilerplate — a struct literal of declarations, a block of
@@ -783,11 +820,7 @@ def find_duplicate_blocks(files, window=8, limit=20):
             block = "\n".join(line for _, line in chunk)
             if len(block) < window * 14:
                 continue
-            statements = sum(
-                1
-                for _, line in chunk
-                if STATEMENT_RE.search(line) and not DECLARATION_RE.match(line)
-            )
+            statements = sum(1 for _, line in chunk if STATEMENT_RE.search(line) and not DECLARATION_RE.match(line))
             if statements < window * 0.6:
                 continue
             origin = seen.get(block)
@@ -814,13 +847,13 @@ def find_duplicate_blocks(files, window=8, limit=20):
     return len(duplicated_lines), findings
 
 
-def find_cycles(graph, limit=10):
+def find_cycles(graph: dict[str, set[str]], limit: int = CYCLE_LIMIT) -> list[list[str]]:
     """Import cycles between the repo's own modules."""
     colour = {}
     stack = []
     cycles = []
 
-    def visit(node):
+    def visit(node: str) -> None:
         colour[node] = 1
         stack.append(node)
         for neighbour in sorted(graph.get(node, ())):
@@ -828,7 +861,7 @@ def find_cycles(graph, limit=10):
                 visit(neighbour)
             elif colour.get(neighbour) == 1 and len(cycles) < limit:
                 start = stack.index(neighbour)
-                cycles.append(stack[start:] + [neighbour])
+                cycles.append([*stack[start:], neighbour])
         stack.pop()
         colour[node] = 2
 
@@ -841,9 +874,11 @@ def find_cycles(graph, limit=10):
 # ------------------------------------------------------------------- churn
 
 FIX_LIMIT = 800
+# Resolved once: `git` on PATH, or nothing to ask about churn.
+_GIT = shutil.which("git") or "git"
 
 
-def git_churn(root: Path, limit=FIX_LIMIT):
+def git_churn(root: Path, limit: int = FIX_LIMIT) -> dict[str, int] | None:
     """How many commits touched each file, keyed the same way as the scan.
 
     `git log` reports paths from the repository root, so when the scan starts
@@ -851,10 +886,10 @@ def git_churn(root: Path, limit=FIX_LIMIT):
     and the dimension silently scores nothing.
     """
 
-    def run(*args):
+    def run(*args: str) -> str | None:
         try:
-            result = subprocess.run(
-                ["git", "-C", str(root), *args],
+            result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own
+                [_GIT, "-C", str(root), *args],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -868,9 +903,7 @@ def git_churn(root: Path, limit=FIX_LIMIT):
     if prefix is None:
         return {}
     prefix = prefix.strip()
-    log = run(
-        "log", "-n", str(limit), "--no-merges", "--name-only", "--pretty=format:%x00", "--", "."
-    )
+    log = run("log", "-n", str(limit), "--no-merges", "--name-only", "--pretty=format:%x00", "--", ".")
     if not log:
         return {}
     counts = Counter()
@@ -886,17 +919,16 @@ def git_churn(root: Path, limit=FIX_LIMIT):
     return dict(counts)
 
 
-def find_hotspots(churn_counts, file_complexity, limit=10):
+def find_hotspots(
+    churn_counts: dict[str, int], file_complexity: dict[str, float], limit: int = HOTSPOT_LIMIT
+) -> Stats | None:
     """Complexity that sits where the changes land is the expensive kind."""
-    scored = [
-        (path, churn_counts.get(path, 0), complexity)
-        for path, complexity in file_complexity.items()
-    ]
+    scored = [(path, churn_counts.get(path, 0), complexity) for path, complexity in file_complexity.items()]
     changed = [entry for entry in scored if entry[1] > 1]
     # Enough files to have a meaningful average, and enough churn to rank by.
     # Three files hammered while the rest sit still is the hotspot case, not a
     # reason to give up on it.
-    if len(scored) < 5 or len(changed) < 3:
+    if len(scored) < MIN_FILES_FOR_HOTSPOTS or len(changed) < MIN_CHANGED_FOR_HOTSPOTS:
         return None
     changed.sort(key=lambda entry: (-entry[1], entry[0]))
     hot_count = max(3, round(len(changed) * 0.2))
@@ -927,7 +959,202 @@ def find_hotspots(churn_counts, file_complexity, limit=10):
 # ----------------------------------------------------------------- collect
 
 
-def collect(root: Path):
+def _yagni_pass(stats: Stats, infos: list[FileInfo], corpus: str) -> None:
+    """Private helpers nobody calls, and abstractions with one implementer."""
+    for info in infos:
+        for function in info["functions"]:
+            name = function["name"]
+            private = name.startswith("_") or (info["lang"] == "go" and name[:1].islower())
+            if private and len(name) > DEAD_NAME_CHARS and corpus.count(name) <= 1:
+                stats["dead_symbols"] += 1
+                if len([f for f in stats["findings"] if f["kind"] == "dead-code"]) < MAX_DEAD_CODE_FINDINGS:
+                    stats["findings"].append(
+                        {
+                            "file": info["file"],
+                            "line": function["line"],
+                            "kind": "dead-code",
+                            "message": f"`{name}` is private and never referenced",
+                        }
+                    )
+        for klass in info["classes"]:
+            if not klass["bases"].strip():
+                continue
+            for base in re.findall(r"\w+", klass["bases"]):
+                if base in {"extends", "implements", "object", "Exception", "Enum", "ABC"}:
+                    continue
+                implementers = len(re.findall(rf"(?:extends|implements|:|\()\s*{base}\b", corpus))
+                if implementers == 1:
+                    stats["single_impl_interfaces"] += 1
+                break
+        stats["stub_overrides"] += info["stubs"]
+
+
+def _cohesion_pass(stats: Stats, infos: list[FileInfo]) -> None:
+    """How much of a class's own state its methods actually use."""
+    for info in infos:
+        if not info["classes"] or info["lang"] not in {
+            "python",
+            "ruby",
+            "javascript",
+            "typescript",
+            "php",
+        }:
+            continue
+        fields = set(re.findall(r"(?:self|this)\.(\w+)\s*=", "\n".join(f["body"] for f in info["functions"])))
+        if not fields or len(info["functions"]) < MIN_FUNCTIONS_FOR_COHESION:
+            continue
+        used = [
+            len({m for m in re.findall(r"(?:self|this)\.(\w+)", f["body"]) if m in fields}) for f in info["functions"]
+        ]
+        share = sum(1 for count in used if count) / len(used)
+        stats["cohesion_classes"] += 1
+        stats["cohesion_score"] += share
+
+
+def _sources(root: Path, stats: Stats) -> list[tuple[Path, str, str]]:
+    """Every source file worth reading, and the language tallies as a side
+    effect: what was skipped for being generated is part of the report."""
+    sources = []
+    for abs_path, rel in walk(root):
+        lang = LANG_BY_EXT.get(rel.suffix)
+        if lang is None or is_test_file(rel):
+            continue
+        text = read_text(abs_path)
+        if text is None:
+            continue
+        if is_generated(rel, text):
+            stats["generated_skipped"] += 1
+            continue
+        sources.append((rel, text, lang))
+        stats["languages"][lang] += 1
+        stats["language_lines"][lang] += sum(1 for line in text.splitlines() if line.strip())
+    return sources
+
+
+def _name_and_size_tallies(stats: Stats, info: FileInfo, profile: Profile) -> None:
+    """One file's function and class measurements, folded into the totals: the
+    size and shape counts, the vague names, and the god-file finding."""
+    for function in info["functions"]:
+        stats["complexity_total"] += function["complexity"]
+        stats["long_functions"] += function["lines"] > profile["max_lines"]
+        stats["complex_functions"] += function["complexity"] > profile["max_complexity"]
+        stats["deep_functions"] += function["nesting"] > profile["max_nesting"]
+        stats["wide_functions"] += function["params"] > profile["max_params"]
+        stats["flag_params"] += function["flag_params"]
+        stats["named_things"] += 1
+        if function["name"].lower() in VAGUE_NAMES or len(function["name"]) <= MIN_NAME_CHARS:
+            stats["vague_names"] += 1
+
+    # A file that is most of a subsystem on its own.
+    if info["lines"] > GOD_FILE_LINES or len(info["functions"]) > GOD_FILE_FUNCTIONS:
+        stats["god_files"] += 1
+        stats["findings"].append(
+            {
+                "file": info["file"],
+                "line": 1,
+                "kind": "god-file",
+                "message": f"{info['lines']} lines, {len(info['functions'])} functions, "
+                f"{len(info['classes'])} classes — more than one reason to change",
+            }
+        )
+    for klass in info["classes"]:
+        stats["named_things"] += 1
+        if klass["name"].lower() in VAGUE_NAMES or klass["name"].lower().endswith(
+            ("manager", "helper", "util", "utils", "processor", "handler", "data")
+        ):
+            stats["vague_names"] += 1
+        if klass["bases"].strip():
+            stats["subclasses"] += 1
+
+
+def _accumulate(
+    stats: Stats, sources: list[tuple[Path, str, str]], profile: Profile, module_names: set[str]
+) -> tuple[list[FileInfo], list[str], Counter, dict[str, set[str]]]:
+    """Fold every file's measurements into `stats`, and hand back what the
+    whole-project passes below need: the per-file records, their stripped
+    text, the literal counts and the import graph."""
+    graph: dict[str, set[str]] = defaultdict(set)
+    literals: Counter = Counter()
+    all_text: list[str] = []
+    infos: list[FileInfo] = []
+    for rel, text, lang in sources:
+        info = analyse_file(rel, text, lang, profile)
+        infos.append(info)
+        all_text.append(info["code"])
+        stats["files"] += 1
+        stats["lines"] += info["lines"]
+        stats["functions"] += len(info["functions"])
+        stats["classes"] += len(info["classes"])
+        stats["findings"].extend(info["findings"])
+        stats["demeter_chains"] += info["demeter"]
+        stats["todos"] += info["todos"]
+        stats["commented_code"] += info["commented_code"]
+        stats["stubs"] += info["stubs"]
+        stats["global_state"] += info["globals"]
+        if info["infra"]:
+            stats["infra_files"] += 1
+        if len(info["concerns"]) >= MAX_CONCERNS_PER_FILE:
+            stats["mixed_concern_files"] += 1
+            stats["findings"].append(
+                {
+                    "file": info["file"],
+                    "line": 1,
+                    "kind": "mixed-concerns",
+                    "message": f"touches {', '.join(sorted(info['concerns']))} in one file",
+                }
+            )
+
+        _name_and_size_tallies(stats, info, profile)
+
+        # OCP: branching on a type or kind instead of dispatching on it.
+        stats["type_switches"] += len(
+            re.findall(
+                r"(?:if|elif|else if|case|when)[^\n:{]{0,40}\b(?:type|kind|sort|category|status)\b"
+                r"[^\n]{0,30}==",
+                info["code"],
+            )
+        )
+        stats["type_checks"] += len(
+            re.findall(
+                r"isinstance\(|instanceof\b|\.GetType\(\)|reflect\.TypeOf|\.class\s*==|is_a\?",
+                info["code"],
+            )
+        )
+
+        interface_re = INTERFACE_RE.get(lang)
+        if interface_re:
+            for match in interface_re.finditer(info["code"]):
+                stats["interfaces"] += 1
+                block = body_of(info["code"], match.start(), lang)
+                methods = len(FUNC_RE[lang].findall(block)) if lang in FUNC_RE else 0
+                if methods > WIDE_INTERFACE_METHODS:
+                    stats["fat_interfaces"] += 1
+                    stats["findings"].append(
+                        {
+                            "file": info["file"],
+                            "line": line_of(text, match.start()),
+                            "kind": "fat-interface",
+                            "message": f"`{match.group(1)}` declares {methods} methods — "
+                            "clients depend on more than they use",
+                        }
+                    )
+        if len(info["classes"]) and lang in FUNC_RE:
+            methods_per_class = len(info["functions"]) / len(info["classes"])
+            if methods_per_class > GOD_CLASS_METHODS:
+                stats["wide_classes"] += 1
+
+        for match in MAGIC_NUMBER_RE.finditer(info["code"]):
+            literals[match.group(0)] += 1
+
+        module = rel.stem
+        for target in info["imports"]:
+            leaf = re.split(r"[./\\:]", target.strip("./"))[-1]
+            if leaf and leaf != module and leaf in module_names:
+                graph[module].add(leaf)
+    return infos, all_text, literals, graph
+
+
+def collect(root: Path) -> Stats:
     stats = {
         "root": str(root.resolve()),
         "files": 0,
@@ -975,134 +1202,13 @@ def collect(root: Path):
         "average_complexity": 0.0,
         "profile": None,
     }
-    sources = []
-    for abs_path, rel in walk(root):
-        lang = LANG_BY_EXT.get(rel.suffix)
-        if lang is None or is_test_file(rel):
-            continue
-        text = read_text(abs_path)
-        if text is None:
-            continue
-        if is_generated(rel, text):
-            stats["generated_skipped"] += 1
-            continue
-        sources.append((rel, text, lang))
-        stats["languages"][lang] += 1
-        stats["language_lines"][lang] += sum(1 for line in text.splitlines() if line.strip())
+    sources = _sources(root, stats)
 
     profile = blend_profile(stats["language_lines"])
     stats["profile"] = profile
 
-    graph = defaultdict(set)
     module_names = {rel.stem for rel, _, _ in sources}
-    literals = Counter()
-    all_text = []
-    infos = []
-
-    for rel, text, lang in sources:
-        info = analyse_file(rel, text, lang, profile)
-        infos.append(info)
-        all_text.append(info["code"])
-        stats["files"] += 1
-        stats["lines"] += info["lines"]
-        stats["functions"] += len(info["functions"])
-        stats["classes"] += len(info["classes"])
-        stats["findings"].extend(info["findings"])
-        stats["demeter_chains"] += info["demeter"]
-        stats["todos"] += info["todos"]
-        stats["commented_code"] += info["commented_code"]
-        stats["stubs"] += info["stubs"]
-        stats["global_state"] += info["globals"]
-        if info["infra"]:
-            stats["infra_files"] += 1
-        if len(info["concerns"]) >= 3:
-            stats["mixed_concern_files"] += 1
-            stats["findings"].append(
-                {
-                    "file": info["file"],
-                    "line": 1,
-                    "kind": "mixed-concerns",
-                    "message": f"touches {', '.join(sorted(info['concerns']))} in one file",
-                }
-            )
-
-        for function in info["functions"]:
-            stats["complexity_total"] += function["complexity"]
-            stats["long_functions"] += function["lines"] > profile["max_lines"]
-            stats["complex_functions"] += function["complexity"] > profile["max_complexity"]
-            stats["deep_functions"] += function["nesting"] > profile["max_nesting"]
-            stats["wide_functions"] += function["params"] > profile["max_params"]
-            stats["flag_params"] += function["flag_params"]
-            stats["named_things"] += 1
-            if function["name"].lower() in VAGUE_NAMES or len(function["name"]) <= 2:
-                stats["vague_names"] += 1
-
-        # A file that is most of a subsystem on its own.
-        if info["lines"] > 400 or len(info["functions"]) > 20:
-            stats["god_files"] += 1
-            stats["findings"].append(
-                {
-                    "file": info["file"],
-                    "line": 1,
-                    "kind": "god-file",
-                    "message": f"{info['lines']} lines, {len(info['functions'])} functions, "
-                    f"{len(info['classes'])} classes — more than one reason to change",
-                }
-            )
-        for klass in info["classes"]:
-            stats["named_things"] += 1
-            if klass["name"].lower() in VAGUE_NAMES or klass["name"].lower().endswith(
-                ("manager", "helper", "util", "utils", "processor", "handler", "data")
-            ):
-                stats["vague_names"] += 1
-            if klass["bases"].strip():
-                stats["subclasses"] += 1
-
-        # OCP: branching on a type or kind instead of dispatching on it.
-        stats["type_switches"] += len(
-            re.findall(
-                r"(?:if|elif|else if|case|when)[^\n:{]{0,40}\b(?:type|kind|sort|category|status)\b"
-                r"[^\n]{0,30}==",
-                info["code"],
-            )
-        )
-        stats["type_checks"] += len(
-            re.findall(
-                r"isinstance\(|instanceof\b|\.GetType\(\)|reflect\.TypeOf|\.class\s*==|is_a\?",
-                info["code"],
-            )
-        )
-
-        interface_re = INTERFACE_RE.get(lang)
-        if interface_re:
-            for match in interface_re.finditer(info["code"]):
-                stats["interfaces"] += 1
-                block = body_of(info["code"], match.start(), lang)
-                methods = len(FUNC_RE[lang].findall(block)) if lang in FUNC_RE else 0
-                if methods > 7:
-                    stats["fat_interfaces"] += 1
-                    stats["findings"].append(
-                        {
-                            "file": info["file"],
-                            "line": line_of(text, match.start()),
-                            "kind": "fat-interface",
-                            "message": f"`{match.group(1)}` declares {methods} methods — "
-                            "clients depend on more than they use",
-                        }
-                    )
-        if len(info["classes"]) and lang in FUNC_RE:
-            methods_per_class = len(info["functions"]) / len(info["classes"])
-            if methods_per_class > 15:
-                stats["wide_classes"] += 1
-
-        for match in MAGIC_NUMBER_RE.finditer(info["code"]):
-            literals[match.group(0)] += 1
-
-        module = rel.stem
-        for target in info["imports"]:
-            leaf = re.split(r"[./\\:]", target.strip("./"))[-1]
-            if leaf and leaf != module and leaf in module_names:
-                graph[module].add(leaf)
+    infos, all_text, literals, graph = _accumulate(stats, sources, profile, module_names)
 
     stats["modules"] = len(module_names)
     stats["fan_out_total"] = sum(len(v) for v in graph.values())
@@ -1117,69 +1223,18 @@ def collect(root: Path):
             }
         )
 
-    duplicate_lines, duplicate_findings = find_duplicate_blocks(
-        [(info["file"], info["code"]) for info in infos]
-    )
+    duplicate_lines, duplicate_findings = find_duplicate_blocks([(info["file"], info["code"]) for info in infos])
     stats["duplicate_lines"] = duplicate_lines
     stats["findings"].extend(duplicate_findings)
 
     corpus = "\n".join(all_text)
     stats["magic_literals"] = sum(
-        1
-        for value, count in literals.items()
-        if count >= 4 and value not in {"10", "100", "1000", "24", "60"}
+        1 for value, count in literals.items() if count >= REPEATED_LITERAL_USES and value not in UNIT_LITERALS
     )
 
-    # YAGNI: private helpers nobody calls, and abstractions with one implementer.
-    for info in infos:
-        for function in info["functions"]:
-            name = function["name"]
-            private = name.startswith("_") or (info["lang"] == "go" and name[:1].islower())
-            if private and len(name) > 3 and corpus.count(name) <= 1:
-                stats["dead_symbols"] += 1
-                if len([f for f in stats["findings"] if f["kind"] == "dead-code"]) < 20:
-                    stats["findings"].append(
-                        {
-                            "file": info["file"],
-                            "line": function["line"],
-                            "kind": "dead-code",
-                            "message": f"`{name}` is private and never referenced",
-                        }
-                    )
-        for klass in info["classes"]:
-            if not klass["bases"].strip():
-                continue
-            for base in re.findall(r"\w+", klass["bases"]):
-                if base in {"extends", "implements", "object", "Exception", "Enum", "ABC"}:
-                    continue
-                implementers = len(re.findall(rf"(?:extends|implements|:|\()\s*{base}\b", corpus))
-                if implementers == 1:
-                    stats["single_impl_interfaces"] += 1
-                break
-        stats["stub_overrides"] += info["stubs"]
-
-    # Cohesion: how much of a class's own state its methods actually use.
-    for info in infos:
-        if not info["classes"] or info["lang"] not in {
-            "python",
-            "ruby",
-            "javascript",
-            "typescript",
-            "php",
-        }:
-            continue
-        fields = set(
-            re.findall(r"(?:self|this)\.(\w+)\s*=", "\n".join(f["body"] for f in info["functions"]))
-        )
-        if not fields or len(info["functions"]) < 3:
-            continue
-        used = [
-            len({m for m in re.findall(r"(?:self|this)\.(\w+)", f["body"]) if m in fields})
-            for f in info["functions"]
-        ]
-        share = sum(1 for count in used if count) / len(used)
-        stats["cohesion_classes"] += 1
-        stats["cohesion_score"] += share
+    # YAGNI and cohesion, each a pass of its own over the same files.
+    _yagni_pass(stats, infos, corpus)
+    _cohesion_pass(stats, infos)
 
     hotspots = find_hotspots(
         git_churn(root),
@@ -1217,20 +1272,18 @@ DIMENSIONS = [
 GRADES = [(85, "A"), (70, "B"), (55, "C"), (40, "D"), (0, "F")]
 
 
-def clamp(value, low=0.0, high=1.0):
+def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return max(low, min(high, value))
 
 
-def penalise(pairs):
+def penalise(pairs: list[tuple[str, float, float, float]]) -> tuple[float, list[tuple[str, float]]]:
     """Turn (label, ratio, target, weight) tuples into a score and a detail line."""
-    penalties = [
-        (label, weight * clamp(ratio / target)) for label, ratio, target, weight in pairs if ratio
-    ]
+    penalties = [(label, weight * clamp(ratio / target)) for label, ratio, target, weight in pairs if ratio]
     score = clamp(1 - sum(value for _, value in penalties))
     return score, penalties
 
 
-def score_kiss(s):
+def score_kiss(s: Stats) -> tuple[float | None, str, str]:
     functions = s["functions"]
     if not functions:
         return None, "no functions found", ""
@@ -1277,7 +1330,7 @@ def score_kiss(s):
     )
 
 
-def score_hotspots(s):
+def score_hotspots(s: Stats) -> tuple[float | None, str, str]:
     """Complexity in the files that change most is the complexity that costs."""
     if not s["hot_files"]:
         return None, "no churn history to rank by", ""
@@ -1300,7 +1353,7 @@ def score_hotspots(s):
     )
 
 
-def score_dry(s):
+def score_dry(s: Stats) -> tuple[float | None, str, str]:
     if not s["lines"]:
         return None, "no code found", ""
     duplicate_share = s["duplicate_lines"] / s["lines"]
@@ -1328,7 +1381,7 @@ def score_dry(s):
     )
 
 
-def score_srp(s):
+def score_srp(s: Stats) -> tuple[float | None, str, str]:
     if not s["files"]:
         return None, "no code found", ""
     score, penalties = penalise(
@@ -1359,7 +1412,7 @@ def score_srp(s):
     )
 
 
-def score_ocp(s):
+def score_ocp(s: Stats) -> tuple[float | None, str, str]:
     if not s["functions"]:
         return None, "no functions found", ""
     score, penalties = penalise(
@@ -1389,7 +1442,7 @@ def score_ocp(s):
     )
 
 
-def score_lsp(s):
+def score_lsp(s: Stats) -> tuple[float | None, str, str]:
     if not s["subclasses"]:
         return None, "no inheritance to judge", ""
     score, penalties = penalise(
@@ -1421,7 +1474,7 @@ def score_lsp(s):
     )
 
 
-def score_isp(s):
+def score_isp(s: Stats) -> tuple[float | None, str, str]:
     if not s["interfaces"]:
         return None, "no interfaces or protocols declared", ""
     score, penalties = penalise(
@@ -1449,7 +1502,7 @@ def score_isp(s):
     )
 
 
-def score_dip(s):
+def score_dip(s: Stats) -> tuple[float | None, str, str]:
     if not s["files"]:
         return None, "no code found", ""
     spread = s["infra_files"] / s["files"]
@@ -1477,8 +1530,8 @@ def score_dip(s):
     )
 
 
-def score_coupling(s):
-    if s["modules"] < 3:
+def score_coupling(s: Stats) -> tuple[float | None, str, str]:
+    if s["modules"] < MIN_MODULES_FOR_COUPLING:
         return None, "too few modules to judge", ""
     fan_out = s["fan_out_total"] / s["modules"]
     score, _ = penalise(
@@ -1500,7 +1553,7 @@ def score_coupling(s):
     )
 
 
-def score_cohesion(s):
+def score_cohesion(s: Stats) -> tuple[float | None, str, str]:
     if not s["cohesion_classes"]:
         return None, "no classes with shared state to judge", ""
     share = s["cohesion_score"] / s["cohesion_classes"]
@@ -1508,14 +1561,11 @@ def score_cohesion(s):
     return (
         clamp(share / 0.8),
         detail,
-        (
-            "methods that never touch their object's fields belong "
-            "somewhere else — usually next to the data they do use"
-        ),
+        ("methods that never touch their object's fields belong somewhere else — usually next to the data they do use"),
     )
 
 
-def score_demeter(s):
+def score_demeter(s: Stats) -> tuple[float | None, str, str]:
     if not s["lines"]:
         return None, "no code found", ""
     per_hundred = s["demeter_chains"] / (s["lines"] / 100)
@@ -1531,7 +1581,7 @@ def score_demeter(s):
     )
 
 
-def score_yagni(s):
+def score_yagni(s: Stats) -> tuple[float | None, str, str]:
     if not s["functions"]:
         return None, "no functions found", ""
     score, penalties = penalise(
@@ -1569,14 +1619,12 @@ def score_yagni(s):
     )
 
 
-def score_naming(s):
+def score_naming(s: Stats) -> tuple[float | None, str, str]:
     if not s["named_things"]:
         return None, "nothing named to judge", ""
     share = s["vague_names"] / s["named_things"]
     score = clamp(1 - clamp(share / 0.15))
-    detail = (
-        f"{s['vague_names']}/{s['named_things']} vague names (manager, helper, data, process, …)"
-    )
+    detail = f"{s['vague_names']}/{s['named_things']} vague names (manager, helper, data, process, …)"
     if s["flag_params"]:
         score = clamp(score - 0.15 * clamp((s["flag_params"] / s["functions"]) / 0.10))
         detail += f", {s['flag_params']} boolean flag parameter(s)"
@@ -1607,14 +1655,14 @@ SCORERS = {
 }
 
 
-def grade_for(score):
+def grade_for(score: float) -> str:
     for floor, letter in GRADES:
         if score >= floor:
             return letter
     return "F"
 
 
-def evaluate(stats):
+def evaluate(stats: Stats) -> Report:
     results = []
     weighted = total_weight = 0.0
     for key, title, weight in DIMENSIONS:
@@ -1645,16 +1693,12 @@ def evaluate(stats):
         "not_scored": [r["title"] for r in results if r["score"] is None],
         "dimensions": results,
         "findings": stats["findings"],
-        "stats": {
-            k: (dict(v) if isinstance(v, Counter) else v)
-            for k, v in stats.items()
-            if k not in {"findings"}
-        },
+        "stats": {k: (dict(v) if isinstance(v, Counter) else v) for k, v in stats.items() if k not in {"findings"}},
     }
 
 
-def recommendations(report, top=5):
-    ranked = [d for d in report["dimensions"] if d["score"] is not None and d["lost"] >= 0.5]
+def recommendations(report: Report, top: int = TOP_RECOMMENDATIONS) -> list[Stats]:
+    ranked = [d for d in report["dimensions"] if d["score"] is not None and d["lost"] >= MIN_POINTS_LOST_TO_RECOMMEND]
     ranked.sort(key=lambda d: d["lost"], reverse=True)
     return ranked[:top]
 
@@ -1662,31 +1706,29 @@ def recommendations(report, top=5):
 # ------------------------------------------------------------------- render
 
 
-def bar(score, width=20):
+def bar(score: float | None, width: int = BAR_WIDTH) -> str:
     if score is None:
         return "·" * width
     filled = round(score * width)
     return "█" * filled + "░" * (width - filled)
 
 
-def location(finding):
+def location(finding: Finding) -> str:
     return f"{finding['file']}:{finding['line']}" if finding["line"] else finding["file"]
 
 
-def capped(findings, limit):
+def capped(findings: list[Finding], limit: int | None) -> list[Finding]:
     """None lists every finding; 0 or less hides the section."""
     if limit is None:
         return list(findings)
     return findings[:limit] if limit > 0 else []
 
 
-def rank_flags(findings):
-    return sorted(
-        findings or [], key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"], f["line"])
-    )
+def rank_flags(findings: list[Finding] | None) -> list[Finding]:
+    return sorted(findings or [], key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"], f["line"]))
 
 
-def render_flags(findings, limit):
+def render_flags(findings: list[Finding] | None, limit: int | None) -> list[str]:
     findings = findings or []
     shown = capped(rank_flags(findings), limit)
     if not shown:
@@ -1715,15 +1757,15 @@ FLAG_ORDER = {
 }
 
 
-def severity_for(kind):
+def severity_for(kind: str) -> str:
     """One ranking, three buckets — editors read this, they don't re-derive it."""
     rank = FLAG_ORDER.get(kind, 9)
-    if rank <= 2:
+    if rank <= HIGH_SEVERITY_RANK:
         return "high"
-    return "medium" if rank <= 6 else "low"
+    return "medium" if rank <= MEDIUM_SEVERITY_RANK else "low"
 
 
-def render_directories(directories):
+def render_directories(directories: list[Stats]) -> list[str]:
     if not directories:
         return []
     width = max(len(d["path"]) for d in directories)
@@ -1736,7 +1778,7 @@ def render_directories(directories):
     return out
 
 
-def render_text(report, top=5, max_flags=None):
+def render_text(report: Report, top: int = TOP_RECOMMENDATIONS, max_flags: int | None = None) -> str:
     stats = report["stats"]
     out = [f"gradebook-code {VERSION} — {report['root']}"]
     langs = ", ".join(f"{k} ({v})" for k, v in list(stats["languages"].items())[:5]) or "none"
@@ -1758,10 +1800,7 @@ def render_text(report, top=5, max_flags=None):
     out.append("")
     for dim in report["dimensions"]:
         points = "  n/a" if dim["score"] is None else f"{dim['points']:5.1f}"
-        out.append(
-            f"  {dim['title']:<30} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} "
-            f"{dim['detail']}"
-        )
+        out.append(f"  {dim['title']:<30} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} {dim['detail']}")
     out.append("")
     out.append(f"SCORE  {report['score']:.1f}/100   grade {report['grade']}")
     if report["not_scored"]:
@@ -1777,7 +1816,7 @@ def render_text(report, top=5, max_flags=None):
     return "\n".join(out)
 
 
-def render_markdown(report, top=5, max_flags=None):
+def render_markdown(report: Report, top: int = TOP_RECOMMENDATIONS, max_flags: int | None = None) -> str:
     stats = report["stats"]
     out = [f"## Code score: **{report['score']:.1f}/100** (grade {report['grade']})", ""]
     out.append(
@@ -1811,7 +1850,7 @@ def render_markdown(report, top=5, max_flags=None):
     return "\n".join(out)
 
 
-def score_directories(root: Path):
+def score_directories(root: Path) -> list[Stats]:
     results = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
         if child.name in SKIP_DIRS or child.name in ARTIFACT_DIRS:
@@ -1837,7 +1876,8 @@ def score_directories(root: Path):
 # ---------------------------------------------------------------------- cli
 
 
-def main(argv=None):
+def _build_parser() -> argparse.ArgumentParser:
+    """The CLI surface, in one place."""
     parser = argparse.ArgumentParser(
         prog="gradebook-code",
         description=__doc__,
@@ -1845,12 +1885,8 @@ def main(argv=None):
     )
     parser.add_argument("path", nargs="?", default=".", help="codebase to evaluate")
     parser.add_argument("--format", choices=["text", "json", "markdown"], default="text")
-    parser.add_argument(
-        "--fail-under", type=float, metavar="N", help="exit 1 when the score is below N (CI gate)"
-    )
-    parser.add_argument(
-        "--baseline", metavar="FILE", help="a previous --format json report to diff against"
-    )
+    parser.add_argument("--fail-under", type=float, metavar="N", help="exit 1 when the score is below N (CI gate)")
+    parser.add_argument("--baseline", metavar="FILE", help="a previous --format json report to diff against")
     parser.add_argument(
         "--fail-on-drop",
         type=float,
@@ -1878,53 +1914,18 @@ def main(argv=None):
         metavar="N",
         help="cap the red flags listed (default: all, 0 to hide)",
     )
-    parser.add_argument(
-        "--list-dimensions", action="store_true", help="print the scoring model and exit"
-    )
+    parser.add_argument("--list-dimensions", action="store_true", help="print the scoring model and exit")
     parser.add_argument("--version", action="version", version=f"gradebook-code {VERSION}")
-    args = parser.parse_args(argv)
+    return parser
 
-    if args.list_dimensions:
-        for key, title, weight in DIMENSIONS:
-            print(f"{key:<10} {weight:>3} pts  {title}")
-        print(
-            "\nAny dimension without evidence (no interfaces, no inheritance, too few "
-            "modules)\nis left unscored and the remaining weights renormalise."
-        )
-        return 0
-    if args.fail_on_drop is not None and not args.baseline:
-        print("gradebook-code: --fail-on-drop needs --baseline", file=sys.stderr)
-        return 2
 
-    root = Path(args.path)
-    if not root.is_dir():
-        print(f"gradebook-code: not a directory: {root}", file=sys.stderr)
-        return 2
-
-    report = evaluate(collect(root))
-    report["recommendations"] = [
-        {"dimension": d["id"], "points": d["lost"], "advice": d["advice"]}
-        for d in recommendations(report, args.top)
-    ]
-    if args.by_dir:
-        report["directories"] = score_directories(root)
-    if args.baseline:
-        try:
-            with open(args.baseline) as handle:
-                baseline = json.load(handle)
-            report["baseline"] = {
-                "score": baseline["score"],
-                "delta": round(report["score"] - baseline["score"], 1),
-            }
-        except (OSError, ValueError, KeyError) as error:
-            print(f"gradebook-code: cannot read baseline {args.baseline}: {error}", file=sys.stderr)
-            return 2
-
+def _emit(report: Report, args: argparse.Namespace) -> None:
+    """The report, in whichever format was asked for."""
     if args.format == "json":
         json.dump(report, sys.stdout, indent=2, default=str)
-        print()
+        print()  # noqa: T201 — the tool's output
     elif args.format == "markdown":
-        print(render_markdown(report, args.top, args.max_flags))
+        print(render_markdown(report, args.top, args.max_flags))  # noqa: T201 — the tool's output
     else:
         text = render_text(report, args.top, args.max_flags)
         if "baseline" in report:
@@ -1934,11 +1935,15 @@ def main(argv=None):
                 f"({report['baseline']['score']:.1f})",
                 1,
             )
-        print(text)
+        print(text)  # noqa: T201 — the tool's output
 
+
+def _gate_failed(report: Report, args: argparse.Namespace) -> bool:
+    """Whether either gate — a floor, or a drop against a baseline — was
+    crossed. Says which on stderr, since that is the whole point of a gate."""
     failed = False
     if args.fail_under is not None and report["score"] < args.fail_under:
-        print(
+        print(  # noqa: T201 — the tool's output
             f"gradebook-code: {report['score']:.1f} is below --fail-under {args.fail_under}",
             file=sys.stderr,
         )
@@ -1946,11 +1951,52 @@ def main(argv=None):
     if args.fail_on_drop is not None:
         drop = -report["baseline"]["delta"]
         if drop > args.fail_on_drop:
-            print(
-                f"gradebook-code: dropped {drop:.1f} points against the baseline", file=sys.stderr
-            )
+            print(f"gradebook-code: dropped {drop:.1f} points against the baseline", file=sys.stderr)  # noqa: T201 — the tool's output
             failed = True
-    return 1 if failed else 0
+    return failed
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    if args.list_dimensions:
+        for key, title, weight in DIMENSIONS:
+            print(f"{key:<10} {weight:>3} pts  {title}")  # noqa: T201 — the tool's output
+        print(  # noqa: T201 — the tool's output
+            "\nAny dimension without evidence (no interfaces, no inheritance, too few "
+            "modules)\nis left unscored and the remaining weights renormalise."
+        )
+        return 0
+    if args.fail_on_drop is not None and not args.baseline:
+        print("gradebook-code: --fail-on-drop needs --baseline", file=sys.stderr)  # noqa: T201 — the tool's output
+        return 2
+
+    root = Path(args.path)
+    if not root.is_dir():
+        print(f"gradebook-code: not a directory: {root}", file=sys.stderr)  # noqa: T201 — the tool's output
+        return 2
+
+    report = evaluate(collect(root))
+    report["recommendations"] = [
+        {"dimension": d["id"], "points": d["lost"], "advice": d["advice"]} for d in recommendations(report, args.top)
+    ]
+    if args.by_dir:
+        report["directories"] = score_directories(root)
+    if args.baseline:
+        try:
+            baseline = json.loads(Path(args.baseline).read_text())
+            report["baseline"] = {
+                "score": baseline["score"],
+                "delta": round(report["score"] - baseline["score"], 1),
+            }
+        except (OSError, ValueError, KeyError) as error:
+            print(f"gradebook-code: cannot read baseline {args.baseline}: {error}", file=sys.stderr)  # noqa: T201 — the tool's output
+            return 2
+
+    _emit(report, args)
+
+    return 1 if _gate_failed(report, args) else 0
 
 
 if __name__ == "__main__":
