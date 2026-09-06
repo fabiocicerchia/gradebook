@@ -1,12 +1,12 @@
-import * as path from 'node:path';
+import * as path from "node:path";
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { Tool } from './types';
+import { Tool } from "./types";
 
 export interface Config {
   enable: boolean;
-  run: 'onSave' | 'onType' | 'manual';
+  run: "onSave" | "onType" | "manual";
   debounceMs: number;
   pythonPath: string;
   codePath: string;
@@ -19,25 +19,25 @@ export interface Config {
 }
 
 export function readConfig(scope?: vscode.Uri): Config {
-  const c = vscode.workspace.getConfiguration('gradebook', scope);
+  const c = vscode.workspace.getConfiguration("gradebook", scope);
   return {
-    enable: c.get('enable', true),
-    run: c.get('run', 'onSave'),
-    debounceMs: c.get('debounceMs', 400),
-    pythonPath: c.get('pythonPath', 'python3'),
-    codePath: c.get('codePath', ''),
-    testsPath: c.get('testsPath', ''),
-    tools: c.get('tools', ['code', 'tests'] as Tool[]),
-    scanProjectOnStartup: c.get('scanProjectOnStartup', true),
-    failUnder: c.get('failUnder', 0),
-    exclude: c.get('exclude', [] as string[]),
-    trace: c.get('trace', false),
+    enable: c.get("enable", true),
+    run: c.get("run", "onSave"),
+    debounceMs: c.get("debounceMs", 400),
+    pythonPath: c.get("pythonPath", "python3"),
+    codePath: c.get("codePath", ""),
+    testsPath: c.get("testsPath", ""),
+    tools: c.get("tools", ["code", "tests"] as Tool[]),
+    scanProjectOnStartup: c.get("scanProjectOnStartup", true),
+    failUnder: c.get("failUnder", 0),
+    exclude: c.get("exclude", [] as string[]),
+    trace: c.get("trace", false),
   };
 }
 
 /** The per-tool module path override, empty meaning "use the installed one". */
 export function modulePath(config: Config, tool: Tool): string {
-  return tool === 'code' ? config.codePath : config.testsPath;
+  return tool === "code" ? config.codePath : config.testsPath;
 }
 
 /** Where a checkout keeps each module, relative to the repository root. */
@@ -64,13 +64,13 @@ export function withWorkspaceDefaults(
     return config;
   }
   const resolved = { ...config };
-  for (const tool of ['code', 'tests'] as Tool[]) {
+  for (const tool of ["code", "tests"] as Tool[]) {
     if (modulePath(config, tool)) {
       continue; // an explicit setting always wins
     }
     const candidate = path.join(root, checkoutModule(tool));
     if (exists(candidate)) {
-      if (tool === 'code') {
+      if (tool === "code") {
         resolved.codePath = candidate;
       } else {
         resolved.testsPath = candidate;
