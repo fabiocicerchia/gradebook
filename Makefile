@@ -44,9 +44,10 @@ run: ## Run one tool from the checkout (TOOL=gradebook-code, ARGS=--help)
 lint: ## Run the whole gate — every hook, every file
 	pre-commit run --all-files
 
-format: ## Format both tools with ruff, the formatter the gate checks
+format: ## Format everything the gate checks — both tools, and the extension
 	cd gradebook-tests && ruff format .
 	cd gradebook-code && ruff format .
+	npx --yes @biomejs/biome@2.5.7 format --write .
 
 analyze: ## Scan the tree the way CI does — vulnerabilities, misconfig, secrets
 	@command -v trivy >/dev/null 2>&1 || { \
