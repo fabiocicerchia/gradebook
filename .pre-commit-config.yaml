@@ -94,6 +94,10 @@ repos:
         entry: npx --yes @biomejs/biome@2.5.7 ci --files-ignore-unknown=true --no-errors-on-unmatched
         language: system
         types_or: [javascript, jsx, ts, tsx, css]
+        # One invocation, not one per batch: npx writes the platform binary on
+        # first use, and a second process spawning it while the first still has
+        # it open dies with ETXTBSY. That is what the CI runs hit.
+        require_serial: true
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: 745eface02aef23e168a8afb6b5737818efbea95  # v0.11.0.1
