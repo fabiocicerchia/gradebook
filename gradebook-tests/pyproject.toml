@@ -26,4 +26,42 @@ py-modules = ["gradebook_tests"]
 pythonpath = ["."]
 
 [tool.ruff]
-line-length = 100
+# FC-PY-001: the house rule set, the same selection every other Python repo in
+# the fleet carries.
+line-length = 120           # FC-GEN-045
+# The floor `requires-python` names, so UP cannot rewrite the tree into syntax
+# the oldest supported interpreter would reject.
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F", "I", "N", "UP", "ANN", "ASYNC", "S", "B", "A", "C4", "DTZ",
+  "T20", "PT", "RET", "SIM", "PTH", "ERA", "TD", "FIX", "PLR2004", "TRY", "PL", "RUF",
+]
+ignore = [
+  "ANN401",      # Any in *args/**kwargs — FC-GEN-016's comment rule covers it
+  "TRY003",      # long messages inline; FC-GEN-022 wants them descriptive
+]
+
+# An en dash is deliberate typography in this prose, not a mistyped hyphen.
+allowed-confusables = ["–", "—", "·", "×"]
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+
+[tool.ruff.lint.per-file-ignores]
+# assert is the point; a magic number in a fixture is the fixture; a test that
+# shells out to the CLI has to shell out.
+"tests/**" = [
+  "S101",     # assert is the point
+  "ANN",      # a fixture's type is obvious from the fixture
+  "PLR2004",  # a magic number in a fixture is the fixture
+  "S603",     # a test for the CLI has to run the CLI
+  "S607",
+  "PLC0415",  # importing inside a test is how you patch before import
+  "T201",     # a test that prints is reporting, not debugging
+]
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
