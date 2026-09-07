@@ -1,5 +1,5 @@
-export type Tool = 'code' | 'tests';
-export type Severity = 'high' | 'medium' | 'low';
+export type Tool = "code" | "tests";
+export type Severity = "high" | "medium" | "low";
 
 export interface Finding {
   file: string;

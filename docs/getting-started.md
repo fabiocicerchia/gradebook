@@ -20,9 +20,9 @@ pipx install ./gradebook-code
 For development in this repo:
 
 ```sh
-make dev     # editable installs of both, plus pytest and ruff
+make setup   # editable installs of both, dev tooling, pre-commit hook
 make test    # both suites
-make lint
+make lint    # the whole gate
 ```
 
 ## Run

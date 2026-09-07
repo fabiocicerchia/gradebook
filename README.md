@@ -70,7 +70,7 @@ pipx install ./gradebook-tests
 pipx install ./gradebook-code
 ```
 
-Python 3.10+, no dependencies. From a checkout: `make dev`.
+Python 3.10+, no dependencies. From a checkout: `make setup`.
 
 ## Usage
 
@@ -94,6 +94,31 @@ gradebook-code . --baseline baseline.json --fail-on-drop
 ```
 
 More in [`docs/ci.md`](docs/ci.md).
+
+## Development
+
+`make help` lists every target. Every repository in this estate exposes the
+same eight verbs, so you do not have to read a Makefile to find out how to
+test it (FC-GEN-057).
+
+| Verb      | What it does here                                          |
+| --------- | ---------------------------------------------------------- |
+| `setup`   | Editable installs of both tools, dev tooling, the hook     |
+| `install` | `pip install` both tools                                   |
+| `run`     | One tool from the checkout: `TOOL=gradebook-code ARGS=...` |
+| `test`    | Both suites (`test-tests`, `test-code`, `test-nvim`)       |
+| `lint`    | `pre-commit run --all-files` — the whole gate              |
+| `format`  | `ruff format` over both tools                              |
+| `analyze` | `trivy fs` — vulnerabilities, misconfig, secrets           |
+
+Beyond the eight: the four `ext-*` targets for the VS Code extension, and
+`clean`.
+
+### Not applicable
+
+- `build` — two pure-Python packages, installed from source; there is nothing
+  to compile. It exits 0 and says so rather than pretending to work
+  (FC-GEN-058).
 
 ## Documentation
 

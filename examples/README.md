@@ -4,7 +4,7 @@ Both tools take a path and need no setup, so the example is the repo in front of
 you. Start with this one — it dogfoods honestly:
 
 ```sh
-make dev
+make setup
 
 gradebook-tests .        # scores this repo's own two pytest suites
 gradebook-code .         # scores the two modules they cover

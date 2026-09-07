@@ -11,7 +11,7 @@ file, no build, no test run, no language server, no network. That constraint is
 what lets either one be pointed at a repository it has never seen — including
 one in a language its author does not write — and produce a number in seconds.
 
-```
+```text
 repo path ──► discover files ──► detect & weight languages ──► calibrate thresholds
                                                                       │
                         ┌─────────────────────────────────────────────┘
@@ -27,12 +27,12 @@ repo path ──► discover files ──► detect & weight languages ──►
 
 ## Components
 
-| Path | Responsibility |
-| --- | --- |
+| Path                                 | Responsibility                                                                                                                            |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `gradebook-tests/gradebook_tests.py` | the whole suite scorer: discovery, classification, coverage evidence, git-history TDD signals, assertion and naming analysis, test smells |
-| `gradebook-code/gradebook_code.py` | the whole code scorer: complexity, duplication, coupling/cohesion, SOLID heuristics, churn-weighted hotspots |
-| `gradebook-*/tests/` | pytest suites, one per tool |
-| `Makefile` | one entry point over two folders — each still builds, tests and lints alone |
+| `gradebook-code/gradebook_code.py`   | the whole code scorer: complexity, duplication, coupling/cohesion, SOLID heuristics, churn-weighted hotspots                              |
+| `gradebook-*/tests/`                 | pytest suites, one per tool                                                                                                               |
+| `Makefile`                           | one entry point over two folders — each still builds, tests and lints alone                                                               |
 
 Each tool is a single module with a console-script entry point. They do not
 import each other, and neither has a runtime dependency outside the standard
@@ -43,16 +43,16 @@ library.
 1. **Discover.** Walk the tree, skipping generated and minified files
    (`*.pb.go`, `*_pb2.py`, `*.min.js`, `@generated`, `DO NOT EDIT`). The header
    line reports how many were skipped — they are not silently scored as zero.
-2. **Calibrate.** Detect the languages present and weight thresholds by how much
+1. **Calibrate.** Detect the languages present and weight thresholds by how much
    of the repo each one is. A 47-line function is unremarkable in Go and too
    long in Python.
-3. **Score each dimension.** `gradebook-tests` has 18 (Coverage 12 pts down to
+1. **Score each dimension.** `gradebook-tests` has 18 (Coverage 12 pts down to
    BDD 2); `gradebook-code` has 13 (Simplicity 13 pts down to Liskov 5). Weights
    add to 100.
-4. **Renormalise.** A dimension with **no evidence** — no git history, no
+1. **Renormalise.** A dimension with **no evidence** — no git history, no
    interfaces, no inheritance — is *not scored* rather than scored zero, and the
    remaining weights are redistributed. The report names every one it dropped.
-5. **Report.** Score, letter grade (A ≥85, B ≥70, C ≥55, D ≥40, F below), the
+1. **Report.** Score, letter grade (A ≥85, B ≥70, C ≥55, D ≥40, F below), the
    dimension table, and red flags ranked by severity with `file:line`.
 
 ## Decisions

@@ -15,7 +15,10 @@ function M.check()
     elseif vim.fn.executable(cmd[1]) == 0 then
       vim.health.error(
         ('%s is not executable'):format(cmd[1]),
-        { 'pipx install gradebook-' .. tool, "or set cmd." .. tool .. " = { 'python3', '/path/to/gradebook_" .. tool .. ".py' }" }
+        {
+          'pipx install gradebook-' .. tool,
+          "or set cmd." .. tool .. " = { 'python3', '/path/to/gradebook_" .. tool .. ".py' }",
+        }
       )
     else
       local result = vim.system(vim.list_extend(vim.deepcopy(cmd), { '--version' }), { text = true }):wait()
