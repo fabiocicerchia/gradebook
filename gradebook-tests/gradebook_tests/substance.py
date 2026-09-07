@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 
-from .base import DECORATIVE_COVERAGE, Finding, JS_EXT, LIST_LIMIT, MIN_CHANGES, MIN_CLUSTER
+from .base import DECORATIVE_COVERAGE, JS_EXT, LIST_LIMIT, MIN_CHANGES, MIN_CLUSTER, Finding
 
 # --------------------------------------------------------------- substance
 

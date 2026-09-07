@@ -3,15 +3,30 @@ walk that applies them."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from collections.abc import Iterator
-from dataclasses import dataclass
-from dataclasses import field
-from pathlib import Path
 import os
 import re
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass, field
+from pathlib import Path
 
-from .base import ARTIFACT_DIRS, CONDITION_WINDOW, FileInfo, Finding, GIANT_CASE_LINES, JS_EXT, LANG_BY_EXT, LONG_CASE_LINES, MANY_ASSERTIONS, MAX_FILE_BYTES, MIN_MEANINGFUL_WORDS, MIN_WORDS_WITH_CONTEXT, MOSTLY, Profile, SKIP_DIRS, TEST_DIR_NAMES
+from .base import (
+    ARTIFACT_DIRS,
+    CONDITION_WINDOW,
+    GIANT_CASE_LINES,
+    JS_EXT,
+    LANG_BY_EXT,
+    LONG_CASE_LINES,
+    MANY_ASSERTIONS,
+    MAX_FILE_BYTES,
+    MIN_MEANINGFUL_WORDS,
+    MIN_WORDS_WITH_CONTEXT,
+    MOSTLY,
+    SKIP_DIRS,
+    TEST_DIR_NAMES,
+    FileInfo,
+    Finding,
+    Profile,
+)
 
 # ---------------------------------------------------------------- detection
 

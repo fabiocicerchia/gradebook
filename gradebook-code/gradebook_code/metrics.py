@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from collections.abc import Iterator
-from pathlib import Path
 import os
 import re
+from collections.abc import Callable, Iterator
+from pathlib import Path
 
-from .base import ARTIFACT_DIRS, BRACE_LANGS, JS_EXT, MAX_FILE_BYTES, Profile, SIGNATURE_SCAN_CHARS, SIGNATURE_SPAN, SKIP_DIRS, TEST_DIR_NAMES
+from .base import (
+    ARTIFACT_DIRS,
+    BRACE_LANGS,
+    JS_EXT,
+    MAX_FILE_BYTES,
+    SIGNATURE_SCAN_CHARS,
+    SIGNATURE_SPAN,
+    SKIP_DIRS,
+    TEST_DIR_NAMES,
+    Profile,
+)
 
 # ------------------------------------------------------------------ metrics
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """gradebook-code — score a codebase against DRY, YAGNI, GRASP, SOLID and KISS.
 
 The principles are famous and the arguments about them are endless, so this
@@ -14,23 +13,121 @@ a line, because "SRP 4.1/10" is not something anyone can act on.
 
 import argparse
 import json
-import os
 import re
-import shutil
-import subprocess
 import sys
 from collections import Counter, defaultdict
-from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any
 
-from .base import ARTIFACT_DIRS, BAR_WIDTH, BRACE_LANGS, CYCLE_LIMIT, DEAD_NAME_CHARS, DUPE_LIMIT, DUPE_WINDOW, FileInfo, Finding, GENERATED_NAME_RE, GENERATED_RE, GOD_CLASS_METHODS, GOD_FILE_FUNCTIONS, GOD_FILE_LINES, HIGH_SEVERITY_RANK, HOTSPOT_LIMIT, JS_EXT, LANG_BY_EXT, MAX_CONCERNS_PER_FILE, MAX_DEAD_CODE_FINDINGS, MAX_FILE_BYTES, MEDIUM_SEVERITY_RANK, MINIFIED_LINE_CHARS, MIN_CHANGED_FOR_HOTSPOTS, MIN_FILES_FOR_HOTSPOTS, MIN_FUNCTIONS_FOR_COHESION, MIN_MODULES_FOR_COUPLING, MIN_NAME_CHARS, MIN_POINTS_LOST_TO_RECOMMEND, Profile, REPEATED_LITERAL_USES, Report, SIGNATURE_SCAN_CHARS, SIGNATURE_SPAN, SKIP_DIRS, Stats, TEST_DIR_NAMES, TOP_RECOMMENDATIONS, UNIT_LITERALS, VERSION, WIDE_INTERFACE_METHODS, is_generated
-from .declarations import CLASS_RE, FUNC_RE, IMPORT_RE
-from .scanning import BLOCK_COMMENTS, DEFAULT_BLOCK_COMMENTS, DEFAULT_LINE_COMMENTS, DEFAULT_QUOTES, LINE_COMMENTS, STRING_QUOTES, TRIPLE_QUOTE_LANGS, strip_noise
-from .metrics import COMMENTED_CODE_RE, CONCERN_RE, DECISION_RE, DEFAULT_PROFILE, DEMETER_RE, GLOBAL_STATE_RE, IMPLEMENTS_RE, IMPLICIT_FIRST_PARAM, IMPLICIT_NAMES, INFRA_RE, INTERFACE_RE, LANGUAGE_PROFILES, MAGIC_NUMBER_RE, STUB_RE, TODO_RE, VAGUE_NAMES, _TEST_STEM_RULES, blend_profile, body_of, count_params, is_test_file, line_of, nesting_depth, read_text, signature_window, walk
-from .analysis import COMMENT_LINE_RE, DECLARATION_RE, NORMALISE_RE, STATEMENT_RE, _imports_in, analyse_file, find_cycles, find_duplicate_blocks, normalise_line
-from .churn import FIX_LIMIT, _GIT, find_hotspots, git_churn
-from .score import DIMENSIONS, GRADES, SCORERS, clamp, evaluate, grade_for, penalise, recommendations, score_cohesion, score_coupling, score_demeter, score_dip, score_dry, score_hotspots, score_isp, score_kiss, score_lsp, score_naming, score_ocp, score_srp, score_yagni
+from .analysis import COMMENT_LINE_RE as COMMENT_LINE_RE
+from .analysis import DECLARATION_RE as DECLARATION_RE
+from .analysis import NORMALISE_RE as NORMALISE_RE
+from .analysis import STATEMENT_RE as STATEMENT_RE
+from .analysis import analyse_file, find_cycles, find_duplicate_blocks
+from .analysis import normalise_line as normalise_line
+from .base import (
+    ARTIFACT_DIRS,
+    BAR_WIDTH,
+    DEAD_NAME_CHARS,
+    GOD_CLASS_METHODS,
+    GOD_FILE_FUNCTIONS,
+    GOD_FILE_LINES,
+    HIGH_SEVERITY_RANK,
+    LANG_BY_EXT,
+    MAX_CONCERNS_PER_FILE,
+    MAX_DEAD_CODE_FINDINGS,
+    MEDIUM_SEVERITY_RANK,
+    MIN_FUNCTIONS_FOR_COHESION,
+    MIN_NAME_CHARS,
+    REPEATED_LITERAL_USES,
+    SKIP_DIRS,
+    TOP_RECOMMENDATIONS,
+    UNIT_LITERALS,
+    VERSION,
+    WIDE_INTERFACE_METHODS,
+    FileInfo,
+    Finding,
+    Profile,
+    Report,
+    Stats,
+    is_generated,
+)
+from .base import BRACE_LANGS as BRACE_LANGS
+from .base import CYCLE_LIMIT as CYCLE_LIMIT
+from .base import DUPE_LIMIT as DUPE_LIMIT
+from .base import DUPE_WINDOW as DUPE_WINDOW
+from .base import GENERATED_NAME_RE as GENERATED_NAME_RE
+from .base import GENERATED_RE as GENERATED_RE
+from .base import HOTSPOT_LIMIT as HOTSPOT_LIMIT
+from .base import JS_EXT as JS_EXT
+from .base import MAX_FILE_BYTES as MAX_FILE_BYTES
+from .base import MIN_CHANGED_FOR_HOTSPOTS as MIN_CHANGED_FOR_HOTSPOTS
+from .base import MIN_FILES_FOR_HOTSPOTS as MIN_FILES_FOR_HOTSPOTS
+from .base import MIN_MODULES_FOR_COUPLING as MIN_MODULES_FOR_COUPLING
+from .base import MIN_POINTS_LOST_TO_RECOMMEND as MIN_POINTS_LOST_TO_RECOMMEND
+from .base import MINIFIED_LINE_CHARS as MINIFIED_LINE_CHARS
+from .base import SIGNATURE_SCAN_CHARS as SIGNATURE_SCAN_CHARS
+from .base import SIGNATURE_SPAN as SIGNATURE_SPAN
+from .base import TEST_DIR_NAMES as TEST_DIR_NAMES
+from .churn import FIX_LIMIT as FIX_LIMIT
+from .churn import find_hotspots, git_churn
+from .declarations import CLASS_RE as CLASS_RE
+from .declarations import FUNC_RE
+from .declarations import IMPORT_RE as IMPORT_RE
+from .metrics import COMMENTED_CODE_RE as COMMENTED_CODE_RE
+from .metrics import CONCERN_RE as CONCERN_RE
+from .metrics import DECISION_RE as DECISION_RE
+from .metrics import DEFAULT_PROFILE as DEFAULT_PROFILE
+from .metrics import DEMETER_RE as DEMETER_RE
+from .metrics import GLOBAL_STATE_RE as GLOBAL_STATE_RE
+from .metrics import IMPLEMENTS_RE as IMPLEMENTS_RE
+from .metrics import IMPLICIT_FIRST_PARAM as IMPLICIT_FIRST_PARAM
+from .metrics import IMPLICIT_NAMES as IMPLICIT_NAMES
+from .metrics import INFRA_RE as INFRA_RE
+from .metrics import (
+    INTERFACE_RE,
+    MAGIC_NUMBER_RE,
+    VAGUE_NAMES,
+    blend_profile,
+    body_of,
+    is_test_file,
+    line_of,
+    read_text,
+    walk,
+)
+from .metrics import LANGUAGE_PROFILES as LANGUAGE_PROFILES
+from .metrics import STUB_RE as STUB_RE
+from .metrics import TODO_RE as TODO_RE
+from .metrics import count_params as count_params
+from .metrics import nesting_depth as nesting_depth
+from .metrics import signature_window as signature_window
+from .scanning import BLOCK_COMMENTS as BLOCK_COMMENTS
+from .scanning import DEFAULT_BLOCK_COMMENTS as DEFAULT_BLOCK_COMMENTS
+from .scanning import DEFAULT_LINE_COMMENTS as DEFAULT_LINE_COMMENTS
+from .scanning import DEFAULT_QUOTES as DEFAULT_QUOTES
+from .scanning import LINE_COMMENTS as LINE_COMMENTS
+from .scanning import STRING_QUOTES as STRING_QUOTES
+from .scanning import TRIPLE_QUOTE_LANGS as TRIPLE_QUOTE_LANGS
+from .scanning import strip_noise as strip_noise
+from .score import DIMENSIONS, evaluate, recommendations
+from .score import GRADES as GRADES
+from .score import SCORERS as SCORERS
+from .score import clamp as clamp
+from .score import grade_for as grade_for
+from .score import penalise as penalise
+from .score import score_cohesion as score_cohesion
+from .score import score_coupling as score_coupling
+from .score import score_demeter as score_demeter
+from .score import score_dip as score_dip
+from .score import score_dry as score_dry
+from .score import score_hotspots as score_hotspots
+from .score import score_isp as score_isp
+from .score import score_kiss as score_kiss
+from .score import score_lsp as score_lsp
+from .score import score_naming as score_naming
+from .score import score_ocp as score_ocp
+from .score import score_srp as score_srp
+from .score import score_yagni as score_yagni
+
 # ----------------------------------------------------------------- collect
 
 
@@ -625,4 +722,5 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 

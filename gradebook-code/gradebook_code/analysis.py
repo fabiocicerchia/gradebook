@@ -2,16 +2,28 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 from .base import CYCLE_LIMIT, DUPE_LIMIT, DUPE_WINDOW, FileInfo, Finding, Profile
-
 from .declarations import CLASS_RE, FUNC_RE, IMPORT_RE
-
+from .metrics import (
+    COMMENTED_CODE_RE,
+    CONCERN_RE,
+    DECISION_RE,
+    DEMETER_RE,
+    GLOBAL_STATE_RE,
+    IMPLICIT_FIRST_PARAM,
+    INFRA_RE,
+    STUB_RE,
+    TODO_RE,
+    body_of,
+    count_params,
+    line_of,
+    nesting_depth,
+    signature_window,
+)
 from .scanning import strip_noise
-
-from .metrics import COMMENTED_CODE_RE, CONCERN_RE, DECISION_RE, DEMETER_RE, GLOBAL_STATE_RE, IMPLICIT_FIRST_PARAM, INFRA_RE, STUB_RE, TODO_RE, body_of, count_params, line_of, nesting_depth, signature_window
 
 # ------------------------------------------------------------- file analysis
 

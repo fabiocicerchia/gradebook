@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import json
 import re
+from pathlib import Path
 
 from .base import FRACTION_AS_PERCENT, PERCENT_MAX
 from .detection import read_text

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
-import re
 
 VERSION = "0.3.0"  # x-release-please-version
 

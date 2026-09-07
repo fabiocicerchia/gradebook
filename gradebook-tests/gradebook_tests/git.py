@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
 import subprocess
+from pathlib import Path
 
-from .base import HISTORY_LIMIT, LANG_BY_EXT, LIST_LIMIT, MIN_CHURN_FILES, Stats, _GIT
+from .base import _GIT, HISTORY_LIMIT, LANG_BY_EXT, LIST_LIMIT, MIN_CHURN_FILES, Stats
 from .detection import is_test_file
 
 # ---------------------------------------------------------------------- git

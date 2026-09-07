@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
 import shutil
-
+from typing import Any
 
 VERSION = "0.3.0"  # x-release-please-version
 

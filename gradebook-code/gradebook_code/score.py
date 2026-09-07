@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from .base import MIN_MODULES_FOR_COUPLING, MIN_POINTS_LOST_TO_RECOMMEND, Report, Stats, TOP_RECOMMENDATIONS, VERSION
+from .base import MIN_MODULES_FOR_COUPLING, MIN_POINTS_LOST_TO_RECOMMEND, TOP_RECOMMENDATIONS, VERSION, Report, Stats
 
 # -------------------------------------------------------------------- score
 

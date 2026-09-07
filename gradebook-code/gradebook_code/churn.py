@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections import Counter
-from pathlib import Path
 import shutil
 import subprocess
+from collections import Counter
+from pathlib import Path
 
 from .base import HOTSPOT_LIMIT, MIN_CHANGED_FOR_HOTSPOTS, MIN_FILES_FOR_HOTSPOTS, Stats
 
