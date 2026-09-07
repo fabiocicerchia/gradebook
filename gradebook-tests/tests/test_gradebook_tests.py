@@ -220,10 +220,7 @@ def test_parses_lcov():
 
 
 def test_parses_jacoco():
-    xml = (
-        '<counter type="LINE" missed="1" covered="1"/>'
-        '<counter type="LINE" missed="20" covered="80"/>'
-    )
+    xml = '<counter type="LINE" missed="1" covered="1"/><counter type="LINE" missed="20" covered="80"/>'
     assert parse_jacoco(xml) == 80.0
 
 
@@ -276,7 +273,8 @@ def test_detects_ci_running_tests_and_coverage(tmp_path):
         "jobs:\n  test:\n    steps:\n      - run: pytest --cov=src --cov-fail-under=80\n",
     )
     stats = collect(tmp_path, use_git=False)
-    assert stats["ci_runs_tests"] and stats["ci_coverage"]
+    assert stats["ci_runs_tests"]
+    assert stats["ci_coverage"]
     assert stats["coverage_threshold"] == 80
 
 
@@ -350,13 +348,15 @@ def test_tdd_not_scored_without_git(tmp_path):
 )
 def test_descriptive_names_are_recognised(name):
     placeholder, descriptive, _ = classify_name(name)
-    assert descriptive and not placeholder
+    assert descriptive
+    assert not placeholder
 
 
 @pytest.mark.parametrize("name", ["test_1", "test", "it works", "testFoo", "test_stuff", "case2"])
 def test_placeholder_names_are_flagged(name):
     placeholder, descriptive, _ = classify_name(name)
-    assert placeholder and not descriptive
+    assert placeholder
+    assert not descriptive
 
 
 def test_condition_is_detected_in_names():
@@ -514,7 +514,7 @@ def test_weak_assertions_are_separated_from_real_ones(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "body,weak",
+    ("body", "weak"),
     [
         ("expect(sum(1, 2)).toBe(3);", False),
         ("expect(sum(1, 2)).toBeTruthy();", True),
@@ -582,9 +582,7 @@ def test_happy_path_only_suite_scores_zero_on_failure_paths(tmp_path):
     write(
         tmp_path,
         "tests/test_a.py",
-        "\n".join(
-            f"def test_returns_{i}_when_asked_for_{i}():\n    assert f() == {i}\n" for i in range(4)
-        ),
+        "\n".join(f"def test_returns_{i}_when_asked_for_{i}():\n    assert f() == {i}\n" for i in range(4)),
     )
     failure = dim(report_for(tmp_path), "failure")
     assert failure["score"] == 0.0
@@ -603,17 +601,12 @@ def test_parses_stryker_report():
 
 
 def test_parses_pitest_report():
-    xml = (
-        "<mutation detected='true' status='KILLED'/><mutation detected='false' status='SURVIVED'/>"
-    )
+    xml = "<mutation detected='true' status='KILLED'/><mutation detected='false' status='SURVIVED'/>"
     assert parse_pitest(xml) == 50.0
 
 
 def test_parses_cargo_mutants_report():
-    payload = (
-        '{"outcomes": [{"summary": "CaughtMutant"}, {"summary": "MissedMutant"},'
-        ' {"summary": "CaughtMutant"}]}'
-    )
+    payload = '{"outcomes": [{"summary": "CaughtMutant"}, {"summary": "MissedMutant"}, {"summary": "CaughtMutant"}]}'
     assert parse_cargo_mutants(payload) == 66.7
 
 
@@ -670,7 +663,7 @@ def test_compare_flags_a_baseline_that_scored_other_dimensions(tmp_path):
 
 def test_compare_rejects_a_file_that_is_not_a_report(tmp_path):
     write(tmp_path, "src/a.py", "x = 1\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="not a gradebook-tests JSON report"):
         compare(report_for(tmp_path), {"nonsense": True})
 
 
@@ -681,18 +674,11 @@ def test_cli_fail_on_drop_gate(tmp_path, capsys):
     assert main([str(tmp_path), "--format", "json", "--no-git"]) == 0
     baseline_file.write_text(capsys.readouterr().out)
 
-    assert (
-        main([str(tmp_path), "--no-git", "--baseline", str(baseline_file), "--fail-on-drop"]) == 0
-    )
+    assert main([str(tmp_path), "--no-git", "--baseline", str(baseline_file), "--fail-on-drop"]) == 0
 
     write(tmp_path, "tests/test_b.py", "def test_1():\n    pass\n")
-    assert (
-        main([str(tmp_path), "--no-git", "--baseline", str(baseline_file), "--fail-on-drop"]) == 1
-    )
-    assert (
-        main([str(tmp_path), "--no-git", "--baseline", str(baseline_file), "--fail-on-drop", "50"])
-        == 0
-    )
+    assert main([str(tmp_path), "--no-git", "--baseline", str(baseline_file), "--fail-on-drop"]) == 1
+    assert main([str(tmp_path), "--no-git", "--baseline", str(baseline_file), "--fail-on-drop", "50"]) == 0
 
 
 def test_cli_rejects_drop_gate_without_baseline(tmp_path):
@@ -747,10 +733,7 @@ def test_normalise_body_strips_names_literals_and_comments():
 
 def test_three_copies_are_flagged_but_a_pair_is_not(tmp_path):
     def case(i):
-        return (
-            f"def test_charge_returns_the_amount_for_{i}():\n"
-            f"    result = charge({i})\n    assert result == {i}\n\n"
-        )
+        return f"def test_charge_returns_the_amount_for_{i}():\n    result = charge({i})\n    assert result == {i}\n\n"
 
     write(tmp_path, "src/a.py", "x = 1\n")
     write(tmp_path, "tests/test_pair.py", case(1) + case(2))
@@ -773,7 +756,7 @@ def test_duplicate_findings_point_back_at_the_original():
 
 
 @pytest.mark.parametrize(
-    "body,message",
+    ("body", "message"),
     [
         ("def test_a():\n    # assert charge(1) == 2\n    charge(1)\n", "commented out"),
         (
@@ -789,7 +772,8 @@ def test_suppressed_failures_are_found(tmp_path, body, message):
     write(tmp_path, "tests/test_a.py", body)
     report = report_for(tmp_path)
     flags = findings_of(report, "suppressed-failure")
-    assert flags and any(message in f["message"] for f in flags)
+    assert flags
+    assert any(message in f["message"] for f in flags)
     assert all(f["line"] > 0 for f in flags)
 
 
@@ -843,7 +827,7 @@ def test_third_party_imports_are_ignored(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "test_file,source",
+    ("test_file", "source"),
     [
         ("tests/test_billing.py", "billing"),
         ("tests/billing_test.py", "billing"),
@@ -938,8 +922,7 @@ def test_substance_dimension_separates_slop_from_real_tests(tmp_path):
         "tests/test_a.py",
         "from src.a import charge, calculate_discount\n\n"
         + "".join(
-            f"def test_charge_{i}():\n    result = charge({i})\n    assert result is not None\n\n"
-            for i in range(4)
+            f"def test_charge_{i}():\n    result = charge({i})\n    assert result is not None\n\n" for i in range(4)
         )
         + "def test_discount():\n    try:\n        calculate_discount(1)\n"
         "    except Exception:\n        pass\n",
@@ -957,9 +940,7 @@ def test_substance_dimension_separates_slop_from_real_tests(tmp_path):
 
 def test_findings_are_rendered_with_a_location(tmp_path):
     write(tmp_path, "src/a.py", "x = 1\n")
-    write(
-        tmp_path, "tests/test_a.py", "def test_a():\n    # assert charge(1) == 2\n    charge(1)\n"
-    )
+    write(tmp_path, "tests/test_a.py", "def test_a():\n    # assert charge(1) == 2\n    charge(1)\n")
     report = report_for(tmp_path)
     text = render_text(report)
     assert "Red flags (1):" in text
@@ -972,10 +953,7 @@ def test_flags_can_be_hidden_and_truncated(tmp_path):
     write(
         tmp_path,
         "tests/test_a.py",
-        "".join(
-            f"def test_{i}():\n    # assert charge({i}) == {i}\n    charge({i})\n\n"
-            for i in range(4)
-        ),
+        "".join(f"def test_{i}():\n    # assert charge({i}) == {i}\n    charge({i})\n\n" for i in range(4)),
     )
     report = report_for(tmp_path)
     assert "Red flags" not in render_text(report, max_flags=0)
@@ -1034,12 +1012,10 @@ def test_every_finding_carries_a_known_severity(tmp_path):
 def test_per_file_coverage_parsers():
     assert lcov_files("SF:src/a.py\nLF:10\nLH:5\nend_of_record\n") == {"a.py": 50.0}
     assert cobertura_files('<class filename="src/a.py" line-rate="0.11"/>') == {"a.py": 11.0}
-    assert json_report_files(
-        '{"total": {"lines": {"pct": 80}}, "/x/src/a.js": {"lines": {"pct": 12}}}'
-    ) == {"a.js": 12.0}
-    assert go_profile_files("mode: set\npkg/a.go:1.1,2.2 4 1\npkg/a.go:3.1,4.2 6 0\n") == {
-        "a.go": 40.0
+    assert json_report_files('{"total": {"lines": {"pct": 80}}, "/x/src/a.js": {"lines": {"pct": 12}}}') == {
+        "a.js": 12.0
     }
+    assert go_profile_files("mode: set\npkg/a.go:1.1,2.2 4 1\npkg/a.go:3.1,4.2 6 0\n") == {"a.go": 40.0}
 
 
 # ------------------------------------------------------------- suite shape
@@ -1053,10 +1029,7 @@ def suite(tmp_path, unit=0, integration=0, e2e=0):
         write(
             tmp_path,
             f"tests/{kind}/test_{kind}.py",
-            "".join(
-                f"def test_returns_{i}_when_called_with_{i}():\n    assert f() == {i}\n\n"
-                for i in range(count)
-            ),
+            "".join(f"def test_returns_{i}_when_called_with_{i}():\n    assert f() == {i}\n\n" for i in range(count)),
         )
     return report_for(tmp_path)
 
@@ -1118,9 +1091,7 @@ def test_a_frozen_clock_is_not_flagged(tmp_path):
 def test_unseeded_randomness_is_flagged_but_seeded_is_not(tmp_path):
     unseeded = determinism_of(
         tmp_path / "a",
-        "import random\n\n"
-        "def test_returns_a_value_when_given_noise():\n"
-        "    assert score(random.random()) > 0\n",
+        "import random\n\ndef test_returns_a_value_when_given_noise():\n    assert score(random.random()) > 0\n",
     )
     seeded = determinism_of(
         tmp_path / "b",
@@ -1133,7 +1104,7 @@ def test_unseeded_randomness_is_flagged_but_seeded_is_not(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "line,flagged",
+    ("line", "flagged"),
     [
         ("    resp = client.get('http://staging.internal.corp/orders')", True),
         ("    path = '/home/ci/fixtures/orders.json'", True),
@@ -1145,16 +1116,13 @@ def test_unseeded_randomness_is_flagged_but_seeded_is_not(tmp_path):
 def test_environment_coupling(tmp_path, line, flagged):
     result = determinism_of(
         tmp_path,
-        "def test_returns_the_order_when_it_exists():\n"
-        f"{line}\n    assert resp.status_code == 200\n",
+        f"def test_returns_the_order_when_it_exists():\n{line}\n    assert resp.status_code == 200\n",
     )
     assert ("coupling" in result["detail"]) is flagged
 
 
 def test_order_dependent_tests_are_flagged(tmp_path):
-    result = determinism_of(
-        tmp_path, "def test_01_creates_the_user_when_posted():\n    assert create() == 1\n"
-    )
+    result = determinism_of(tmp_path, "def test_01_creates_the_user_when_posted():\n    assert create() == 1\n")
     assert "order-dependent" in result["detail"]
 
 
@@ -1202,7 +1170,8 @@ def test_focus_flags_branching_and_assertion_roulette(tmp_path):
     )
     focus = dim(report_for(tmp_path), "focus")
     assert focus["score"] < 0.6
-    assert "if/switch logic" in focus["detail"] and "10+ assertions" in focus["detail"]
+    assert "if/switch logic" in focus["detail"]
+    assert "10+ assertions" in focus["detail"]
 
 
 def test_focus_is_clean_for_small_linear_cases(tmp_path):
@@ -1280,7 +1249,7 @@ def test_bugfixes_with_tests_do_not_lower_tdd(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "call,brittle",
+    ("call", "brittle"),
     [
         ("page.click('//div[3]/span[2]')", True),
         ("page.click('.css-1a2b3c4d')", True),
@@ -1319,7 +1288,7 @@ def test_robust_locators_in_the_same_file_suppress_the_flag(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "assertion,mirrored",
+    ("assertion", "mirrored"),
     [
         ("assert total(cart) == sum(i.price for i in cart)", True),
         ("assert total(cart) == 30", False),
@@ -1387,7 +1356,8 @@ def test_risk_targeting_flags_untested_hotspots(tmp_path):
 
     report = report_for(tmp_path, use_git=True)
     risk = dim(report, "risk")
-    assert risk["score"] is not None and risk["score"] < 1.0
+    assert risk["score"] is not None
+    assert risk["score"] < 1.0
     hotspots = [f for f in report["findings"] if f["kind"] == "untested-hotspot"]
     assert {f["file"] for f in hotspots} == {"src/hot.py", "src/warm.py"}
     assert "changed 5 times" in hotspots[0]["message"]
@@ -1483,13 +1453,8 @@ def test_mocking_everything_with_no_integration_layer_is_penalised(tmp_path):
         "def test_charges_the_real_gateway_when_it_is_up():\n    assert charge(live) == 'r1'\n",
     )
 
-    assert (
-        dim(report_for(isolated), "doubles")["score"] < dim(report_for(backed), "doubles")["score"]
-    )
-    assert (
-        "no integration test exercises the real one"
-        in dim(report_for(isolated), "doubles")["advice"]
-    )
+    assert dim(report_for(isolated), "doubles")["score"] < dim(report_for(backed), "doubles")["score"]
+    assert "no integration test exercises the real one" in dim(report_for(isolated), "doubles")["advice"]
 
 
 # ------------------------------------------------------- test-to-code ratio
@@ -1541,8 +1506,7 @@ def test_tests_named_after_production_methods_are_flagged(tmp_path):
     write(
         tmp_path,
         "tests/test_billing.py",
-        "def test_charge():\n    assert charge(1) == 1\n\n"
-        "def test_refund():\n    assert refund(1) == -1\n",
+        "def test_charge():\n    assert charge(1) == 1\n\ndef test_refund():\n    assert refund(1) == -1\n",
     )
     report = report_for(tmp_path)
     assert report["stats"]["method_mirror_names"] == 2
@@ -1556,8 +1520,7 @@ def test_behaviour_names_are_not_method_mirrors(tmp_path):
     write(
         tmp_path,
         "tests/test_billing.py",
-        "def test_charge_returns_the_amount_when_the_card_is_accepted():\n"
-        "    assert charge(1) == 1\n",
+        "def test_charge_returns_the_amount_when_the_card_is_accepted():\n    assert charge(1) == 1\n",
     )
     assert report_for(tmp_path)["stats"]["method_mirror_names"] == 0
 
@@ -1598,11 +1561,7 @@ def test_a_suite_testing_boundaries_scores_higher(tmp_path):
         write(
             root,
             "tests/test_a.py",
-            "".join(
-                f"def test_returns_{i}_when_given_{i}():\n    assert f({i}) == {i}\n\n"
-                for i in range(4)
-            )
-            + extra,
+            "".join(f"def test_returns_{i}_when_given_{i}():\n    assert f({i}) == {i}\n\n" for i in range(4)) + extra,
         )
         return dim(report_for(root), "failure")
 
@@ -1616,9 +1575,7 @@ def test_a_suite_testing_boundaries_scores_higher(tmp_path):
 
 def test_serial_only_suites_lose_determinism_points(tmp_path):
     write(tmp_path, "src/a.js", "export const a = 1;\n")
-    write(
-        tmp_path, "src/a.spec.js", "it('returns one when called', () => { expect(a).toBe(1); });\n"
-    )
+    write(tmp_path, "src/a.spec.js", "it('returns one when called', () => { expect(a).toBe(1); });\n")
     write(tmp_path, "package.json", '{"scripts": {"test": "jest --runInBand"}}')
     determinism = dim(report_for(tmp_path), "determinism")
     assert "single worker" in determinism["detail"]
@@ -1804,7 +1761,8 @@ def test_recommendations_are_ranked_by_points_recoverable(tmp_path):
 def test_markdown_render_contains_table_and_score(tmp_path):
     write(tmp_path, "src/a.py", "x = 1\n")
     out = render_markdown(report_for(tmp_path))
-    assert "| Dimension |" in out and "Test suite score" in out
+    assert "| Dimension |" in out
+    assert "Test suite score" in out
 
 
 # ---------------------------------------------------------------------- cli

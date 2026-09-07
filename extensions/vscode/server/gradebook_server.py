@@ -21,6 +21,7 @@ Ops:
 """
 
 import argparse
+import contextlib
 import importlib
 import importlib.util
 import json
@@ -29,6 +30,8 @@ import queue
 import sys
 import threading
 from pathlib import Path
+from types import ModuleType
+from typing import Any, TextIO
 
 PROTOCOL_VERSION = 1
 TOOLS = ("code", "tests")
@@ -37,7 +40,7 @@ TOOLS = ("code", "tests")
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def load_tool(tool, module_path=None):
+def load_tool(tool: str, module_path: str | None = None) -> ModuleType:
     """Import a gradebook module, preferring an explicit path.
 
     An explicit path wins, then an installed package, then the sibling folder
@@ -53,7 +56,7 @@ def load_tool(tool, module_path=None):
         return _from_path(name, REPO_ROOT / f"gradebook-{tool}" / f"{name}.py")
 
 
-def _from_path(name, path):
+def _from_path(name: str, path: Path) -> ModuleType:
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise ImportError(f"cannot load {name} from {path}")
@@ -78,12 +81,34 @@ REQUIRED_API = (
 )
 
 
-def missing_api(module):
+def _require_api(tool: str, module: ModuleType) -> None:
+    """Raise if the installed tool predates the API this extension calls."""
+    missing = missing_api(module)
+    if missing:
+        raise ImportError(
+            f"gradebook-{tool} at {getattr(module, '__file__', '?')} is too old for "
+            f"this extension: it has no {', '.join(missing)}"
+        )
+
+
+def _load_checked(tool: str, hint: str | None) -> ModuleType:
+    """The tool's module, or an ImportError saying which API it predates."""
+    module = load_tool(tool, hint)
+    missing = missing_api(module)
+    if missing:
+        raise ImportError(
+            f"gradebook-{tool} at {getattr(module, '__file__', '?')} is too old for "
+            f"this extension: it has no {', '.join(missing)}"
+        )
+    return module
+
+
+def missing_api(module: ModuleType) -> list[str]:
     return [name for name in REQUIRED_API if not hasattr(module, name)]
 
 
 class Server:
-    def __init__(self, hints, out):
+    def __init__(self, hints: dict[str, str], out: TextIO) -> None:
         # Loaded on demand, not up front: the two tools are separate packages,
         # and `tools: ["code"]` must not fail because the other one is absent.
         self.hints = hints
@@ -101,40 +126,34 @@ class Server:
 
     # --- transport -------------------------------------------------------
 
-    def send(self, payload):
+    def send(self, payload: dict[str, Any]) -> None:
         line = json.dumps(payload, default=str)
         with self.out_lock:
             self.out.write(line + "\n")
             self.out.flush()
 
-    def read_stdin(self):
+    def read_stdin(self) -> None:
         """Feed stdin lines to the inbox from a thread.
 
         A thread rather than `select()` because select cannot watch a pipe on
         Windows, and blocking readline releases the GIL anyway.
         """
-        for line in sys.stdin:
-            line = line.strip()
+        for raw in sys.stdin:
+            line = raw.strip()
             if line:
                 self.inbox.put(line)
         self.inbox.put(None)
 
     # --- modules ---------------------------------------------------------
 
-    def module_for(self, tool):
+    def module_for(self, tool: str) -> ModuleType:
         """The module for one tool, or a ValueError naming how to get it."""
         if tool in self.modules:
             return self.modules[tool]
         if tool in self.failures:
             raise ValueError(self.failures[tool])
         try:
-            module = load_tool(tool, self.hints.get(tool))
-            missing = missing_api(module)
-            if missing:
-                raise ImportError(
-                    f"gradebook-{tool} at {getattr(module, '__file__', '?')} is too old for "
-                    f"this extension: it has no {', '.join(missing)}"
-                )
+            module = _load_checked(tool, self.hints.get(tool))
         except Exception as exc:  # turned into advice below
             self.failures[tool] = (
                 f"gradebook-{tool} is not available ({exc}). Install it with "
@@ -145,19 +164,19 @@ class Server:
         self.modules[tool] = module
         return module
 
-    def available(self):
+    def available(self) -> dict[str, ModuleType]:
         """Which tools load right now, without raising on the ones that do not."""
         loaded = {}
         for tool in TOOLS:
-            try:
+            # A tool that is not installed is simply not offered; that is what
+            # this method exists to report.
+            with contextlib.suppress(ValueError):
                 loaded[tool] = self.module_for(tool)
-            except ValueError:
-                pass
         return loaded
 
     # --- scanning --------------------------------------------------------
 
-    def scan_project(self, request):
+    def scan_project(self, request: dict[str, Any]) -> dict[str, Any]:
         """Score one directory with one tool.
 
         Whole-repo, never per-file: hotspots need `git log` and duplication is
@@ -179,7 +198,7 @@ class Server:
         self.reports[(str(root), tool)] = report
         return {"report": report}
 
-    def severity_order(self, loaded):
+    def severity_order(self, loaded: dict[str, ModuleType]) -> dict[str, int]:
         """Every kind an available tool knows, bucketed — no client keeps a copy."""
         order = {}
         for module in loaded.values():
@@ -189,7 +208,7 @@ class Server:
 
     # --- dispatch --------------------------------------------------------
 
-    def handle(self, request):
+    def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         op = request.get("op")
         if op == "ping":
             loaded = self.available()
@@ -197,9 +216,7 @@ class Server:
                 "protocol": PROTOCOL_VERSION,
                 "python": sys.version.split()[0],
                 "versions": {tool: m.VERSION for tool, m in loaded.items()},
-                "modules": {
-                    tool: getattr(m, "__file__", None) for tool, m in loaded.items()
-                },
+                "modules": {tool: getattr(m, "__file__", None) for tool, m in loaded.items()},
                 # Named rather than implied by absence: "not installed" and
                 # "installed but broken" need different advice, and a client
                 # that cannot tell them apart says neither.
@@ -225,21 +242,21 @@ class Server:
             return {"cancelling": target in self.cancelled}
         raise ValueError(f"unknown op: {op!r}")
 
-    def parse(self, line):
+    def parse(self, line: str) -> dict[str, Any] | None:
         try:
             return json.loads(line)
         except ValueError as exc:
             self.send({"id": None, "ok": False, "error": f"malformed request: {exc}"})
             return None
 
-    def dispatch(self, request):
+    def dispatch(self, request: dict[str, Any]) -> None:
         request_id = request.get("id")
         self.active_scan = request_id if request.get("op") == "scanProject" else None
         try:
             response = self.handle(request)
         # A bad request is one failed request, not the end of the session, so
         # it comes back as an error the extension can surface.
-        except (Exception, SystemExit) as exc:  # noqa: BLE001 - reported, not swallowed
+        except (Exception, SystemExit) as exc:
             self.active_scan = None
             self.send({"id": request_id, "ok": False, "error": f"{exc}"})
             return
@@ -254,7 +271,7 @@ class Server:
         response["ok"] = True
         self.send(response)
 
-    def serve(self):
+    def serve(self) -> None:
         threading.Thread(target=self.read_stdin, daemon=True).start()
         self.send({"id": 0, "ok": True, "event": "ready", "protocol": PROTOCOL_VERSION})
         while True:
@@ -266,7 +283,7 @@ class Server:
                 self.dispatch(request)
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="gradebook_server")
     parser.add_argument("--code", help="path to gradebook_code.py or its directory")
     parser.add_argument("--tests", help="path to gradebook_tests.py or its directory")
@@ -281,16 +298,11 @@ def main(argv=None):
     # Resolved, not loaded: whether a tool is importable is a per-request
     # answer, so that asking for one missing tool does not take the other down
     # with it. Only something unrecoverable is fatal here.
-    hints = {
-        tool: getattr(args, tool) or os.environ.get(f"GRADEBOOK_{tool.upper()}_MODULE")
-        for tool in TOOLS
-    }
+    hints = {tool: getattr(args, tool) or os.environ.get(f"GRADEBOOK_{tool.upper()}_MODULE") for tool in TOOLS}
     try:
         server = Server(hints, out)
-    except Exception as exc:  # noqa: BLE001 - the extension turns this into a prompt
-        out.write(
-            json.dumps({"id": 0, "ok": False, "fatal": True, "error": f"{exc}"}) + "\n"
-        )
+    except Exception as exc:
+        out.write(json.dumps({"id": 0, "ok": False, "fatal": True, "error": f"{exc}"}) + "\n")
         out.flush()
         return 1
 

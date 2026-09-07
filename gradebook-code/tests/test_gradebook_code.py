@@ -103,11 +103,12 @@ def test_body_of_matches_braces():
 def test_body_of_follows_indentation():
     text = "def a():\n    x = 1\n    return x\n\ndef b():\n    return 2\n"
     body = body_of(text, 0, "python")
-    assert "return x" in body and "def b" not in body
+    assert "return x" in body
+    assert "def b" not in body
 
 
 @pytest.mark.parametrize(
-    "signature,expected",
+    ("signature", "expected"),
     [
         ("def f():", 0),
         ("def f(a):", 1),
@@ -211,7 +212,8 @@ def test_declaration_boilerplate_is_not_duplication():
         "Args: cobra.NoArgs,\nHidden: false,\nSilenceUsage: true,\n}\n"
     )
     duplicates, findings = find_duplicate_blocks([("a.go", boilerplate), ("b.go", boilerplate)])
-    assert duplicates == 0 and findings == []
+    assert duplicates == 0
+    assert findings == []
 
 
 def test_a_clean_codebase_scores_dry(tmp_path):
@@ -302,16 +304,13 @@ def test_infrastructure_spread_lowers_dip(tmp_path):
         "import psycopg2\n\ndef connect():\n    return psycopg2.connect('')\n",
     )
     for i in range(5):
-        write(
-            concentrated, f"src/rule{i}.py", f"def rule{i}(order):\n    return order.total > {i}\n"
-        )
+        write(concentrated, f"src/rule{i}.py", f"def rule{i}(order):\n    return order.total > {i}\n")
     spread = tmp_path / "spread"
     for i in range(6):
         write(
             spread,
             f"src/rule{i}.py",
-            f"import psycopg2\n\ndef rule{i}(order):\n"
-            f"    conn = psycopg2.connect('')\n    return order.total > {i}\n",
+            f"import psycopg2\n\ndef rule{i}(order):\n    conn = psycopg2.connect('')\n    return order.total > {i}\n",
         )
     assert dim(report_for(concentrated), "dip")["score"] > dim(report_for(spread), "dip")["score"]
 
@@ -321,7 +320,8 @@ def test_infrastructure_spread_lowers_dip(tmp_path):
 
 def test_find_cycles_detects_a_loop():
     cycles = find_cycles({"a": {"b"}, "b": {"c"}, "c": {"a"}})
-    assert cycles and set(cycles[0][:-1]) == {"a", "b", "c"}
+    assert cycles
+    assert set(cycles[0][:-1]) == {"a", "b", "c"}
 
 
 def test_find_cycles_ignores_a_dag():
@@ -344,9 +344,7 @@ def test_coupling_is_not_scored_for_tiny_codebases(tmp_path):
 
 
 def test_demeter_chains_are_counted(tmp_path):
-    write(
-        tmp_path, "src/a.py", "def total(order):\n    return order.customer.address.country.code\n"
-    )
+    write(tmp_path, "src/a.py", "def total(order):\n    return order.customer.address.country.code\n")
     report = report_for(tmp_path)
     assert report["stats"]["demeter_chains"] >= 1
     assert dim(report, "demeter")["score"] < 1.0
@@ -429,8 +427,7 @@ def test_clear_names_score_well(tmp_path):
     write(
         tmp_path,
         "src/pricing.py",
-        "class PriceList:\n    pass\n\n\n"
-        "def apply_discount(order, percentage):\n    return order * percentage\n",
+        "class PriceList:\n    pass\n\n\ndef apply_discount(order, percentage):\n    return order * percentage\n",
     )
     assert dim(report_for(tmp_path), "naming")["score"] == 1.0
 
@@ -447,9 +444,7 @@ def complexity_via_ast(source):
     tree = ast.parse(source)
     decisions = 0
     for node in ast.walk(tree):
-        if isinstance(
-            node, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler, ast.IfExp)
-        ):
+        if isinstance(node, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler, ast.IfExp)):
             decisions += 1
         elif isinstance(node, ast.BoolOp):
             decisions += len(node.values) - 1
@@ -462,9 +457,7 @@ def complexity_via_ast(source):
 
 def params_via_ast(source):
     function = next(
-        node
-        for node in ast.walk(ast.parse(source))
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        node for node in ast.walk(ast.parse(source)) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     )
     args = function.args
     names = [a.arg for a in args.posonlyargs + args.args + args.kwonlyargs]
@@ -505,7 +498,7 @@ def test_parameter_count_matches_a_real_parser(source):
 
 
 @pytest.mark.parametrize(
-    "lang,name,source",
+    ("lang", "name", "source"),
     [
         (
             "python",
@@ -519,10 +512,7 @@ def test_parameter_count_matches_a_real_parser(source):
         (
             "javascript",
             "x.js",
-            (
-                "function get() {\n  // if the url has a query, and or while\n"
-                '  return fetch("http://x.com/a?b=1");\n}\n'
-            ),
+            ('function get() {\n  // if the url has a query, and or while\n  return fetch("http://x.com/a?b=1");\n}\n'),
         ),
         (
             "go",
@@ -559,14 +549,15 @@ def test_strip_noise_preserves_offsets_and_lines():
     stripped = strip_noise(source, "python")
     assert len(stripped) == len(source)
     assert stripped.count("\n") == source.count("\n")
-    assert "abc" not in stripped and "note" not in stripped
+    assert "abc" not in stripped
+    assert "note" not in stripped
 
 
 # --------------------------------------------------------- parameter counting
 
 
 @pytest.mark.parametrize(
-    "lang,name,source,expected",
+    ("lang", "name", "source", "expected"),
     [
         # `self` is not a parameter the caller passes
         ("python", "x.py", "def method(self, a, b):\n    return a\n", 2),
@@ -620,7 +611,7 @@ def test_wrapped_signatures_still_trip_the_limit(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "name,text",
+    ("name", "text"),
     [
         ("api.pb.go", "package api\n"),
         ("model_pb2.py", "x = 1\n"),
@@ -635,7 +626,7 @@ def test_generated_files_are_recognised(name, text):
 
 
 @pytest.mark.parametrize(
-    "name,text",
+    ("name", "text"),
     [
         ("billing.py", "def charge(amount):\n    return amount\n"),
         ("generator.py", "def generate(seed):\n    return seed\n"),
@@ -678,10 +669,7 @@ def commit(path, env, message):
 
 
 def complex_body(revision):
-    body = "".join(
-        f"    if kind == {i}:\n        for row in rows:\n            total += {i}\n"
-        for i in range(12)
-    )
+    body = "".join(f"    if kind == {i}:\n        for row in rows:\n            total += {i}\n" for i in range(12))
     return f"def route(kind, rows, total):\n{body}    return total + {revision}\n"
 
 
@@ -706,16 +694,12 @@ def churned_repo(tmp_path, hot_is_complex=True):
         write(
             tmp_path,
             "src/billing.py",
-            complex_body(revision)
-            if hot_is_complex
-            else f"def route(a):\n    return a + {revision}\n",
+            complex_body(revision) if hot_is_complex else f"def route(a):\n    return a + {revision}\n",
         )
         write(
             tmp_path,
             "src/orders.py",
-            complex_body(revision)
-            if hot_is_complex
-            else f"def place(a):\n    return a + {revision}\n",
+            complex_body(revision) if hot_is_complex else f"def place(a):\n    return a + {revision}\n",
         )
         write(tmp_path, "src/quiet0.py", f"def calc0(a, b):\n    return a + b + {revision}\n")
         commit(tmp_path, env, f"change {revision}")
@@ -734,7 +718,8 @@ def test_git_churn_strips_the_subdirectory_prefix(tmp_path):
     # Scanning a subdirectory: git reports repo-root paths, the scan uses
     # subdirectory-relative ones, and they have to be made to meet.
     churn = git_churn(repo / "src")
-    assert "billing.py" in churn and "src/billing.py" not in churn
+    assert "billing.py" in churn
+    assert "src/billing.py" not in churn
 
 
 def test_git_churn_is_empty_outside_a_repository(tmp_path):
@@ -745,7 +730,8 @@ def test_git_churn_is_empty_outside_a_repository(tmp_path):
 def test_complexity_that_sits_where_the_changes_land_scores_badly(tmp_path):
     report = report_for(churned_repo(tmp_path))
     hotspots = dim(report, "hotspots")
-    assert hotspots["score"] is not None and hotspots["score"] < 0.4
+    assert hotspots["score"] is not None
+    assert hotspots["score"] < 0.4
     assert "most-changed files average" in hotspots["detail"]
     flags = findings_of(report, "hotspot")
     assert {f["file"] for f in flags} >= {"src/billing.py", "src/orders.py"}
@@ -767,9 +753,7 @@ def test_hotspots_are_not_scored_without_history(tmp_path):
 
 def test_find_hotspots_needs_enough_files_and_churn():
     assert find_hotspots({"a.py": 9}, {"a.py": 30}) is None  # one file
-    assert (
-        find_hotspots({f"f{i}.py": 1 for i in range(6)}, {f"f{i}.py": 5 for i in range(6)}) is None
-    )  # no churn
+    assert find_hotspots({f"f{i}.py": 1 for i in range(6)}, {f"f{i}.py": 5 for i in range(6)}) is None  # no churn
 
 
 # --------------------------------------------------------- duplication bounds
@@ -796,12 +780,9 @@ def test_score_is_bounded_and_ordered(tmp_path):
         )
     bad = tmp_path / "bad"
     body = "".join(
-        f"    if kind == {i}:\n        for row in rows:\n            total = total + {i}\n"
-        for i in range(25)
+        f"    if kind == {i}:\n        for row in rows:\n            total = total + {i}\n" for i in range(25)
     )
-    write(
-        bad, "src/everything.py", f"def process(data, force=False):\n{body}    return total\n" * 2
-    )
+    write(bad, "src/everything.py", f"def process(data, force=False):\n{body}    return total\n" * 2)
 
     good_report, bad_report = report_for(good), report_for(bad)
     assert 0 <= good_report["score"] <= 100
@@ -814,16 +795,20 @@ def test_recommendations_are_ranked(tmp_path):
     body = "".join(f"    if x == {i}:\n        y()\n" for i in range(30))
     write(tmp_path, "src/a.py", f"def big(a):\n{body}    return 1\n")
     wins = recommendations(report_for(tmp_path))
-    assert wins and [w["lost"] for w in wins] == sorted((w["lost"] for w in wins), reverse=True)
+    assert wins
+    assert [w["lost"] for w in wins] == sorted((w["lost"] for w in wins), reverse=True)
 
 
 def test_renderers_contain_the_essentials(tmp_path):
     write(tmp_path, "src/a.py", "def a(value):\n    return value\n")
     report = report_for(tmp_path)
     text = render_text(report)
-    assert "gradebook-code" in text and "SCORE" in text and "Simplicity (KISS)" in text
+    assert "gradebook-code" in text
+    assert "SCORE" in text
+    assert "Simplicity (KISS)" in text
     markdown = render_markdown(report)
-    assert "| Principle |" in markdown and "Code score" in markdown
+    assert "| Principle |" in markdown
+    assert "Code score" in markdown
 
 
 def flagged_repo(root):
@@ -904,7 +889,8 @@ def test_cli_json_and_gates(tmp_path, capsys):
     write(tmp_path, "src/a.py", f"def big(a):\n{body}    return 1\n")
     assert main([str(tmp_path), "--format", "json"]) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["score"] < 100 and payload["findings"]
+    assert payload["score"] < 100
+    assert payload["findings"]
 
     assert main([str(tmp_path), "--fail-under", "99"]) == 1
     assert main([str(tmp_path), "--fail-under", "0"]) == 0
