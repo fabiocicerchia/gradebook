@@ -1,8 +1,8 @@
-import { ChildProcess, spawn } from 'node:child_process';
-import * as path from 'node:path';
+import { ChildProcess, spawn } from "node:child_process";
+import * as path from "node:path";
 
-import { Config } from './config';
-import { Report, ServerInfo, Tool } from './types';
+import { Config } from "./config";
+import { Report, ServerInfo, Tool } from "./types";
 
 type Pending = {
   resolve: (value: Record<string, unknown>) => void;
@@ -24,8 +24,8 @@ export interface Message {
  * arrive in pieces or several at a time; only whole lines are JSON.
  */
 export function frame(buffer: string, chunk: string): { lines: string[]; rest: string } {
-  const parts = (buffer + chunk).split('\n');
-  const rest = parts.pop() ?? '';
+  const parts = (buffer + chunk).split("\n");
+  const rest = parts.pop() ?? "";
   return { lines: parts.map((line) => line.trim()).filter(Boolean), rest };
 }
 
@@ -33,10 +33,10 @@ export function frame(buffer: string, chunk: string): { lines: string[]; rest: s
 export function serverArgv(serverPath: string, config: Config): string[] {
   const argv = [serverPath];
   if (config.codePath) {
-    argv.push('--code', config.codePath);
+    argv.push("--code", config.codePath);
   }
   if (config.testsPath) {
-    argv.push('--tests', config.testsPath);
+    argv.push("--tests", config.testsPath);
   }
   return argv;
 }
@@ -48,7 +48,7 @@ export function serverArgv(serverPath: string, config: Config): string[] {
 export class Engine {
   private child: ChildProcess | undefined;
   private pending = new Map<number, Pending>();
-  private buffer = '';
+  private buffer = "";
   private nextId = 1;
 
   constructor(
@@ -76,18 +76,18 @@ export class Engine {
     const argv = serverArgv(this.serverPath, this.config);
     const child = spawn(this.config.pythonPath, argv, {
       cwd: path.dirname(this.serverPath),
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ["pipe", "pipe", "pipe"],
     });
-    child.stdout?.setEncoding('utf8');
-    child.stdout?.on('data', (chunk: string) => this.consume(chunk));
-    child.stderr?.setEncoding('utf8');
-    child.stderr?.on('data', (chunk: string) => this.log(`server: ${chunk.trimEnd()}`));
-    child.on('exit', (code) => {
+    child.stdout?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk: string) => this.consume(chunk));
+    child.stderr?.setEncoding("utf8");
+    child.stderr?.on("data", (chunk: string) => this.log(`server: ${chunk.trimEnd()}`));
+    child.on("exit", (code) => {
       this.log(`server exited (${code})`);
       this.failAll(new Error(`gradebook server exited (${code})`));
       this.child = undefined;
     });
-    child.on('error', (error) => {
+    child.on("error", (error) => {
       this.failAll(error);
       this.child = undefined;
     });
@@ -119,7 +119,7 @@ export class Engine {
     if (message.id === 0) {
       if (message.fatal) {
         this.log(`server failed to start: ${message.error}`);
-        this.failAll(new Error(message.error ?? 'server failed to start'));
+        this.failAll(new Error(message.error ?? "server failed to start"));
       }
       return;
     }
@@ -131,7 +131,7 @@ export class Engine {
     if (message.ok) {
       waiter.resolve(message);
     } else {
-      waiter.reject(new Error(message.error ?? 'unknown server error'));
+      waiter.reject(new Error(message.error ?? "unknown server error"));
     }
   }
 
@@ -151,7 +151,7 @@ export class Engine {
     }
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      child.stdin?.write(line + '\n', (error) => {
+      child.stdin?.write(line + "\n", (error) => {
         if (error) {
           this.pending.delete(id);
           reject(error);
@@ -161,24 +161,24 @@ export class Engine {
   }
 
   async ping(): Promise<ServerInfo> {
-    return (await this.send({ op: 'ping' })) as unknown as ServerInfo;
+    return (await this.send({ op: "ping" })) as unknown as ServerInfo;
   }
 
   async scanProject(root: string, tool: Tool): Promise<Report> {
-    const response = await this.send({ op: 'scanProject', root, tool });
+    const response = await this.send({ op: "scanProject", root, tool });
     return response.report as Report;
   }
 
   invalidate(): Promise<Record<string, unknown>> {
-    return this.send({ op: 'invalidate' });
+    return this.send({ op: "invalidate" });
   }
 
   /** Drops answers we no longer want; a running scan is ~0.25s and finishes. */
   cancelAll(): void {
     for (const id of this.pending.keys()) {
-      void this.send({ op: 'cancel', cancel: id }).catch(() => undefined);
+      void this.send({ op: "cancel", cancel: id }).catch(() => undefined);
     }
-    this.failAll(new Error('cancelled'));
+    this.failAll(new Error("cancelled"));
   }
 
   restart(): void {
@@ -187,9 +187,9 @@ export class Engine {
   }
 
   dispose(): void {
-    this.failAll(new Error('server stopped'));
+    this.failAll(new Error("server stopped"));
     this.child?.kill();
     this.child = undefined;
-    this.buffer = '';
+    this.buffer = "";
   }
 }

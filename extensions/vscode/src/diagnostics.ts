@@ -1,7 +1,7 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as vscode from 'vscode';
-import { Finding, Report, Severity, Tool } from './types';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as vscode from "vscode";
+import { Finding, Report, Severity, Tool } from "./types";
 
 /** A finding that names a real file at a real line; everything else is workspace-level. */
 export function isAnchored(finding: Finding, exists: (file: string) => boolean): boolean {
@@ -19,11 +19,7 @@ export interface Split {
   workspace: Finding[];
 }
 
-export function partition(
-  findings: Finding[],
-  exclude: string[],
-  exists: (file: string) => boolean,
-): Split {
+export function partition(findings: Finding[], exclude: string[], exists: (file: string) => boolean): Split {
   const split: Split = { anchored: [], workspace: [] };
   for (const finding of findings) {
     if (excluded(finding, exclude)) {
@@ -73,9 +69,7 @@ export class Diagnostics {
 
   /** Publishes the anchored findings and hands back the workspace-level ones. */
   publish(tool: Tool, report: Report, exclude: string[]): Finding[] {
-    const split = partition(report.findings ?? [], exclude, (file) =>
-      fs.existsSync(path.resolve(report.root, file)),
-    );
+    const split = partition(report.findings ?? [], exclude, (file) => fs.existsSync(path.resolve(report.root, file)));
     const collection = this.collection(tool);
     collection.clear();
     for (const [file, findings] of byFile(report.root, split.anchored)) {

@@ -1,5 +1,5 @@
-import * as vscode from 'vscode';
-import { Finding, Report, Tool } from './types';
+import * as vscode from "vscode";
+import { Finding, Report, Tool } from "./types";
 
 export interface Section {
   tool: Tool;
@@ -10,20 +10,16 @@ export interface Section {
 /** The CLI's bar, so the view and `gradebook-code .` read the same. */
 export function bar(score: number | null, width = 20): string {
   if (score === null) {
-    return '·'.repeat(width);
+    return "·".repeat(width);
   }
   const filled = Math.round(score * width);
-  return '█'.repeat(filled) + '░'.repeat(width - filled);
+  return "█".repeat(filled) + "░".repeat(width - filled);
 }
 
 /** Exported so a test can build the expected markup with it rather than a
  * second copy of these rules — `Naming & intent` is a real dimension title. */
 export function escape(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function sectionHtml(section: Section): string {
@@ -33,36 +29,36 @@ function sectionHtml(section: Section): string {
       (dim) => `<tr>
         <td>${escape(dim.title)}</td>
         <td class="bar">${bar(dim.score)}</td>
-        <td class="num">${dim.score === null ? 'n/a' : dim.points.toFixed(1)}/${dim.weight.toFixed(0)}</td>
+        <td class="num">${dim.score === null ? "n/a" : dim.points.toFixed(1)}/${dim.weight.toFixed(0)}</td>
         <td>${escape(dim.detail)}</td>
       </tr>`,
     )
-    .join('\n');
+    .join("\n");
   const wins = (report.recommendations ?? [])
     .map((rec) => `<li><b>+${rec.points.toFixed(1)}</b> ${escape(rec.advice)}</li>`)
-    .join('\n');
+    .join("\n");
   const notScored = report.not_scored?.length
-    ? `<p class="muted">Not scored (weights redistributed): ${escape(report.not_scored.join(', '))}.</p>`
-    : '';
+    ? `<p class="muted">Not scored (weights redistributed): ${escape(report.not_scored.join(", "))}.</p>`
+    : "";
   // Findings with no file to squiggle — a dependency cycle names a loop of
   // modules, not a line — live here rather than on a guessed path.
   const workspace = section.workspace.length
     ? `<h3>Workspace findings (${section.workspace.length})</h3><ul>${section.workspace
         .map((f) => `<li><code>${escape(f.file)}</code> <b>${escape(f.kind)}</b> — ${escape(f.message)}</li>`)
-        .join('\n')}</ul>`
-    : '';
+        .join("\n")}</ul>`
+    : "";
   return `<section>
     <h2>${escape(report.tool)} — <b>${report.score.toFixed(1)}/100</b> (grade ${escape(report.grade)})</h2>
     <table>${rows}</table>
     ${notScored}
-    ${wins ? `<h3>Biggest wins</h3><ul>${wins}</ul>` : ''}
+    ${wins ? `<h3>Biggest wins</h3><ul>${wins}</ul>` : ""}
     ${workspace}
   </section>`;
 }
 
 export function renderHtml(sections: Section[]): string {
   const body = sections.length
-    ? sections.map(sectionHtml).join('\n')
+    ? sections.map(sectionHtml).join("\n")
     : '<p class="muted">No scan yet — run <b>gradebook: Scan Workspace</b>.</p>';
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -91,12 +87,9 @@ export class ReportView {
 
   show(): void {
     if (!this.panel) {
-      this.panel = vscode.window.createWebviewPanel(
-        'gradebook.report',
-        'gradebook',
-        vscode.ViewColumn.Beside,
-        { enableScripts: false },
-      );
+      this.panel = vscode.window.createWebviewPanel("gradebook.report", "gradebook", vscode.ViewColumn.Beside, {
+        enableScripts: false,
+      });
       this.panel.onDidDispose(() => {
         this.panel = undefined;
       });
