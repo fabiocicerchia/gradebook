@@ -68,43 +68,43 @@ and *Determinism & isolation* dimensions of
 The scoring model is a catalogue of testing anti-patterns turned into things a
 static pass can actually see. What each one maps to:
 
-| Anti-pattern | Where it shows up |
-|---|---|
-| Ice-cream cone / inverted pyramid | Suite shape |
-| Unit tests without integration tests | Suite shape, Integration tests |
-| Integration tests without a unit base | Suite shape, Unit tests |
-| The Liar (passes without testing what it claims) | Assertion quality, Test doubles |
-| The Mockery / over-mocking | Test doubles |
-| Testing the mock instead of the code | Test doubles (interaction-only cases) |
-| The Inspector / Anal Probe (reaching into privates) | Test substance (`implementation-access`) |
-| The Ugly Mirror / Doppelgänger (test recomputes the expected value) | Test substance (`mirror-assertion`) |
-| Line Hitter (executes code, analyses no output) | Assertion quality (cases that assert nothing) |
-| Brittle locators / record-and-playback output | Determinism & isolation (`brittle-selector`) |
-| Assertion Roulette / The Giant / Eager Test | Test focus |
-| Conditional test logic | Test focus |
-| Excessive setup (Mother Hen) | Test focus |
-| The Enumerator (`test1`, `test2`) | Test naming |
-| The Butterfly (unfrozen clocks, randomness) | Determinism & isolation |
-| The Local Hero / Resource Optimism (hosts, paths, URLs) | Determinism & isolation |
-| Chain Gang / Generous Leftovers (order dependence, shared state) | Determinism & isolation |
-| Wait-and-see (hard-coded sleeps) | Determinism & isolation |
-| The Free Ride / copy-paste tests | Test substance (`duplicate-case`) |
-| The Secret Catcher / swallowed failures | Test substance (`suppressed-failure`) |
-| Second-class citizen test code | Test substance, Test focus |
-| Happy Path / Liar / Success Against All Odds | Edge & failure paths |
-| Never testing boundaries or equivalence partitions | Edge & failure paths |
-| Tests that cannot run in parallel or in any order | Determinism & isolation |
-| Not converting bugs into regression tests | TDD discipline (bugfix commits without tests) |
-| Testing the wrong functionality (not what breaks often) | Risk targeting (`untested-hotspot`) |
-| Conjoined Twins (unit tests that are really integration tests) | Test substance (`conjoined-twin`) |
-| Test-per-Method (one test per production method) | Test naming |
-| The Loudmouth (console chatter instead of assertions) | Suite hygiene |
-| The Greedy Catcher (failure logged, test passes) | Test substance (`suppressed-failure`) |
-| Operating System Evangelist (platform branches) | Determinism & isolation |
-| Mocking everything with no integration layer behind it | Test doubles |
-| Coverage as the goal (Goodhart) | Mutation score, Test substance (`decorative-test`) |
-| Manual testing only / not in CI | CI enforcement |
-| Skipped tests left to rot | Suite hygiene, Test substance |
+| Anti-pattern                                                        | Where it shows up                                  |
+| ------------------------------------------------------------------- | -------------------------------------------------- |
+| Ice-cream cone / inverted pyramid                                   | Suite shape                                        |
+| Unit tests without integration tests                                | Suite shape, Integration tests                     |
+| Integration tests without a unit base                               | Suite shape, Unit tests                            |
+| The Liar (passes without testing what it claims)                    | Assertion quality, Test doubles                    |
+| The Mockery / over-mocking                                          | Test doubles                                       |
+| Testing the mock instead of the code                                | Test doubles (interaction-only cases)              |
+| The Inspector / Anal Probe (reaching into privates)                 | Test substance (`implementation-access`)           |
+| The Ugly Mirror / Doppelgänger (test recomputes the expected value) | Test substance (`mirror-assertion`)                |
+| Line Hitter (executes code, analyses no output)                     | Assertion quality (cases that assert nothing)      |
+| Brittle locators / record-and-playback output                       | Determinism & isolation (`brittle-selector`)       |
+| Assertion Roulette / The Giant / Eager Test                         | Test focus                                         |
+| Conditional test logic                                              | Test focus                                         |
+| Excessive setup (Mother Hen)                                        | Test focus                                         |
+| The Enumerator (`test1`, `test2`)                                   | Test naming                                        |
+| The Butterfly (unfrozen clocks, randomness)                         | Determinism & isolation                            |
+| The Local Hero / Resource Optimism (hosts, paths, URLs)             | Determinism & isolation                            |
+| Chain Gang / Generous Leftovers (order dependence, shared state)    | Determinism & isolation                            |
+| Wait-and-see (hard-coded sleeps)                                    | Determinism & isolation                            |
+| The Free Ride / copy-paste tests                                    | Test substance (`duplicate-case`)                  |
+| The Secret Catcher / swallowed failures                             | Test substance (`suppressed-failure`)              |
+| Second-class citizen test code                                      | Test substance, Test focus                         |
+| Happy Path / Liar / Success Against All Odds                        | Edge & failure paths                               |
+| Never testing boundaries or equivalence partitions                  | Edge & failure paths                               |
+| Tests that cannot run in parallel or in any order                   | Determinism & isolation                            |
+| Not converting bugs into regression tests                           | TDD discipline (bugfix commits without tests)      |
+| Testing the wrong functionality (not what breaks often)             | Risk targeting (`untested-hotspot`)                |
+| Conjoined Twins (unit tests that are really integration tests)      | Test substance (`conjoined-twin`)                  |
+| Test-per-Method (one test per production method)                    | Test naming                                        |
+| The Loudmouth (console chatter instead of assertions)               | Suite hygiene                                      |
+| The Greedy Catcher (failure logged, test passes)                    | Test substance (`suppressed-failure`)              |
+| Operating System Evangelist (platform branches)                     | Determinism & isolation                            |
+| Mocking everything with no integration layer behind it              | Test doubles                                       |
+| Coverage as the goal (Goodhart)                                     | Mutation score, Test substance (`decorative-test`) |
+| Manual testing only / not in CI                                     | CI enforcement                                     |
+| Skipped tests left to rot                                           | Suite hygiene, Test substance                      |
 
 ## Sources
 
