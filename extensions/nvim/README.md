@@ -39,11 +39,11 @@ require('gradebook').setup({
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `:Gradebook` | Scan the project now |
-| `:GradebookReport` | Open the score report in a float |
-| `:checkhealth gradebook` | Check the CLIs are reachable |
+| Command                  | What it does                     |
+| ------------------------ | -------------------------------- |
+| `:Gradebook`             | Scan the project now             |
+| `:GradebookReport`       | Open the score report in a float |
+| `:checkhealth gradebook` | Check the CLIs are reachable     |
 
 Scripting it? `require('gradebook').scan({ on_done = function(ok) ... end })`
 — the two tools land independently, so the callback is the only honest
