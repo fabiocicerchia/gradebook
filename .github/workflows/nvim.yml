@@ -9,14 +9,14 @@ on:
     branches: [main, master]
     paths:
       - extensions/nvim/**
-      - gradebook-code/gradebook_code.py
-      - gradebook-tests/gradebook_tests.py
+      - gradebook-code/gradebook_code/**
+      - gradebook-tests/gradebook_tests/**
       - .github/workflows/nvim.yml
   pull_request:
     paths:
       - extensions/nvim/**
-      - gradebook-code/gradebook_code.py
-      - gradebook-tests/gradebook_tests.py
+      - gradebook-code/gradebook_code/**
+      - gradebook-tests/gradebook_tests/**
       - .github/workflows/nvim.yml
   workflow_dispatch:
 

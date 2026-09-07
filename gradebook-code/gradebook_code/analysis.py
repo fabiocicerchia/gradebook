@@ -209,5 +209,3 @@ def find_cycles(graph: dict[str, set[str]], limit: int = CYCLE_LIMIT) -> list[li
         if colour.get(node, 0) == 0:
             visit(node)
     return cycles
-
-

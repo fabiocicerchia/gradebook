@@ -49,9 +49,13 @@ def load_tool(tool: str, module_path: str | None = None) -> ModuleType:
     name = f"gradebook_{tool}"
     if module_path:
         path = Path(module_path)
-        # A file still works if someone points at one; otherwise the directory
-        # is the one that *contains* the package.
-        return _from_path(name, path) if path.is_file() else _from_dir(name, path)
+        # A real file still works if someone points at one. Anything else is
+        # treated as the directory that CONTAINS the package -- including a
+        # stale `.../gradebook_<tool>.py`, which is what the editor settings
+        # and their defaults have always said, and which no longer exists.
+        if path.is_file():
+            return _from_path(name, path)
+        return _from_dir(name, path.parent if path.suffix == ".py" else path)
     try:
         return importlib.import_module(name)
     except ImportError:

@@ -136,5 +136,3 @@ def find_hotspots(
         "hot_coverage": round(sum(covered) / len(covered), 1) if covered else None,
         "findings": findings,
     }
-
-

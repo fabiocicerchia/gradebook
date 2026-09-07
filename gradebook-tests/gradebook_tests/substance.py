@@ -141,5 +141,3 @@ def find_decorative(
                 }
             )
     return decorative, findings
-
-

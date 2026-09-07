@@ -1183,5 +1183,3 @@ def analyse_test_file(rel: Path, text: str, lang: str) -> FileInfo:
         "name_words": words,
         "bad_names": bad_names,
     }
-
-

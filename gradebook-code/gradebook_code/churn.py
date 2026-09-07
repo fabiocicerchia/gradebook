@@ -92,5 +92,3 @@ def find_hotspots(
         "average_complexity": round(overall, 1),
         "findings": findings,
     }
-
-

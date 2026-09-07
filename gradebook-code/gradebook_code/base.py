@@ -169,4 +169,3 @@ BRACE_LANGS = {
     "cpp",
 }
 TEST_DIR_NAMES = {"test", "tests", "spec", "specs", "__tests__", "testing", "e2e", "features"}
-

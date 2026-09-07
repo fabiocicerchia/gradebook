@@ -96,5 +96,3 @@ def strip_noise(text: str, lang: str) -> str:
             continue
         position += 1
     return "".join(out)
-
-

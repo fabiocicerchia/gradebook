@@ -342,5 +342,3 @@ def is_ci_file(rel: Path) -> bool:
     if ".circleci" in parts and rel.name in {"config.yml", "config.yaml"}:
         return True
     return bool(CI_FILES.match(rel.name))
-
-

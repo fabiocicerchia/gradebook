@@ -136,4 +136,3 @@ LANG_BY_EXT = {
 }
 JS_EXT = {".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
 TEST_DIR_NAMES = {"test", "tests", "spec", "specs", "__tests__", "testing", "e2e", "features"}
-

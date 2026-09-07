@@ -116,4 +116,3 @@ IMPORT_RE = {
 }
 IMPORT_RE["typescript"] = IMPORT_RE["javascript"]
 IMPORT_RE["kotlin"] = IMPORT_RE["java"]
-

@@ -305,5 +305,3 @@ def count_params(signature: str, *, implicit_self: bool = False) -> int:
     if implicit_self and parts and parts[0].split(":")[0].strip() in IMPLICIT_NAMES:
         parts = parts[1:]
     return len(parts)
-
-

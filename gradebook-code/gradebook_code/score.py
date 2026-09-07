@@ -455,5 +455,3 @@ def recommendations(report: Report, top: int = TOP_RECOMMENDATIONS) -> list[Stat
     ranked = [d for d in report["dimensions"] if d["score"] is not None and d["lost"] >= MIN_POINTS_LOST_TO_RECOMMEND]
     ranked.sort(key=lambda d: d["lost"], reverse=True)
     return ranked[:top]
-
-
