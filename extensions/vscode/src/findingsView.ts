@@ -1,13 +1,13 @@
-import * as path from 'node:path';
+import * as path from "node:path";
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { Finding, Severity, Tool } from './types';
+import { Finding, Severity, Tool } from "./types";
 
-export type Grouping = 'severity' | 'file' | 'kind';
+export type Grouping = "severity" | "file" | "kind";
 
-export const SEVERITIES: Severity[] = ['high', 'medium', 'low'];
-export const TOOLS: Tool[] = ['code', 'tests'];
+export const SEVERITIES: Severity[] = ["high", "medium", "low"];
+export const TOOLS: Tool[] = ["code", "tests"];
 
 /** What the panel is currently showing. Absent axes mean "everything". */
 export interface Filter {
@@ -30,9 +30,9 @@ export function matches(entry: Entry, filter: Filter): boolean {
 }
 
 const SEVERITY_THEME: Record<Severity, { icon: string; colour: string }> = {
-  high: { icon: 'flame', colour: 'charts.red' },
-  medium: { icon: 'warning', colour: 'charts.yellow' },
-  low: { icon: 'info', colour: 'charts.blue' },
+  high: { icon: "flame", colour: "charts.red" },
+  medium: { icon: "warning", colour: "charts.yellow" },
+  low: { icon: "info", colour: "charts.blue" },
 };
 
 const SEVERITY_RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
@@ -55,7 +55,7 @@ interface Group {
 
 type Node = Group | Entry;
 
-const isGroup = (node: Node): node is Group => 'children' in node;
+const isGroup = (node: Node): node is Group => "children" in node;
 
 /** Worst first, then by file, then by line — the order the CLI prints. */
 export function compareEntries(a: Entry, b: Entry): number {
@@ -76,10 +76,10 @@ export function countBySeverity(entries: Entry[]): Record<Severity, number> {
 
 /** The grouping key for one entry, under each of the three modes. */
 export function groupKey(entry: Entry, grouping: Grouping): string {
-  if (grouping === 'severity') {
+  if (grouping === "severity") {
     return entry.severity;
   }
-  return grouping === 'kind' ? entry.kind : entry.file;
+  return grouping === "kind" ? entry.kind : entry.file;
 }
 
 /** Group and order entries — pure, so the ordering is testable on its own. */
@@ -95,25 +95,22 @@ export function group(entries: Entry[], grouping: Grouping): Array<[string, Entr
     }
   }
   const keys = [...buckets.keys()];
-  if (grouping === 'severity') {
+  if (grouping === "severity") {
     keys.sort((a, b) => SEVERITY_RANK[a as Severity] - SEVERITY_RANK[b as Severity]);
   } else {
     // Worst-first by the bucket's own worst finding, so the tree opens on what
     // matters rather than on whatever sorts first alphabetically.
-    keys.sort(
-      (a, b) =>
-        compareEntries(buckets.get(a)![0], buckets.get(b)![0]) || (a < b ? -1 : a > b ? 1 : 0),
-    );
+    keys.sort((a, b) => compareEntries(buckets.get(a)![0], buckets.get(b)![0]) || (a < b ? -1 : a > b ? 1 : 0));
   }
   return keys.map((key) => [key, buckets.get(key)!]);
 }
 
 /** "2 high, 1 low" — the empty buckets are noise, so they are left out. */
 export function summarise(counts: Record<Severity, number>): string {
-  return (['high', 'medium', 'low'] as Severity[])
+  return (["high", "medium", "low"] as Severity[])
     .filter((severity) => counts[severity] > 0)
     .map((severity) => `${counts[severity]} ${severity}`)
-    .join(', ');
+    .join(", ");
 }
 
 function severityIcon(severity: Severity): vscode.ThemeIcon {
@@ -129,7 +126,7 @@ export class FindingsProvider implements vscode.TreeDataProvider<Node> {
   // Fixed: the panel groups by file and narrows with a filter, which is how
   // the sibling extensions read. A grouping picker and a filter on the same
   // toolbar is two ways to do one thing.
-  readonly grouping: Grouping = 'file';
+  readonly grouping: Grouping = "file";
   expanded = true;
   private entries: Entry[] = [];
   private filter: Filter = allOf();
@@ -205,9 +202,8 @@ export class FindingsProvider implements vscode.TreeDataProvider<Node> {
         const tally = summarise(countBySeverity(children));
         return {
           key: label,
-          label: this.grouping === 'file' ? path.basename(label) : label,
-          description:
-            this.grouping === 'file' ? `${path.dirname(label)} · ${tally}` : tally,
+          label: this.grouping === "file" ? path.basename(label) : label,
+          description: this.grouping === "file" ? `${path.dirname(label)} · ${tally}` : tally,
           icon: severityIcon(children[0].severity),
           children,
         } satisfies Group;
@@ -220,9 +216,7 @@ export class FindingsProvider implements vscode.TreeDataProvider<Node> {
     if (isGroup(node)) {
       const item = new vscode.TreeItem(
         node.label,
-        this.expanded
-          ? vscode.TreeItemCollapsibleState.Expanded
-          : vscode.TreeItemCollapsibleState.Collapsed,
+        this.expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed,
       );
       // Keyed on the group key, not the label: grouping by file shows
       // basenames, and two directories can hold the same one.
@@ -234,16 +228,13 @@ export class FindingsProvider implements vscode.TreeDataProvider<Node> {
     const item = new vscode.TreeItem(node.message, vscode.TreeItemCollapsibleState.None);
     item.description = `${node.kind} · ${node.tool}`;
     item.iconPath = severityIcon(node.severity);
-    item.tooltip = `${node.file}${node.line ? `:${node.line}` : ''}\n${node.kind} — ${node.message}`;
+    item.tooltip = `${node.file}${node.line ? `:${node.line}` : ""}\n${node.kind} — ${node.message}`;
     if (node.fsPath) {
       item.resourceUri = vscode.Uri.file(node.fsPath);
       item.command = {
-        command: 'vscode.open',
-        title: 'Open',
-        arguments: [
-          vscode.Uri.file(node.fsPath),
-          { selection: new vscode.Range(node.line - 1, 0, node.line - 1, 0) },
-        ],
+        command: "vscode.open",
+        title: "Open",
+        arguments: [vscode.Uri.file(node.fsPath), { selection: new vscode.Range(node.line - 1, 0, node.line - 1, 0) }],
       };
     }
     return item;

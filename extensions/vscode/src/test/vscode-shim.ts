@@ -24,7 +24,7 @@ class EventEmitter<T> {
 }
 
 class ThemeIcon {
-  static readonly File = new ThemeIcon('file');
+  static readonly File = new ThemeIcon("file");
   constructor(
     readonly id: string,
     readonly color?: unknown,
@@ -104,7 +104,7 @@ export const vscode = {
       readonly severity: number,
     ) {}
   },
-  Uri: { file: (fsPath: string) => ({ fsPath, scheme: 'file' }) },
+  Uri: { file: (fsPath: string) => ({ fsPath, scheme: "file" }) },
   languages: {
     createDiagnosticCollection(name: string): DiagnosticCollection {
       const collection = new DiagnosticCollection(name);
@@ -126,11 +126,8 @@ export const vscode = {
   },
   window: {
     createOutputChannel: () => ({ appendLine() {}, show() {}, dispose() {} }),
-    createStatusBarItem: () => ({ text: '', command: '', show() {}, hide() {}, dispose() {} }),
-    createTreeView: (
-      id: string,
-      options: { treeDataProvider: { getChildren(node?: unknown): unknown[] } },
-    ) => {
+    createStatusBarItem: () => ({ text: "", command: "", show() {}, hide() {}, dispose() {} }),
+    createTreeView: (id: string, options: { treeDataProvider: { getChildren(node?: unknown): unknown[] } }) => {
       trees.set(id, options.treeDataProvider);
       return { dispose: () => trees.delete(id) };
     },
@@ -140,7 +137,7 @@ export const vscode = {
       return Promise.resolve(undefined);
     },
     createWebviewPanel: () => ({
-      webview: { html: '' },
+      webview: { html: "" },
       reveal() {},
       onDidDispose() {},
       dispose() {},
@@ -152,7 +149,7 @@ export const vscode = {
       return { dispose: () => commands.delete(id) };
     },
     executeCommand: (command: string, key?: string, value?: unknown) => {
-      if (command === 'setContext' && key !== undefined) {
+      if (command === "setContext" && key !== undefined) {
         contexts.set(key, value);
       }
       return Promise.resolve();

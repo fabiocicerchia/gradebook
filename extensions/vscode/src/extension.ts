@@ -1,22 +1,22 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import * as fs from "node:fs";
+import * as path from "node:path";
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { Config, readConfig, withWorkspaceDefaults } from './config';
-import { Diagnostics } from './diagnostics';
-import { Engine } from './engine';
-import { Entry, FindingsProvider, Filter, SEVERITIES, TOOLS } from './findingsView';
-import { ReportView, Section } from './report';
-import { StatusBar } from './status';
-import { Store } from './store';
-import { Tool } from './types';
+import { Config, readConfig, withWorkspaceDefaults } from "./config";
+import { Diagnostics } from "./diagnostics";
+import { Engine } from "./engine";
+import { Entry, FindingsProvider, Filter, SEVERITIES, TOOLS } from "./findingsView";
+import { ReportView, Section } from "./report";
+import { StatusBar } from "./status";
+import { Store } from "./store";
+import { Tool } from "./types";
 
 let engine: Engine | undefined;
 let timer: NodeJS.Timeout | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
-  const output = vscode.window.createOutputChannel('gradebook');
+  const output = vscode.window.createOutputChannel("gradebook");
   const log = (message: string) => output.appendLine(message);
   const diagnostics = new Diagnostics();
   const view = new ReportView();
@@ -25,11 +25,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const status = new StatusBar();
 
   const workspaceRoot = () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const currentConfig = (): Config =>
-    withWorkspaceDefaults(readConfig(), workspaceRoot(), fs.existsSync);
+  const currentConfig = (): Config => withWorkspaceDefaults(readConfig(), workspaceRoot(), fs.existsSync);
 
   let config: Config = currentConfig();
-  const serverPath = context.asAbsolutePath(path.join('server', 'gradebook_server.py'));
+  const serverPath = context.asAbsolutePath(path.join("server", "gradebook_server.py"));
   engine = new Engine(serverPath, config, log);
 
   const sections = (): Section[] =>
@@ -63,8 +62,8 @@ export function activate(context: vscode.ExtensionContext): void {
     findings.setEntries(entries);
     // Two keys, not one: the panel has to tell "never scanned" from "scanned
     // and clean", or a tidy workspace looks exactly like a broken extension.
-    void vscode.commands.executeCommand('setContext', 'gradebook.scanned', current.length > 0);
-    void vscode.commands.executeCommand('setContext', 'gradebook.hasFindings', entries.length > 0);
+    void vscode.commands.executeCommand("setContext", "gradebook.scanned", current.length > 0);
+    void vscode.commands.executeCommand("setContext", "gradebook.hasFindings", entries.length > 0);
 
     status.update(store.entries(), config.failUnder);
   };
@@ -78,15 +77,13 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     reported.add(message);
-    void vscode.window
-      .showErrorMessage(`gradebook: ${message}`, 'Open Settings', 'Show Log')
-      .then((choice) => {
-        if (choice === 'Show Log') {
-          output.show();
-        } else if (choice === 'Open Settings') {
-          void vscode.commands.executeCommand('workbench.action.openSettings', 'gradebook');
-        }
-      });
+    void vscode.window.showErrorMessage(`gradebook: ${message}`, "Open Settings", "Show Log").then((choice) => {
+      if (choice === "Show Log") {
+        output.show();
+      } else if (choice === "Open Settings") {
+        void vscode.commands.executeCommand("workbench.action.openSettings", "gradebook");
+      }
+    });
   };
 
   async function scan(): Promise<void> {
@@ -115,7 +112,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const refreshFilterState = () => {
-    void vscode.commands.executeCommand('setContext', 'gradebook.filtered', findings.narrowed);
+    void vscode.commands.executeCommand("setContext", "gradebook.filtered", findings.narrowed);
   };
 
   async function pickFilters(): Promise<void> {
@@ -123,16 +120,16 @@ export function activate(context: vscode.ExtensionContext): void {
     const count = (predicate: (entry: Entry) => boolean) => `${all.filter(predicate).length}`;
     const current = findings.currentFilter();
 
-    type Item = vscode.QuickPickItem & { severity?: Entry['severity']; tool?: Entry['tool'] };
+    type Item = vscode.QuickPickItem & { severity?: Entry["severity"]; tool?: Entry["tool"] };
     const items: Item[] = [
-      { label: 'Severity', kind: vscode.QuickPickItemKind.Separator },
+      { label: "Severity", kind: vscode.QuickPickItemKind.Separator },
       ...SEVERITIES.map((severity) => ({
         label: severity,
         description: count((entry) => entry.severity === severity),
         picked: current.severities.has(severity),
         severity,
       })),
-      { label: 'Tool', kind: vscode.QuickPickItemKind.Separator },
+      { label: "Tool", kind: vscode.QuickPickItemKind.Separator },
       ...TOOLS.map((tool) => ({
         label: `gradebook-${tool}`,
         description: count((entry) => entry.tool === tool),
@@ -143,14 +140,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const chosen = await vscode.window.showQuickPick(items, {
       canPickMany: true,
-      title: 'gradebook: show which findings',
+      title: "gradebook: show which findings",
     });
     if (!chosen) {
       return; // dismissed, so nothing changes
     }
     const filter: Filter = {
-      severities: new Set(chosen.map((item) => item.severity).filter(Boolean) as Entry['severity'][]),
-      tools: new Set(chosen.map((item) => item.tool).filter(Boolean) as Entry['tool'][]),
+      severities: new Set(chosen.map((item) => item.severity).filter(Boolean) as Entry["severity"][]),
+      tools: new Set(chosen.map((item) => item.tool).filter(Boolean) as Entry["tool"][]),
     };
     findings.setFilter(filter);
     refreshFilterState();
@@ -161,32 +158,32 @@ export function activate(context: vscode.ExtensionContext): void {
     { dispose: () => status.dispose() },
     // showCollapseAll gives the view VS Code's own collapse button, which is
     // implemented inside the tree and always works.
-    vscode.window.createTreeView('gradebook.findings', {
+    vscode.window.createTreeView("gradebook.findings", {
       treeDataProvider: findings,
       showCollapseAll: true,
     }),
     { dispose: () => diagnostics.dispose() },
     { dispose: () => view.dispose() },
     { dispose: () => engine?.dispose() },
-    vscode.commands.registerCommand('gradebook.scanWorkspace', () => scan()),
-    vscode.commands.registerCommand('gradebook.showReport', () => {
+    vscode.commands.registerCommand("gradebook.scanWorkspace", () => scan()),
+    vscode.commands.registerCommand("gradebook.showReport", () => {
       view.update(sections());
       view.show();
     }),
-    vscode.commands.registerCommand('gradebook.showOutput', () => output.show()),
-    vscode.commands.registerCommand('gradebook.restartServer', () => {
+    vscode.commands.registerCommand("gradebook.showOutput", () => output.show()),
+    vscode.commands.registerCommand("gradebook.restartServer", () => {
       engine?.restart();
       return scan();
     }),
-    vscode.commands.registerCommand('gradebook.cancelScan', () => engine?.cancelAll()),
-    vscode.commands.registerCommand('gradebook.filterFindings', () => pickFilters()),
-    vscode.commands.registerCommand('gradebook.clearFilter', () => {
+    vscode.commands.registerCommand("gradebook.cancelScan", () => engine?.cancelAll()),
+    vscode.commands.registerCommand("gradebook.filterFindings", () => pickFilters()),
+    vscode.commands.registerCommand("gradebook.clearFilter", () => {
       findings.clearFilter();
       refreshFilterState();
     }),
-    vscode.commands.registerCommand('gradebook.expandAll', () => findings.setExpanded(true)),
+    vscode.commands.registerCommand("gradebook.expandAll", () => findings.setExpanded(true)),
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (!event.affectsConfiguration('gradebook')) {
+      if (!event.affectsConfiguration("gradebook")) {
         return;
       }
       config = currentConfig();
@@ -199,12 +196,12 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.workspace.onDidSaveTextDocument(() => {
-      if (config.run === 'onSave' || config.run === 'onType') {
+      if (config.run === "onSave" || config.run === "onType") {
         schedule(0);
       }
     }),
     vscode.workspace.onDidChangeTextDocument(() => {
-      if (config.run === 'onType') {
+      if (config.run === "onType") {
         schedule(config.debounceMs);
       }
     }),

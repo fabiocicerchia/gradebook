@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { Report, Tool } from './types';
+import { Report, Tool } from "./types";
 
 /** What the status bar says. Pure, so the wording is testable. */
 export interface Entry {
@@ -10,7 +10,7 @@ export interface Entry {
   warn: boolean;
 }
 
-const ICON: Record<Tool, string> = { code: 'code', tests: 'beaker' };
+const ICON: Record<Tool, string> = { code: "code", tests: "beaker" };
 
 /** One tool's piece of the label: an icon, its grade and its score. */
 export function fragmentFor(tool: Tool, report: Report): string {
@@ -20,7 +20,7 @@ export function fragmentFor(tool: Tool, report: Report): string {
 function detail(report: Report): string[] {
   const lines = [`${report.tool} ${report.version} — ${report.score.toFixed(1)}/100, grade ${report.grade}`];
   if (report.not_scored?.length) {
-    lines.push(`  not scored: ${report.not_scored.join(', ')}`);
+    lines.push(`  not scored: ${report.not_scored.join(", ")}`);
   }
   const top = report.recommendations?.[0];
   if (top) {
@@ -43,12 +43,14 @@ export function summaryFor(reports: Array<[Tool, Report]>, failUnder: number): E
   }
   // Fixed order, never the order the scans happened to finish in: a status bar
   // that reshuffles itself between saves cannot be read at a glance.
-  const ordered = (['code', 'tests'] as Tool[])
+  const ordered = (["code", "tests"] as Tool[])
     .map((tool) => reports.find(([candidate]) => candidate === tool))
     .filter((entry): entry is [Tool, Report] => entry !== undefined);
   return {
-    text: ordered.map(([tool, report]) => fragmentFor(tool, report)).join('  '),
-    tooltip: ['gradebook', ...ordered.flatMap(([, report]) => detail(report)), '', 'Click to open the report.'].join('\n'),
+    text: ordered.map(([tool, report]) => fragmentFor(tool, report)).join("  "),
+    tooltip: ["gradebook", ...ordered.flatMap(([, report]) => detail(report)), "", "Click to open the report."].join(
+      "\n",
+    ),
     warn: failUnder > 0 && ordered.some(([, report]) => report.score < failUnder),
   };
 }
@@ -64,13 +66,11 @@ export class StatusBar {
     }
     if (!this.item) {
       this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-      this.item.command = 'gradebook.showReport';
+      this.item.command = "gradebook.showReport";
     }
     this.item.text = entry.text;
     this.item.tooltip = entry.tooltip;
-    this.item.backgroundColor = entry.warn
-      ? new vscode.ThemeColor('statusBarItem.warningBackground')
-      : undefined;
+    this.item.backgroundColor = entry.warn ? new vscode.ThemeColor("statusBarItem.warningBackground") : undefined;
     this.item.show();
   }
 
