@@ -20,7 +20,7 @@ dev = ["pytest", "ruff"]
 gradebook-code = "gradebook_code:main"
 
 [tool.setuptools]
-py-modules = ["gradebook_code"]
+packages = ["gradebook_code"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
