@@ -16,12 +16,69 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from collections import Counter
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 VERSION = "0.3.0"  # x-release-please-version
+
+# The shapes this module passes around. All JSON-shaped: the report is written
+# out as JSON and read back by the extension and by --baseline, so nothing here
+# is richer than what survives that round trip.
+Stats = dict[str, Any]
+Report = dict[str, Any]
+Finding = dict[str, Any]
+FileInfo = dict[str, Any]
+Profile = dict[str, Any]
+
+# The defaults the analysis runs with. Each is a judgement about what is worth
+# reporting rather than an arbitrary number.
+CONDITION_WINDOW = 400  # past this, the branch found belongs to another case
+HISTORY_LIMIT = 400  # commits read for the churn and TDD signals
+LIST_LIMIT = 20  # as many findings of one kind as anyone acts on
+MIN_CLUSTER = 3  # three identical bodies is a pattern, two a coincidence
+MIN_CHANGES = 5  # a file touched fewer times says nothing about staleness
+DECORATIVE_COVERAGE = 40.0  # a test file whose source is barely covered
+TOP_RECOMMENDATIONS = 5
+BAR_WIDTH = 20
+# Resolved once: `git` on PATH, or nothing to ask about history.
+_GIT = shutil.which("git") or "git"
+
+# What the rubric judges by. Each is a claim about test quality, so each is
+# named rather than sitting as a number in the middle of a condition.
+MIN_MEANINGFUL_WORDS = 3  # a name of three real words describes something
+MIN_WORDS_WITH_CONTEXT = 2  # two, if one of them says what the behaviour is
+MOSTLY = 0.5  # "most of the suite does this"
+LONG_CASE_LINES = 20  # past this the case is doing more than one thing
+GIANT_CASE_LINES = 50
+MANY_ASSERTIONS = 10
+PERCENT_MAX = 100.0
+FRACTION_AS_PERCENT = 10.0  # below this, a "percentage" is really a fraction
+MIN_CHURN_FILES = 3  # fewer, and there is no ranking to make
+MAX_NAME_WORDS_FOR_MIRROR = 2  # `test_parse` mirrors `parse`, and says no more
+MIN_SOURCE_COMMITS_FOR_TDD = 5
+FIX_COMMIT_SHARE = 0.5  # more fixes than features is a suite arriving late
+INTEGRATION_TARGET = 0.15
+INTEGRATION_CEILING = 0.35
+E2E_TARGET = 0.20
+E2E_TOLERANCE = 0.4
+E2E_CEILING = 0.4
+UNIT_FLOOR = 0.5
+INTEGRATION_FLOOR = 0.1
+INTEGRATION_SPARSE = 0.05
+UNIT_SPARSE = 0.3
+HEAVY_SETUP_LINES = 30
+MIRRORED_NAME_SHARE = 0.3  # a third of the names just echo the function
+BUSY_DOUBLE_DENSITY = 3  # three doubles per case is a test about mocks
+MANY_CASES = 20  # past this, unparametrized repetition shows
+MIN_POINTS_LOST_TO_RECOMMEND = 0.5
+HIGH_SEVERITY_RANK = 2
+MEDIUM_SEVERITY_RANK = 6
 MAX_FILE_BYTES = 512 * 1024
 
 # Directories never worth walking into.
@@ -103,38 +160,41 @@ TEST_DIR_NAMES = {"test", "tests", "spec", "specs", "__tests__", "testing", "e2e
 # ---------------------------------------------------------------- detection
 
 
+# How each ecosystem spells a test file. A table rather than a chain of
+# returns: adding a language is a row, and the rules sit side by side where
+# they can be compared.
+def _jvm_test_name(stem: str, _name: str, _parts: set[str]) -> bool:
+    """JUnit's conventions, which allow the marker at either end of the name."""
+    return stem.endswith(("Test", "Tests", "Spec", "IT", "ITCase")) or stem.startswith("Test")
+
+
+_TEST_NAME_RULES: dict[str, Callable[[str, str, set[str]], bool]] = {
+    ".py": lambda stem, name, _parts: name.startswith("test_") or stem.endswith("_test") or name == "conftest.py",
+    ".go": lambda stem, _name, _parts: stem.endswith("_test"),
+    ".java": _jvm_test_name,
+    ".kt": _jvm_test_name,
+    ".rb": lambda stem, _name, _parts: stem.endswith(("_spec", "_test")),
+    ".php": lambda stem, _name, _parts: stem.endswith(("Test", "Spec")),
+    ".cs": lambda stem, _name, _parts: stem.endswith(("Test", "Tests", "Spec")),
+    ".exs": lambda stem, _name, _parts: stem.endswith("_test"),
+    ".scala": lambda stem, _name, _parts: stem.endswith(("Spec", "Test", "Suite")),
+    ".sh": lambda stem, _name, _parts: stem.startswith("test") or stem.endswith("_test"),
+    ".bash": lambda stem, _name, _parts: stem.startswith("test") or stem.endswith("_test"),
+    **{
+        ext: lambda stem, _name, parts: bool(re.search(r"\.(test|spec)$", stem)) or "__tests__" in parts
+        for ext in JS_EXT
+    },
+}
+
+
 def is_test_file(rel: Path) -> bool:
     """True if the path looks like a test/spec file in any common ecosystem."""
-    suffix = rel.suffix
-    stem = rel.stem
-    name = rel.name
+    suffix, stem, name = rel.suffix, rel.stem, rel.name
     parts = {p.lower() for p in rel.parts[:-1]}
-
     if suffix == ".feature":
         return True
-    if suffix == ".py" and (
-        name.startswith("test_") or stem.endswith("_test") or name == "conftest.py"
-    ):
-        return True
-    if suffix in JS_EXT and (re.search(r"\.(test|spec)$", stem) or "__tests__" in parts):
-        return True
-    if suffix == ".go" and stem.endswith("_test"):
-        return True
-    if suffix in {".java", ".kt"} and (
-        stem.endswith(("Test", "Tests", "Spec", "IT", "ITCase")) or stem.startswith("Test")
-    ):
-        return True
-    if suffix == ".rb" and stem.endswith(("_spec", "_test")):
-        return True
-    if suffix == ".php" and stem.endswith(("Test", "Spec")):
-        return True
-    if suffix == ".cs" and stem.endswith(("Test", "Tests", "Spec")):
-        return True
-    if suffix == ".exs" and stem.endswith("_test"):
-        return True
-    if suffix == ".scala" and stem.endswith(("Spec", "Test", "Suite")):
-        return True
-    if suffix in {".sh", ".bash"} and (stem.startswith("test") or stem.endswith("_test")):
+    rule = _TEST_NAME_RULES.get(suffix)
+    if rule and rule(stem, name, parts):
         return True
     # Anything of a known language living under a test directory.
     return suffix in LANG_BY_EXT and bool(parts & TEST_DIR_NAMES)
@@ -202,9 +262,7 @@ KIND_CONTENT_HINTS = [
     ),
     (
         "performance",
-        re.compile(
-            r"\bk6\b|locust|jmeter|\bJMH\b|pytest-benchmark|criterion|autocannon", re.IGNORECASE
-        ),
+        re.compile(r"\bk6\b|locust|jmeter|\bJMH\b|pytest-benchmark|criterion|autocannon", re.IGNORECASE),
     ),
 ]
 
@@ -232,18 +290,14 @@ CASE_RE = {
     "javascript": re.compile(r"(?<![.\w$])(?:it|test)\s*(?:\.\w+)*\s*\("),
     "go": re.compile(r"^func[ \t]+(?:Test|Fuzz|Example)\w*[ \t]*\(", re.MULTILINE),
     "java": re.compile(r"@(?:Test|ParameterizedTest|RepeatedTest)\b"),
-    "ruby": re.compile(
-        r"^[ \t]*(?:it|specify|scenario)[ \t]+['\"]|^[ \t]*def[ \t]+test_", re.MULTILINE
-    ),
+    "ruby": re.compile(r"^[ \t]*(?:it|specify|scenario)[ \t]+['\"]|^[ \t]*def[ \t]+test_", re.MULTILINE),
     "php": re.compile(r"function[ \t]+test\w*[ \t]*\(|@test\b"),
     "rust": re.compile(r"#\[[\w:]*test\]"),
     "csharp": re.compile(r"\[(?:Fact|Theory|Test|TestMethod|TestCase)[\]\(]"),
     "elixir": re.compile(r"^[ \t]*(?:test|property)[ \t]+[\"']", re.MULTILINE),
     "scala": re.compile(r"(?<![.\w])(?:test|it)\s*(?:should)?\s*[(\"']"),
     "shell": re.compile(r"^[ \t]*(?:function[ \t]+)?test_\w+[ \t]*\(\)", re.MULTILINE),
-    "feature": re.compile(
-        r"^[ \t]*(?:Scenario Outline|Scenario Template|Scenario|Example):", re.MULTILINE
-    ),
+    "feature": re.compile(r"^[ \t]*(?:Scenario Outline|Scenario Template|Scenario|Example):", re.MULTILINE),
 }
 CASE_RE["typescript"] = CASE_RE["javascript"]
 CASE_RE["kotlin"] = CASE_RE["java"]
@@ -279,9 +333,7 @@ WEAK_ASSERT_RE = re.compile(
 )
 # Bare truthiness: `assert thing` with nothing compared against.
 BARE_ASSERT_RE = {
-    "python": re.compile(
-        r"^[ \t]*assert\s+(?![^\n]*(?:==|!=|<|>|\bin\b|\bis\b))\S[^\n]*$", re.MULTILINE
-    ),
+    "python": re.compile(r"^[ \t]*assert\s+(?![^\n]*(?:==|!=|<|>|\bin\b|\bis\b))\S[^\n]*$", re.MULTILINE),
     "rust": re.compile(r"assert!\(\s*[\w.()]+\s*[,)]"),
 }
 TAUTOLOGY_RE = re.compile(
@@ -370,9 +422,7 @@ MOCK_RE = re.compile(
 # Test names, per language: group 1 (or the first non-empty group) is the name.
 NAME_RE = {
     "python": [re.compile(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(test\w*)[ \t]*\(", re.MULTILINE)],
-    "javascript": [
-        re.compile(r"(?<![.\w$])(?:it|test)\s*(?:\.\w+)*\s*\(\s*[`'\"]([^`'\"]{1,140})")
-    ],
+    "javascript": [re.compile(r"(?<![.\w$])(?:it|test)\s*(?:\.\w+)*\s*\(\s*[`'\"]([^`'\"]{1,140})")],
     "go": [
         re.compile(r"^func[ \t]+(Test\w*)[ \t]*\(", re.MULTILINE),
         re.compile(r"t\.Run\(\s*\"([^\"]{1,140})\""),
@@ -576,9 +626,7 @@ DOUBLE_RE = re.compile(
     r"|responses\.add\(|httpretty|stub_request\(|fakeredis|moto\.",
     re.IGNORECASE,
 )
-SPY_RE = re.compile(
-    r"spyOn\(|sinon\.spy|Mockito\.spy|\bspy\(|wraps\s*=|@Spy\b|SpyOn", re.IGNORECASE
-)
+SPY_RE = re.compile(r"spyOn\(|sinon\.spy|Mockito\.spy|\bspy\(|wraps\s*=|@Spy\b|SpyOn", re.IGNORECASE)
 STUB_RE = re.compile(
     r"\bstub\b|thenReturn|return_value|side_effect|\.Returns\(|mockReturnValue"
     r"|mockResolvedValue|\.willReturn|and_return",
@@ -598,17 +646,15 @@ DOUBLE_CLEANUP_RE = re.compile(
 )
 
 
-def name_words(name: str):
+def name_words(name: str) -> list[str]:
     """Split a test name into meaningful lowercase words."""
-    text = re.sub(
-        r"^(?:test[_\s-]*|should[_\s-]+|it[_\s-]+)", "", name.strip(), flags=re.IGNORECASE
-    )
+    text = re.sub(r"^(?:test[_\s-]*|should[_\s-]+|it[_\s-]+)", "", name.strip(), flags=re.IGNORECASE)
     text = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", text)
     text = re.sub(r"[_\-.]+", " ", text)
     return [w.lower() for w in re.findall(r"[A-Za-z]+|\d+", text)]
 
 
-def classify_name(name: str):
+def classify_name(name: str) -> tuple[bool, bool, bool]:
     """Return (is_placeholder, is_descriptive, states_a_condition) for a test name."""
     words = name_words(name)
     meaningful = [w for w in words if not w.isdigit() and w not in FILLER_WORDS]
@@ -616,12 +662,13 @@ def classify_name(name: str):
     behaviour = any(w in BEHAVIOUR_WORDS for w in words) or "should" in name.lower()
     condition = any(w in CONDITION_WORDS for w in words)
     descriptive = not placeholder and (
-        len(meaningful) >= 3 or (len(meaningful) >= 2 and (behaviour or condition))
+        len(meaningful) >= MIN_MEANINGFUL_WORDS
+        or (len(meaningful) >= MIN_WORDS_WITH_CONTEXT and (behaviour or condition))
     )
     return placeholder, descriptive, condition
 
 
-def extract_names(text: str, lang: str):
+def extract_names(text: str, lang: str) -> set[str]:
     names = []
     for pattern in NAME_RE.get(lang, []):
         for match in pattern.finditer(text):
@@ -645,9 +692,7 @@ SWALLOW_RE = re.compile(
     r"|catch\s*\([^)]*\)\s*\{\s*\}|contextlib\.suppress|recover\(\)\s*;?\s*\}",
     re.MULTILINE,
 )
-DEAD_BRANCH_RE = re.compile(
-    r"^[ \t]*if\s+(?:False|0)\s*:|^[ \t]*if\s*\(\s*(?:false|0)\s*\)", re.MULTILINE
-)
+DEAD_BRANCH_RE = re.compile(r"^[ \t]*if\s+(?:False|0)\s*:|^[ \t]*if\s*\(\s*(?:false|0)\s*\)", re.MULTILINE)
 SKIP_NO_REASON_RE = re.compile(
     r"@pytest\.mark\.skip(?!\w)(?!\s*\(\s*reason)|@unittest\.skip\s*\(\s*\)"
     r"|\bt\.Skip\(\s*\)|@Disabled\s*(?:\n|$)|@Ignore\s*(?:\n|$)"
@@ -695,7 +740,7 @@ GUARD_RE = re.compile(
 )
 
 
-def conditional_logic(block: str, window=400):
+def conditional_logic(block: str, window: int = CONDITION_WINDOW) -> int:
     """Branches that decide what a test checks, ignoring assertion guards."""
     count = 0
     for match in BRANCH_RE.finditer(block):
@@ -751,7 +796,7 @@ UNINFORMATIVE_ASSERT_RE["kotlin"] = UNINFORMATIVE_ASSERT_RE["java"]
 UNINFORMATIVE_ASSERT_RE["typescript"] = UNINFORMATIVE_ASSERT_RE["javascript"]
 
 
-def blend_profile(language_lines):
+def blend_profile(language_lines: dict[str, int]) -> Profile:
     """Weight each ecosystem's thresholds by how much of the source it is."""
     total = sum(language_lines.values())
     if not total:
@@ -765,9 +810,7 @@ def blend_profile(language_lines):
     ratio = cases = 0.0
     bare = spec = 0.0
     for lang, lines in language_lines.items():
-        target_ratio, target_cases, bare_check, spec_ok = LANGUAGE_PROFILES.get(
-            lang, DEFAULT_PROFILE
-        )
+        target_ratio, target_cases, bare_check, spec_ok = LANGUAGE_PROFILES.get(lang, DEFAULT_PROFILE)
         share = lines / total
         ratio += target_ratio * share
         cases += target_cases * share
@@ -778,8 +821,8 @@ def blend_profile(language_lines):
         "test_code_ratio": round(ratio, 2),
         "cases_per_source": round(cases, 2),
         # Only apply an ecosystem-specific check when that ecosystem is most of the repo.
-        "bare_assert_check": bare >= 0.5,
-        "spec_style_idiomatic": spec >= 0.5,
+        "bare_assert_check": bare >= MOSTLY,
+        "spec_style_idiomatic": spec >= MOSTLY,
         "languages": dominant,
     }
 
@@ -913,9 +956,7 @@ SYMBOL_RE = {
 SYMBOL_RE["typescript"] = SYMBOL_RE["javascript"]
 # Only languages whose imports name the symbols they pull in can be checked.
 PHANTOM_LANGS = {"python", "javascript", "typescript"}
-PY_IMPORT_RE = re.compile(
-    r"^[ \t]*from[ \t]+([.\w]+)[ \t]+import[ \t]+(\([^)]*\)|[^\n#]+)", re.MULTILINE
-)
+PY_IMPORT_RE = re.compile(r"^[ \t]*from[ \t]+([.\w]+)[ \t]+import[ \t]+(\([^)]*\)|[^\n#]+)", re.MULTILINE)
 JS_IMPORT_RE = re.compile(
     r"import[ \t]*\{([^}]*)\}[ \t]*from[ \t]*['\"](\.[^'\"]*)['\"]"
     r"|(?:const|let|var)[ \t]*\{([^}]*)\}[ \t]*=[ \t]*require\("
@@ -923,11 +964,11 @@ JS_IMPORT_RE = re.compile(
 )
 
 
-def line_of(text: str, offset: int):
+def line_of(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
 
 
-def normalise_body(block: str):
+def normalise_body(block: str) -> str:
     """A case body with its name, comments and literals removed, for duplicate hunting."""
     body = block.split("\n", 1)[1] if "\n" in block else ""
     body = COMMENT_RE.sub("", body)
@@ -935,7 +976,7 @@ def normalise_body(block: str):
     return re.sub(r"\s+", " ", body).strip()
 
 
-def imported_project_names(text: str, lang: str, modules: set):
+def imported_project_names(text: str, lang: str, modules: set[str]) -> set[str]:
     """Names a test pulls in from the project's own code."""
     names = []
     if lang == "python":
@@ -960,7 +1001,7 @@ def imported_project_names(text: str, lang: str, modules: set):
 # ------------------------------------------------------------------ walking
 
 
-def read_text(path: Path):
+def read_text(path: Path) -> str | None:
     try:
         if path.stat().st_size > MAX_FILE_BYTES:
             return None
@@ -969,7 +1010,7 @@ def read_text(path: Path):
         return None
 
 
-def walk(root: Path):
+def walk(root: Path) -> Iterator[tuple[Path, Path]]:
     """Yield (absolute_path, relative_path, in_artifact_dir) for every file."""
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
@@ -980,13 +1021,24 @@ def walk(root: Path):
             yield abs_path, rel, in_artifact
 
 
-def language_of(rel: Path):
+def language_of(rel: Path) -> str | None:
     if rel.suffix == ".feature":
         return "feature"
     return LANG_BY_EXT.get(rel.suffix)
 
 
-def classify_kind(rel: Path, text: str):
+# The idioms a file can be written in, each recognised by one pattern.
+STYLE_FLAGS = [
+    (GHERKIN_RE, "bdd"),
+    (SPEC_STYLE_RE, "spec-style"),
+    (PROPERTY_RE, "property"),
+    (SNAPSHOT_RE, "snapshot"),
+    (PARAM_RE, "parametrized"),
+    (MOCK_RE, "mocked"),
+]
+
+
+def classify_kind(rel: Path, text: str) -> tuple[str, set[str]]:
     """Return (kind, flags) for one test file. Most specific signal wins."""
     flags = set()
     dirs = {p.lower() for p in rel.parts[:-1]} | {rel.stem.lower()}
@@ -997,9 +1049,7 @@ def classify_kind(rel: Path, text: str):
             break
     # Conjoined Twins: filed as a unit test, but talking to something real.
     if kind == "unit" and any(
-        pattern.search(text)
-        for name, pattern in KIND_CONTENT_HINTS
-        if name in {"integration", "e2e"}
+        pattern.search(text) for name, pattern in KIND_CONTENT_HINTS if name in {"integration", "e2e"}
     ):
         flags.add("conjoined")
     if kind is None:
@@ -1012,22 +1062,11 @@ def classify_kind(rel: Path, text: str):
         flags.add("bdd")
     if kind is None:
         kind = "unit"
-    if GHERKIN_RE.search(text):
-        flags.add("bdd")
-    if SPEC_STYLE_RE.search(text):
-        flags.add("spec-style")
-    if PROPERTY_RE.search(text):
-        flags.add("property")
-    if SNAPSHOT_RE.search(text):
-        flags.add("snapshot")
-    if PARAM_RE.search(text):
-        flags.add("parametrized")
-    if MOCK_RE.search(text):
-        flags.add("mocked")
+    flags |= {flag for pattern, flag in STYLE_FLAGS if pattern.search(text)}
     return kind, flags
 
 
-def with_decorators(text: str, start: int):
+def with_decorators(text: str, start: int) -> int:
     """Extend a case start backwards over its decorators/annotations."""
     position = start
     while position > 0:
@@ -1040,60 +1079,80 @@ def with_decorators(text: str, start: int):
     return position
 
 
-def analyse_test_file(rel: Path, text: str, lang: str):
-    case_re = CASE_RE.get(lang)
-    assert_re = ASSERT_RE.get(lang, GENERIC_ASSERT)
-    starts = [m.start() for m in case_re.finditer(text)] if case_re else []
+@dataclass
+class _CaseTally:
+    """What one file's cases add up to, before the file-level signals."""
 
-    bare_re = BARE_ASSERT_RE.get(lang)
-    bodies = []
-    giant_cases = roulette_cases = branching_cases = boundary_cases = 0
-    mirrors = []
-    blocks = [with_decorators(text, start) for start in starts]
-    without = doubles = cases_with_doubles = mock_only = 0
-    weak_assertions = weak_only = error_cases = 0
+    without: int = 0
+    doubles: int = 0
+    cases_with_doubles: int = 0
+    mock_only: int = 0
+    weak_assertions: int = 0
+    weak_only: int = 0
+    error_cases: int = 0
+    giant_cases: int = 0
+    roulette_cases: int = 0
+    branching_cases: int = 0
+    boundary_cases: int = 0
+    bodies: list = field(default_factory=list)
+    mirrors: list = field(default_factory=list)
+
+
+def _tally_assertions(tally: _CaseTally, block: str, assert_re: re.Pattern, bare_re: re.Pattern | None) -> int:
+    """How one case asserts: how many, how many of those are weak, and whether
+    it only ever checks its doubles. Returns the assertion count."""
+    assertions = len(assert_re.findall(block))
+    mock_assertions = len(MOCK_ASSERT_RE.findall(block))
+    block_doubles = len(DOUBLE_RE.findall(block))
+    weak = len(WEAK_ASSERT_RE.findall(block)) + len(TAUTOLOGY_RE.findall(block))
+    if bare_re:
+        weak += len(bare_re.findall(block))
+    weak = min(weak, assertions)
+    tally.weak_assertions += weak
+    if not assertions:
+        tally.without += 1
+    elif weak == assertions:
+        # It asserts, but only that something is truthy/not-null/a snapshot.
+        tally.weak_only += 1
+    if block_doubles:
+        tally.cases_with_doubles += 1
+        tally.doubles += block_doubles
+    # A case whose every assertion is an interaction check tests the double,
+    # not the behaviour.
+    if mock_assertions and assertions <= mock_assertions:
+        tally.mock_only += 1
+    return assertions
+
+
+def _tally_cases(
+    rel: Path, text: str, blocks: list[int], assert_re: re.Pattern, bare_re: re.Pattern | None
+) -> _CaseTally:
+    """Walk the file's cases once and count what each one is: how it asserts,
+    whether it asserts at all, how big it got, and what it duplicates."""
+    tally = _CaseTally()
     for i, start in enumerate(blocks):
         end = blocks[i + 1] if i + 1 < len(blocks) else len(text)
         block = text[start:end]
-        assertions = len(assert_re.findall(block))
-        mock_assertions = len(MOCK_ASSERT_RE.findall(block))
-        block_doubles = len(DOUBLE_RE.findall(block))
-        weak = len(WEAK_ASSERT_RE.findall(block)) + len(TAUTOLOGY_RE.findall(block))
-        if bare_re:
-            weak += len(bare_re.findall(block))
-        weak = min(weak, assertions)
-        weak_assertions += weak
-        if not assertions:
-            without += 1
-        elif weak == assertions:
-            # It asserts, but only that something is truthy/not-null/a snapshot.
-            weak_only += 1
-        if block_doubles:
-            cases_with_doubles += 1
-            doubles += block_doubles
-        # A case whose every assertion is an interaction check tests the double,
-        # not the behaviour.
-        if mock_assertions and assertions <= mock_assertions:
-            mock_only += 1
+        assertions = _tally_assertions(tally, block, assert_re, bare_re)
         first_line = block.split("\n", 1)[0]
         words = set(name_words(first_line))
         if ERROR_ASSERT_RE.search(block) or words & ERROR_NAME_WORDS:
-            error_cases += 1
+            tally.error_cases += 1
         if BOUNDARY_RE.search(block) or words & BOUNDARY_NAME_WORDS:
-            boundary_cases += 1
+            tally.boundary_cases += 1
         body = normalise_body(block)
-        if len(body) >= 20:
-            bodies.append((body, line_of(text, start)))
+        if len(body) >= LONG_CASE_LINES:
+            tally.bodies.append((body, line_of(text, start)))
 
         body_lines = [ln for ln in block.splitlines()[1:] if ln.strip()]
-        if len(body_lines) > 50:
-            giant_cases += 1
-        if assertions > 10:
-            roulette_cases += 1
+        if len(body_lines) > GIANT_CASE_LINES:
+            tally.giant_cases += 1
+        if assertions > MANY_ASSERTIONS:
+            tally.roulette_cases += 1
         if conditional_logic(block) > 0:
-            branching_cases += 1
+            tally.branching_cases += 1
         for match in MIRROR_RE.finditer(block):
-            mirrors.append(
+            tally.mirrors.append(
                 {
                     "file": str(rel),
                     "line": line_of(text, start + match.start()),
@@ -1102,42 +1161,12 @@ def analyse_test_file(rel: Path, text: str, lang: str):
                     "the test shares the formula it is meant to check",
                 }
             )
-    # Doubles wired up in setUp/beforeEach, outside any single case.
-    doubles += len(DOUBLE_RE.findall(text[: blocks[0]] if blocks else text))
+    return tally
 
-    placeholder = descriptive = conditional = words = 0
-    bad_names = []
-    names = extract_names(text, lang)
-    for name in names:
-        is_placeholder, is_descriptive, has_condition = classify_name(name)
-        words += len(name_words(name))
-        placeholder += is_placeholder
-        descriptive += is_descriptive
-        conditional += has_condition
-        if not is_descriptive:
-            bad_names.append(name)
 
-    uninformative = (
-        len(UNINFORMATIVE_ASSERT_RE[lang].findall(text)) if lang in UNINFORMATIVE_ASSERT_RE else 0
-    )
-    chatter = len(CHATTER_RE.findall(text))
-    platform_branches = len(PLATFORM_RE.findall(text))
-    frozen = bool(FROZEN_TIME_RE.search(text))
-    seeded = bool(SEEDED_RANDOM_RE.search(text))
-    unfrozen_time = 0 if frozen else len(UNFROZEN_TIME_RE.findall(text))
-    unseeded_random = 0 if seeded else len(UNSEEDED_RANDOM_RE.findall(text))
-    env_coupling = len(ENV_COUPLING_RE.findall(text))
-    order_dependent = len(ORDER_DEPENDENT_RE.findall(text))
-
-    setup_lines = 0
-    setup_match = SETUP_BLOCK_RE.search(text)
-    if setup_match:
-        rest = text[setup_match.end() :].splitlines()
-        for line in rest:
-            if line.strip() and not line[:1].isspace():
-                break
-            setup_lines += 1 if line.strip() else 0
-
+def _brittle_and_private(rel: Path, text: str) -> tuple[list[Finding], list[Finding]]:
+    """(brittle selectors, implementation access) — the two findings that come
+    from reading the file rather than its cases."""
     brittle = []
     if not ROBUST_SELECTOR_RE.search(text):
         for match in BRITTLE_SELECTOR_RE.finditer(text):
@@ -1159,10 +1188,67 @@ def analyse_test_file(rel: Path, text: str, lang: str):
                 "file": str(rel),
                 "line": line_of(text, match.start()),
                 "kind": "implementation-access",
-                "message": f"reaches into `{member}` — testing the implementation, "
-                "not the behaviour",
+                "message": f"reaches into `{member}` — testing the implementation, not the behaviour",
             }
         )
+    return brittle, suppressed
+
+
+def analyse_test_file(rel: Path, text: str, lang: str) -> FileInfo:
+    case_re = CASE_RE.get(lang)
+    assert_re = ASSERT_RE.get(lang, GENERIC_ASSERT)
+    starts = [m.start() for m in case_re.finditer(text)] if case_re else []
+
+    bare_re = BARE_ASSERT_RE.get(lang)
+    bodies = []
+    giant_cases = roulette_cases = branching_cases = boundary_cases = 0
+    mirrors = []
+    blocks = [with_decorators(text, start) for start in starts]
+    without = doubles = cases_with_doubles = mock_only = 0
+    weak_assertions = weak_only = error_cases = 0
+    tally = _tally_cases(rel, text, blocks, assert_re, bare_re)
+    bodies, mirrors = tally.bodies, tally.mirrors
+    giant_cases, roulette_cases = tally.giant_cases, tally.roulette_cases
+    branching_cases, boundary_cases = tally.branching_cases, tally.boundary_cases
+    without, doubles = tally.without, tally.doubles
+    cases_with_doubles, mock_only = tally.cases_with_doubles, tally.mock_only
+    weak_assertions, weak_only, error_cases = tally.weak_assertions, tally.weak_only, tally.error_cases
+
+    # Doubles wired up in setUp/beforeEach, outside any single case.
+    doubles += len(DOUBLE_RE.findall(text[: blocks[0]] if blocks else text))
+
+    placeholder = descriptive = conditional = words = 0
+    bad_names = []
+    names = extract_names(text, lang)
+    for name in names:
+        is_placeholder, is_descriptive, has_condition = classify_name(name)
+        words += len(name_words(name))
+        placeholder += is_placeholder
+        descriptive += is_descriptive
+        conditional += has_condition
+        if not is_descriptive:
+            bad_names.append(name)
+
+    uninformative = len(UNINFORMATIVE_ASSERT_RE[lang].findall(text)) if lang in UNINFORMATIVE_ASSERT_RE else 0
+    chatter = len(CHATTER_RE.findall(text))
+    platform_branches = len(PLATFORM_RE.findall(text))
+    frozen = bool(FROZEN_TIME_RE.search(text))
+    seeded = bool(SEEDED_RANDOM_RE.search(text))
+    unfrozen_time = 0 if frozen else len(UNFROZEN_TIME_RE.findall(text))
+    unseeded_random = 0 if seeded else len(UNSEEDED_RANDOM_RE.findall(text))
+    env_coupling = len(ENV_COUPLING_RE.findall(text))
+    order_dependent = len(ORDER_DEPENDENT_RE.findall(text))
+
+    setup_lines = 0
+    setup_match = SETUP_BLOCK_RE.search(text)
+    if setup_match:
+        rest = text[setup_match.end() :].splitlines()
+        for line in rest:
+            if line.strip() and not line[:1].isspace():
+                break
+            setup_lines += 1 if line.strip() else 0
+
+    brittle, suppressed = _brittle_and_private(rel, text)
     for pattern, message in (
         (COMMENTED_ASSERT_RE, "assertion commented out"),
         (GREEDY_CATCH_RE, "failure logged and swallowed — the test still passes"),
@@ -1276,18 +1362,18 @@ THRESHOLD_PATTERNS = [
 ]
 
 
-def parse_cobertura(text):
+def parse_cobertura(text: str) -> float | None:
     m = re.search(r'line-rate="([0-9.]+)"', text)
     return round(float(m.group(1)) * 100, 1) if m else None
 
 
-def parse_lcov(text):
+def parse_lcov(text: str) -> float | None:
     found = sum(int(x) for x in re.findall(r"^LF:(\d+)", text, re.MULTILINE))
     hit = sum(int(x) for x in re.findall(r"^LH:(\d+)", text, re.MULTILINE))
     return round(hit / found * 100, 1) if found else None
 
 
-def parse_jacoco(text):
+def parse_jacoco(text: str) -> float | None:
     counters = re.findall(r'<counter type="LINE" missed="(\d+)" covered="(\d+)"', text)
     if not counters:
         return None
@@ -1296,7 +1382,7 @@ def parse_jacoco(text):
     return round(covered / total * 100, 1) if total else None
 
 
-def parse_go_profile(text):
+def parse_go_profile(text: str) -> float | None:
     total = covered = 0
     for line in text.splitlines():
         m = re.match(r"^.+:\d+\.\d+,\d+\.\d+ (\d+) (\d+)$", line)
@@ -1308,7 +1394,7 @@ def parse_go_profile(text):
     return round(covered / total * 100, 1) if total else None
 
 
-def parse_json_report(text):
+def parse_json_report(text: str) -> float | None:
     try:
         data = json.loads(text)
     except (ValueError, TypeError):
@@ -1325,7 +1411,7 @@ def parse_json_report(text):
     return None
 
 
-def cobertura_files(text):
+def cobertura_files(text: str) -> dict[str, float]:
     out = {}
     for tag in re.finditer(r"<class\b[^>]*>", text):
         attrs = dict(re.findall(r'([\w-]+)="([^"]*)"', tag.group(0)))
@@ -1334,7 +1420,7 @@ def cobertura_files(text):
     return out
 
 
-def lcov_files(text):
+def lcov_files(text: str) -> dict[str, float]:
     out = {}
     current, found, hit = None, 0, 0
     for line in text.splitlines():
@@ -1350,14 +1436,10 @@ def lcov_files(text):
     return out
 
 
-def jacoco_files(text):
+def jacoco_files(text: str) -> dict[str, float]:
     out = {}
-    for block in re.finditer(
-        r"<sourcefile[^>]*name=\"([^\"]+)\"[^>]*>(.*?)</sourcefile>", text, re.DOTALL
-    ):
-        counters = re.findall(
-            r'<counter type="LINE" missed="(\d+)" covered="(\d+)"', block.group(2)
-        )
+    for block in re.finditer(r"<sourcefile[^>]*name=\"([^\"]+)\"[^>]*>(.*?)</sourcefile>", text, re.DOTALL):
+        counters = re.findall(r'<counter type="LINE" missed="(\d+)" covered="(\d+)"', block.group(2))
         if counters:
             missed, covered = (int(counters[-1][0]), int(counters[-1][1]))
             total = missed + covered
@@ -1366,7 +1448,7 @@ def jacoco_files(text):
     return out
 
 
-def go_profile_files(text):
+def go_profile_files(text: str) -> dict[str, float]:
     totals = {}
     for line in text.splitlines():
         match = re.match(r"^(.+?):\d+\.\d+,\d+\.\d+ (\d+) (\d+)$", line)
@@ -1379,7 +1461,7 @@ def go_profile_files(text):
     return {name: round(c / t * 100, 1) for name, (c, t) in totals.items() if t}
 
 
-def json_report_files(text):
+def json_report_files(text: str) -> dict[str, float]:
     try:
         data = json.loads(text)
     except (ValueError, TypeError):
@@ -1419,28 +1501,30 @@ COVERAGE_REPORTS = [
 ]
 
 
-def measure_coverage(rel: Path, path: Path):
+def measure_coverage(rel: Path, path: Path) -> tuple[float | None, dict[str, float]]:
     """Return (total_percent, {basename: percent}) for a coverage report."""
     for pattern, parser in COVERAGE_REPORTS:
         if pattern.search(rel.name):
             text = read_text(path)
             if text is None:
                 return None, {}
-            if (
+            # A JaCoCo report whose filename says nothing: cobertura's pattern
+            # matched it first, and only the body tells the two apart.
+            looks_jacoco = (
                 rel.name.endswith(".xml")
                 and "jacoco" not in rel.name.lower()
                 and "<counter" in text
                 and "line-rate" not in text
-            ):
-                parser = parse_jacoco
-            total = parser(text)
+            )
+            chosen = parse_jacoco if looks_jacoco else parser
+            total = chosen(text)
             if total is None:
                 return None, {}
-            return total, PER_FILE_COVERAGE[parser](text)
+            return total, PER_FILE_COVERAGE[chosen](text)
     return None, {}
 
 
-def parse_stryker(text):
+def parse_stryker(text: str) -> float | None:
     """Stryker mutation.json: files -> mutants -> status."""
     try:
         data = json.loads(text)
@@ -1461,7 +1545,7 @@ def parse_stryker(text):
     return round(killed / total * 100, 1) if total else None
 
 
-def parse_pitest(text):
+def parse_pitest(text: str) -> float | None:
     """PIT mutations.xml: <mutation detected='true' status='KILLED'>."""
     detections = re.findall(r"<mutation[^>]*\bdetected=[\"']([a-z]+)[\"']", text, re.IGNORECASE)
     if not detections:
@@ -1470,7 +1554,7 @@ def parse_pitest(text):
     return round(killed / len(detections) * 100, 1)
 
 
-def parse_cargo_mutants(text):
+def parse_cargo_mutants(text: str) -> float | None:
     """cargo-mutants outcomes.json: summary per mutant."""
     try:
         data = json.loads(text)
@@ -1490,7 +1574,7 @@ def parse_cargo_mutants(text):
     return round(caught / total * 100, 1) if total else None
 
 
-def parse_generic_mutation(text):
+def parse_generic_mutation(text: str) -> float | None:
     """Anything exposing a mutation score directly."""
     try:
         data = json.loads(text)
@@ -1500,7 +1584,7 @@ def parse_generic_mutation(text):
         return None
     for key in ("mutationScore", "mutation_score", "score"):
         value = data.get(key)
-        if isinstance(value, (int, float)) and 0 <= value <= 100:
+        if isinstance(value, (int, float)) and 0 <= value <= PERCENT_MAX:
             return round(float(value), 1)
     return None
 
@@ -1512,7 +1596,7 @@ MUTATION_REPORTS = [
 ]
 
 
-def measure_mutation(rel: Path, path: Path):
+def measure_mutation(rel: Path, path: Path) -> float | None:
     for pattern, parser in MUTATION_REPORTS:
         if pattern.search(rel.name):
             text = read_text(path)
@@ -1522,15 +1606,15 @@ def measure_mutation(rel: Path, path: Path):
     return None
 
 
-def find_threshold(texts):
+def find_threshold(texts: list[str]) -> float | None:
     best = None
     for text in texts:
         for pattern in THRESHOLD_PATTERNS:
             for raw in pattern.findall(text):
                 value = int(raw)
                 if pattern.pattern.startswith("<minimum>"):
-                    value = value * 10 if value < 10 else value
-                if 1 <= value <= 100:
+                    value = value * 10 if value < FRACTION_AS_PERCENT else value
+                if 1 <= value <= PERCENT_MAX:
                     best = value if best is None else max(best, value)
     return best
 
@@ -1556,7 +1640,7 @@ CI_STRICT_RE = re.compile(
 )
 
 
-def is_ci_file(rel: Path):
+def is_ci_file(rel: Path) -> bool:
     parts = [p.lower() for p in rel.parts]
     if ".github" in parts and "workflows" in parts and rel.suffix in {".yml", ".yaml"}:
         return True
@@ -1569,18 +1653,16 @@ def is_ci_file(rel: Path):
 
 # "Not converting production bugs into regression tests" — a fix that ships no
 # test is a bug free to come back.
-FIX_COMMIT_RE = re.compile(
-    r"\b(?:fix|fixes|fixed|bug|bugfix|hotfix|regression|patch|repair)\b", re.IGNORECASE
-)
+FIX_COMMIT_RE = re.compile(r"\b(?:fix|fixes|fixed|bug|bugfix|hotfix|regression|patch|repair)\b", re.IGNORECASE)
 
 
-def git_history(root: Path, limit=400):
+def git_history(root: Path, limit: int = HISTORY_LIMIT) -> Stats | None:
     """Commit-level TDD signal: do source changes arrive with test changes?"""
 
-    def run(*args):
+    def run(*args: str) -> str | None:
         try:
-            result = subprocess.run(
-                ["git", "-C", str(root), *args],
+            result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own
+                [_GIT, "-C", str(root), *args],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -1652,14 +1734,20 @@ def git_history(root: Path, limit=400):
     }
 
 
-def find_hotspots(file_commits, source_files, tested, coverage_by_file, limit=20):
+def find_hotspots(
+    file_commits: dict[str, int],
+    source_files: list[str],
+    tested: set[str],
+    coverage_by_file: dict[str, float],
+    limit: int = LIST_LIMIT,
+) -> Stats | None:
     """Kapelonis AP4: is the code that changes most often the code under test?"""
     churn = sorted(
         ((len(file_commits.get(path, [])), path) for path in source_files),
         key=lambda item: (-item[0], item[1]),
     )
     churn = [(count, path) for count, path in churn if count > 1]
-    if len(churn) < 3:
+    if len(churn) < MIN_CHURN_FILES:
         return None  # too little history to say which files are hot
     hot_count = max(5, round(len(churn) * 0.2))
     hot = churn[:hot_count]
@@ -1693,7 +1781,7 @@ def find_hotspots(file_commits, source_files, tested, coverage_by_file, limit=20
 # --------------------------------------------------------------- substance
 
 
-def source_stem(rel: Path):
+def source_stem(rel: Path) -> str:
     """The source file stem a test file is named after, if any."""
     stem = rel.stem
     name = stem
@@ -1714,7 +1802,9 @@ def source_stem(rel: Path):
     return name if name and name != stem else None
 
 
-def find_duplicates(bodies_by_file, limit=20, min_cluster=3):
+def find_duplicates(
+    bodies_by_file: dict[str, list[tuple[str, int, str]]], limit: int = LIST_LIMIT, min_cluster: int = MIN_CLUSTER
+) -> tuple[int, list[Finding]]:
     """Cases whose bodies are identical once names and literals are stripped.
 
     Two matching bodies are common and often legitimate; three or more is a
@@ -1744,7 +1834,9 @@ def find_duplicates(bodies_by_file, limit=20, min_cluster=3):
     return redundant, findings
 
 
-def find_phantoms(imports_by_file, symbols, limit=20):
+def find_phantoms(
+    imports_by_file: dict[str, set[str]], symbols: set[str], limit: int = LIST_LIMIT
+) -> tuple[int, list[Finding]]:
     """Test imports of project symbols that no source file defines."""
     findings = []
     seen = set()
@@ -1759,14 +1851,15 @@ def find_phantoms(imports_by_file, symbols, limit=20):
                         "file": file,
                         "line": 0,
                         "kind": "phantom-symbol",
-                        "message": f"imports `{name}`, which no source file defines — "
-                        "dead or invented test",
+                        "message": f"imports `{name}`, which no source file defines — dead or invented test",
                     }
                 )
     return len(seen), findings
 
 
-def find_stale(pairs, file_commits, min_changes=5, limit=20):
+def find_stale(
+    pairs: list[tuple[str, str]], file_commits: dict[str, int], min_changes: int = MIN_CHANGES, limit: int = LIST_LIMIT
+) -> tuple[int, list[Finding]]:
     """Tests frozen while the code they cover kept changing.
 
     Positions come from `git log` newest-first, so a lower number is a more
@@ -1795,7 +1888,12 @@ def find_stale(pairs, file_commits, min_changes=5, limit=20):
     return stale, findings
 
 
-def find_decorative(pairs, file_coverage, threshold=40.0, limit=20):
+def find_decorative(
+    pairs: list[tuple[str, str]],
+    file_coverage: dict[str, float],
+    threshold: float = DECORATIVE_COVERAGE,
+    limit: int = LIST_LIMIT,
+) -> tuple[int, list[Finding]]:
     """Source files that have a test file and are still barely covered."""
     findings = []
     decorative = 0
@@ -1819,8 +1917,177 @@ def find_decorative(pairs, file_coverage, threshold=40.0, limit=20):
 # ------------------------------------------------------------------ collect
 
 
-def collect(root: Path, use_git=True):
-    stats = {
+@dataclass
+class _WalkState:
+    """What the walk gathers for the whole-project passes that come after it."""
+
+    symbols: set[str] = field(default_factory=set)
+    source_symbols: set[str] = field(default_factory=set)
+    modules: set[str] = field(default_factory=set)
+    test_names: list[str] = field(default_factory=list)
+    test_paths: list[Path] = field(default_factory=list)
+    source_paths: list[str] = field(default_factory=list)
+    source_by_stem: dict[str, Path] = field(default_factory=dict)
+    bodies_by_file: list[tuple[str, list]] = field(default_factory=list)
+    imports_by_file: list[tuple[str, set[str]]] = field(default_factory=list)
+
+
+@dataclass
+class _ConfigTexts:
+    """The two text buckets the threshold search reads at the end of the walk:
+    coverage config files and CI workflows."""
+
+    config: list[str] = field(default_factory=list)
+    ci: list[str] = field(default_factory=list)
+
+
+def _scrape_ci(stats: Stats, rel: Path, abs_path: Path, ci_texts: list[str]) -> None:
+    """What one CI workflow says: whether it runs the suite, measures
+    coverage, fails on it, mutates, or pins itself to one worker."""
+    text = read_text(abs_path) or ""
+    ci_texts.append(text)
+    stats["ci_files"].append(str(rel))
+    if TEST_CMD_RE.search(text):
+        stats["ci_runs_tests"] = True
+    if CI_COVERAGE_RE.search(text):
+        stats["ci_coverage"] = True
+    if CI_STRICT_RE.search(text):
+        stats["ci_strict"] = True
+    if MUTATION_RE.search(text):
+        stats["mutation_testing"] = True
+    if SERIAL_ONLY_RE.search(text):
+        stats["serial_only"] = True
+
+
+def _scrape_config(stats: Stats, rel: Path, abs_path: Path, texts: _ConfigTexts, *, in_artifact: bool) -> None:
+    """What one file says about how the suite is run: coverage config, CI
+    workflows, and the first coverage or mutation report found."""
+    config_texts, ci_texts = texts.config, texts.ci
+    name = rel.name
+    if not in_artifact and (name in COVERAGE_CONFIG_FILES or name.startswith(".coveragerc")):
+        text = read_text(abs_path)
+        if text:
+            config_texts.append(text)
+            if COVERAGE_TOOL_RE.search(text):
+                stats["coverage_config"].append(str(rel))
+            if MUTATION_RE.search(text):
+                stats["mutation_testing"] = True
+            if SERIAL_ONLY_RE.search(text):
+                stats["serial_only"] = True
+    if not in_artifact and is_ci_file(rel):
+        _scrape_ci(stats, rel, abs_path, ci_texts)
+    if stats["coverage_measured"] is None:
+        pct, per_file = measure_coverage(rel, abs_path)
+        if pct is not None:
+            stats["coverage_measured"] = pct
+            stats["coverage_source"] = str(rel)
+            stats["coverage_by_file"] = per_file
+    if stats["mutation_measured"] is None:
+        pct = measure_mutation(rel, abs_path)
+        if pct is not None:
+            stats["mutation_measured"] = pct
+            stats["mutation_source"] = str(rel)
+
+
+# Which kind of double a file uses, by the count it reported.
+_DOUBLE_KINDS = (("spies", "spies"), ("stubs", "stubs"), ("doubles", "mocks"))
+
+
+def _symbols_in(text: str, lang: str) -> set[str]:
+    """Every identifier this file defines or imports, as its language spells it."""
+    found: set[str] = set()
+    for pattern in SYMBOL_RE.get(lang, []):
+        for match in pattern.findall(text):
+            for raw in str(match).split(","):
+                name = raw.strip().split(" as ")[-1].strip()
+                if name.isidentifier():
+                    found.add(name)
+    return found
+
+
+def _fold_test_file(stats: Stats, rel: Path, text: str, lang: str, walk_state: _WalkState) -> None:
+    """One test file's measurements, folded into the totals and into the
+    per-file records the whole-project passes read afterwards."""
+    symbols, test_names = walk_state.symbols, walk_state.test_names
+    bodies_by_file, test_paths = walk_state.bodies_by_file, walk_state.test_paths
+    imports_by_file, modules = walk_state.imports_by_file, walk_state.modules
+    stats["test_files"] += 1
+    stats["test_languages"][lang] += 1
+    stats["test_lines"] += sum(1 for line in text.splitlines() if line.strip())
+    if lang == "feature":
+        stats["feature_files"] += 1
+    info = analyse_test_file(rel, text, lang)
+    stats["kind_files"][info["kind"]] += 1
+    stats["kind_cases"][info["kind"]] += info["cases"]
+    for flag in info["flags"]:
+        stats["flag_files"][flag] += 1
+    if "conjoined" in info["flags"]:
+        stats["conjoined_files"] += 1
+        stats["findings"].append(
+            {
+                "file": str(rel),
+                "line": 0,
+                "kind": "conjoined-twin",
+                "message": "filed as a unit test but talks to a real database, HTTP "
+                "service or browser — it is an integration test",
+            }
+        )
+    for key in (
+        "cases",
+        "assertions",
+        "cases_without_assertions",
+        "skips",
+        "focused",
+        "sleeps",
+        "weak_assertions",
+        "weak_only_cases",
+        "error_cases",
+        "giant_cases",
+        "roulette_cases",
+        "branching_cases",
+        "chatter",
+        "platform_branches",
+        "boundary_cases",
+        "uninformative_assertions",
+        "unfrozen_time",
+        "unseeded_random",
+        "env_coupling",
+        "order_dependent",
+        "doubles",
+        "cases_with_doubles",
+        "mock_only_cases",
+        "test_names",
+        "placeholder_names",
+        "descriptive_names",
+        "conditional_names",
+        "name_words",
+    ):
+        stats[key] += info[key]
+    stats["double_cleanup"] = stats["double_cleanup"] or info["double_cleanup"]
+    stats["double_kinds"].update(kind for key, kind in _DOUBLE_KINDS if info[key])
+    stats["bad_names"].extend(info["bad_names"][:3])
+    test_names.extend(info["names"])
+    stats["findings"].extend(info["suppressed"])
+    stats["findings"].extend(info["mirrors"][:5])
+    stats["findings"].extend(info["brittle"][:5])
+    stats["mirror_assertions"] += len(info["mirrors"])
+    stats["brittle_selectors"] += len(info["brittle"])
+    stats["private_access"] += info["private_access"]
+    stats["setup_lines"] = max(stats["setup_lines"], info["setup_lines"])
+    bodies_by_file.append((str(rel), info["case_bodies"]))
+    test_paths.append(rel)
+    symbols |= _symbols_in(text, lang)
+    if lang in PHANTOM_LANGS:
+        imports_by_file.append((str(rel), imported_project_names(text, lang, modules)))
+    if "bdd" in info["flags"]:
+        stats["bdd_cases"] += info["cases"]
+    elif "spec-style" in info["flags"]:
+        stats["spec_cases"] += info["cases"]
+
+
+def _empty_stats(root: Path) -> Stats:
+    """Every counter this pass fills, at zero."""
+    return {
         "root": str(root.resolve()),
         "source_files": 0,
         "test_files": 0,
@@ -1898,185 +2165,13 @@ def collect(root: Path, use_git=True):
         "git": None,
         "profile": None,
     }
-    config_texts = []
-    ci_texts = []
-    bodies_by_file = []
-    imports_by_file = []
-    symbols = set()
-    source_symbols = set()
-    test_names = []
-    source_by_stem = {}
-    source_paths = []
-    test_paths = []
-    modules = {p.name for p in root.iterdir() if p.is_dir()} if root.is_dir() else set()
 
-    for abs_path, rel, in_artifact in walk(root):
-        name = rel.name
-        if not in_artifact and (name in COVERAGE_CONFIG_FILES or name.startswith(".coveragerc")):
-            text = read_text(abs_path)
-            if text:
-                config_texts.append(text)
-                if COVERAGE_TOOL_RE.search(text):
-                    stats["coverage_config"].append(str(rel))
-                if MUTATION_RE.search(text):
-                    stats["mutation_testing"] = True
-                if SERIAL_ONLY_RE.search(text):
-                    stats["serial_only"] = True
-        if not in_artifact and is_ci_file(rel):
-            text = read_text(abs_path) or ""
-            ci_texts.append(text)
-            stats["ci_files"].append(str(rel))
-            if TEST_CMD_RE.search(text):
-                stats["ci_runs_tests"] = True
-            if CI_COVERAGE_RE.search(text):
-                stats["ci_coverage"] = True
-            if CI_STRICT_RE.search(text):
-                stats["ci_strict"] = True
-            if MUTATION_RE.search(text):
-                stats["mutation_testing"] = True
-            if SERIAL_ONLY_RE.search(text):
-                stats["serial_only"] = True
 
-        if stats["coverage_measured"] is None:
-            pct, per_file = measure_coverage(rel, abs_path)
-            if pct is not None:
-                stats["coverage_measured"] = pct
-                stats["coverage_source"] = str(rel)
-                stats["coverage_by_file"] = per_file
-        if stats["mutation_measured"] is None:
-            pct = measure_mutation(rel, abs_path)
-            if pct is not None:
-                stats["mutation_measured"] = pct
-                stats["mutation_source"] = str(rel)
-
-        if in_artifact:
-            continue
-        lang = language_of(rel)
-        if lang is None:
-            continue
-        if is_test_file(rel):
-            text = read_text(abs_path)
-            if text is None:
-                continue
-            stats["test_files"] += 1
-            stats["test_languages"][lang] += 1
-            stats["test_lines"] += sum(1 for line in text.splitlines() if line.strip())
-            if lang == "feature":
-                stats["feature_files"] += 1
-            info = analyse_test_file(rel, text, lang)
-            stats["kind_files"][info["kind"]] += 1
-            stats["kind_cases"][info["kind"]] += info["cases"]
-            for flag in info["flags"]:
-                stats["flag_files"][flag] += 1
-            if "conjoined" in info["flags"]:
-                stats["conjoined_files"] += 1
-                stats["findings"].append(
-                    {
-                        "file": str(rel),
-                        "line": 0,
-                        "kind": "conjoined-twin",
-                        "message": "filed as a unit test but talks to a real database, HTTP "
-                        "service or browser — it is an integration test",
-                    }
-                )
-            for key in (
-                "cases",
-                "assertions",
-                "cases_without_assertions",
-                "skips",
-                "focused",
-                "sleeps",
-                "weak_assertions",
-                "weak_only_cases",
-                "error_cases",
-                "giant_cases",
-                "roulette_cases",
-                "branching_cases",
-                "chatter",
-                "platform_branches",
-                "boundary_cases",
-                "uninformative_assertions",
-                "unfrozen_time",
-                "unseeded_random",
-                "env_coupling",
-                "order_dependent",
-                "doubles",
-                "cases_with_doubles",
-                "mock_only_cases",
-                "test_names",
-                "placeholder_names",
-                "descriptive_names",
-                "conditional_names",
-                "name_words",
-            ):
-                stats[key] += info[key]
-            stats["double_cleanup"] = stats["double_cleanup"] or info["double_cleanup"]
-            if info["spies"]:
-                stats["double_kinds"].add("spies")
-            if info["stubs"]:
-                stats["double_kinds"].add("stubs")
-            if info["doubles"]:
-                stats["double_kinds"].add("mocks")
-            stats["bad_names"].extend(info["bad_names"][:3])
-            test_names.extend(info["names"])
-            stats["findings"].extend(info["suppressed"])
-            stats["findings"].extend(info["mirrors"][:5])
-            stats["findings"].extend(info["brittle"][:5])
-            stats["mirror_assertions"] += len(info["mirrors"])
-            stats["brittle_selectors"] += len(info["brittle"])
-            stats["private_access"] += info["private_access"]
-            stats["setup_lines"] = max(stats["setup_lines"], info["setup_lines"])
-            bodies_by_file.append((str(rel), info["case_bodies"]))
-            test_paths.append(rel)
-            for pattern in SYMBOL_RE.get(lang, []):
-                for match in pattern.findall(text):
-                    for name in str(match).split(","):
-                        name = name.strip().split(" as ")[-1].strip()
-                        if name.isidentifier():
-                            symbols.add(name)
-            if lang in PHANTOM_LANGS:
-                imports_by_file.append((str(rel), imported_project_names(text, lang, modules)))
-            if "bdd" in info["flags"]:
-                stats["bdd_cases"] += info["cases"]
-            elif "spec-style" in info["flags"]:
-                stats["spec_cases"] += info["cases"]
-        else:
-            stats["source_files"] += 1
-            stats["languages"][lang] += 1
-            source_by_stem.setdefault(rel.stem, rel)
-            source_paths.append(str(rel))
-            modules.add(rel.stem)
-            text = read_text(abs_path)
-            if text:
-                lines = sum(1 for line in text.splitlines() if line.strip())
-                stats["source_lines"] += lines
-                stats["language_lines"][lang] += lines
-                for pattern in SYMBOL_RE.get(lang, []):
-                    for match in pattern.findall(text):
-                        for name in str(match).split(","):
-                            name = name.strip().split(" as ")[-1].strip()
-                            if name.isidentifier():
-                                symbols.add(name)
-                                source_symbols.add(name.lower())
-
-    stats["profile"] = blend_profile(stats["language_lines"])
-    stats["coverage_threshold"] = find_threshold(config_texts + ci_texts)
-    if use_git:
-        stats["git"] = git_history(root)
-
-    for name in test_names:
-        words = [w for w in name_words(name) if w not in FILLER_WORDS]
-        if 1 <= len(words) <= 2 and "_".join(words) in source_symbols:
-            stats["method_mirror_names"] += 1
-
-    symbols |= modules | {stem for stem in source_by_stem}
-
-    stats["duplicate_cases"], duplicate_findings = find_duplicates(bodies_by_file)
-    stats["findings"].extend(duplicate_findings)
-    if symbols:
-        stats["phantom_symbols"], phantom_findings = find_phantoms(imports_by_file, symbols)
-        stats["findings"].extend(phantom_findings)
-
+def _pairing_passes(stats: Stats, walk_state: _WalkState) -> None:
+    """What the test/source pairing says: which tests are stale, which are
+    decorative, and where the churn lands without cover."""
+    test_paths, source_by_stem = walk_state.test_paths, walk_state.source_by_stem
+    source_paths = walk_state.source_paths
     pairs = []
     for rel in test_paths:
         stem = source_stem(rel)
@@ -2088,14 +2183,8 @@ def collect(root: Path, use_git=True):
         stats["stale_tests"], stale_findings = find_stale(pairs, stats["git"]["file_commits"])
         stats["findings"].extend(stale_findings)
     if stats["coverage_by_file"]:
-        coverage_pairs = [
-            (test, source)
-            for test, source in pairs
-            if Path(source).name in stats["coverage_by_file"]
-        ]
-        lookup = {
-            source: stats["coverage_by_file"][Path(source).name] for _, source in coverage_pairs
-        }
+        coverage_pairs = [(test, source) for test, source in pairs if Path(source).name in stats["coverage_by_file"]]
+        lookup = {source: stats["coverage_by_file"][Path(source).name] for _, source in coverage_pairs}
         stats["decorative_tests"], decorative_findings = find_decorative(coverage_pairs, lookup)
         stats["findings"].extend(decorative_findings)
     if stats["git"]:
@@ -2111,9 +2200,64 @@ def collect(root: Path, use_git=True):
             stats["hot_coverage"] = hotspots["hot_coverage"]
             stats["findings"].extend(hotspots["findings"])
 
-    stats["suppressed_failures"] = sum(
-        1 for f in stats["findings"] if f["kind"] == "suppressed-failure"
-    )
+
+def collect(root: Path, *, use_git: bool = True) -> Stats:
+    stats = _empty_stats(root)
+    texts = _ConfigTexts()
+    walk_state = _WalkState(modules={p.name for p in root.iterdir() if p.is_dir()} if root.is_dir() else set())
+    bodies_by_file, imports_by_file = walk_state.bodies_by_file, walk_state.imports_by_file
+    symbols, source_symbols = walk_state.symbols, walk_state.source_symbols
+    test_names, source_by_stem, modules = walk_state.test_names, walk_state.source_by_stem, walk_state.modules
+
+    for abs_path, rel, in_artifact in walk(root):
+        _scrape_config(stats, rel, abs_path, texts, in_artifact=in_artifact)
+
+        if in_artifact:
+            continue
+        lang = language_of(rel)
+        if lang is None:
+            continue
+        if is_test_file(rel):
+            text = read_text(abs_path)
+            if text is None:
+                continue
+            _fold_test_file(stats, rel, text, lang, walk_state)
+        else:
+            stats["source_files"] += 1
+            stats["languages"][lang] += 1
+            source_by_stem.setdefault(rel.stem, rel)
+            walk_state.source_paths.append(str(rel))
+            modules.add(rel.stem)
+            text = read_text(abs_path)
+            if text:
+                lines = sum(1 for line in text.splitlines() if line.strip())
+                stats["source_lines"] += lines
+                stats["language_lines"][lang] += lines
+                found = _symbols_in(text, lang)
+                symbols |= found
+                source_symbols |= {name.lower() for name in found}
+
+    stats["profile"] = blend_profile(stats["language_lines"])
+    stats["coverage_threshold"] = find_threshold(texts.config + texts.ci)
+    if use_git:
+        stats["git"] = git_history(root)
+
+    for name in test_names:
+        words = [w for w in name_words(name) if w not in FILLER_WORDS]
+        if 1 <= len(words) <= MAX_NAME_WORDS_FOR_MIRROR and "_".join(words) in source_symbols:
+            stats["method_mirror_names"] += 1
+
+    symbols |= modules | set(source_by_stem)
+
+    stats["duplicate_cases"], duplicate_findings = find_duplicates(bodies_by_file)
+    stats["findings"].extend(duplicate_findings)
+    if symbols:
+        stats["phantom_symbols"], phantom_findings = find_phantoms(imports_by_file, symbols)
+        stats["findings"].extend(phantom_findings)
+
+    _pairing_passes(stats, walk_state)
+
+    stats["suppressed_failures"] = sum(1 for f in stats["findings"] if f["kind"] == "suppressed-failure")
     stats["findings"].sort(key=lambda f: (FLAG_ORDER.get(f["kind"], 9), f["file"], f["line"]))
     for finding in stats["findings"]:
         finding["severity"] = severity_for(finding["kind"])
@@ -2147,11 +2291,11 @@ DIMENSIONS = [
 GRADES = [(85, "A"), (70, "B"), (55, "C"), (40, "D"), (0, "F")]
 
 
-def clamp(value, low=0.0, high=1.0):
+def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return max(low, min(high, value))
 
 
-def score_coverage(s):
+def score_coverage(s: Stats) -> tuple[float | None, str, str]:
     """0.25 for tooling, 0.20 for a gate, 0.55 for what is actually covered."""
     configured = bool(s["coverage_config"]) or s["ci_coverage"]
     threshold = s["coverage_threshold"]
@@ -2184,7 +2328,7 @@ def score_coverage(s):
     return clamp(score), detail, advice
 
 
-def score_unit(s):
+def score_unit(s: Stats) -> tuple[float | None, str, str]:
     source = s["source_files"]
     if source == 0:
         return None, "no source files found", ""
@@ -2214,7 +2358,7 @@ def score_unit(s):
     )
 
 
-def score_layer(s, kind, target_share, label, advice):
+def score_layer(s: Stats, kind: str, target_share: float, label: str, advice: str) -> tuple[float | None, str, str]:
     cases = s["kind_cases"][kind]
     files = s["kind_files"][kind]
     if not cases and not files:
@@ -2226,12 +2370,12 @@ def score_layer(s, kind, target_share, label, advice):
     return score, detail, f"grow the {label} layer — {advice}"
 
 
-def score_tdd(s):
+def score_tdd(s: Stats) -> tuple[float | None, str, str]:
     git = s["git"]
     if not git:
         return None, "no git history available", ""
     source_commits = git["source_commits"]
-    if source_commits < 5:
+    if source_commits < MIN_SOURCE_COMMITS_FOR_TDD:
         return None, f"only {source_commits} source commit(s) — not enough signal", ""
     ratio = git["source_commits_with_tests"] / source_commits
     test_only = git["test_only_commits"] / max(git["commits_analysed"], 1)
@@ -2243,13 +2387,10 @@ def score_tdd(s):
         f"{ratio * 100:.0f}% of {source_commits} source commits also touched tests "
         f"({git['test_only_commits']} test-only)"
     )
-    advice = (
-        "ship tests in the same commit as the code they cover — "
-        "aim for 60%+ of source commits touching tests"
-    )
+    advice = "ship tests in the same commit as the code they cover — aim for 60%+ of source commits touching tests"
     if fixes:
         detail += f", {git['fix_commits_with_tests']}/{fixes} bugfixes shipped a test"
-        if fix_ratio < 0.5:
+        if fix_ratio < FIX_COMMIT_SHARE:
             advice = (
                 f"{fixes - git['fix_commits_with_tests']} of {fixes} bugfix commits shipped "
                 "no test — a fix without a regression test is a bug free to come back"
@@ -2257,7 +2398,7 @@ def score_tdd(s):
     return clamp(score), detail, advice
 
 
-def score_assertions(s):
+def score_assertions(s: Stats) -> tuple[float | None, str, str]:
     cases = s["cases"]
     if cases == 0:
         return 0.0, "no test cases detected", "write tests that assert something"
@@ -2285,10 +2426,7 @@ def score_assertions(s):
     if not s["cases_without_assertions"] and not s["weak_only_cases"] and not uninformative:
         detail += ", every case asserts a value"
     if silent >= weak_only:
-        advice = (
-            "assert on behaviour: tests that only exercise code without asserting "
-            "cannot fail for the right reason"
-        )
+        advice = "assert on behaviour: tests that only exercise code without asserting cannot fail for the right reason"
     else:
         advice = (
             f"{s['weak_only_cases']} case(s) only assert truthiness or not-null — "
@@ -2302,7 +2440,7 @@ def score_assertions(s):
     return score, detail, advice
 
 
-def score_failure_paths(s):
+def score_failure_paths(s: Stats) -> tuple[float | None, str, str]:
     """Regressions escape through the error paths and the boundaries."""
     cases = s["cases"]
     if cases == 0:
@@ -2327,7 +2465,7 @@ def score_failure_paths(s):
     return score, detail, advice
 
 
-def score_mutation(s):
+def score_mutation(s: Stats) -> tuple[float | None, str, str]:
     """The only direct evidence that the suite kills bugs — scored when present."""
     measured = s["mutation_measured"]
     if measured is None:
@@ -2337,14 +2475,11 @@ def score_mutation(s):
     return (
         score,
         detail,
-        (
-            "survived mutants are code paths a bug could change without any "
-            "test noticing — kill them or delete the code"
-        ),
+        ("survived mutants are code paths a bug could change without any test noticing — kill them or delete the code"),
     )
 
 
-def score_pyramid(s):
+def score_pyramid(s: Stats) -> tuple[float | None, str, str]:
     """The test pyramid's shape: unit-only, integration-only and ice-cream cone."""
     unit = s["kind_cases"]["unit"]
     integration = s["kind_cases"]["integration"] + s["kind_cases"]["contract"]
@@ -2355,22 +2490,23 @@ def score_pyramid(s):
     unit_share, integration_share, e2e_share = (unit / total, integration / total, e2e / total)
     # Healthy: unit-heavy base, a real integration band, a thin E2E tip.
     unit_term = clamp(unit_share / 0.5)
-    integration_term = clamp(integration_share / 0.15) if integration_share <= 0.35 else 1.0
-    e2e_term = 1.0 if e2e_share <= 0.20 else clamp(1 - (e2e_share - 0.20) / 0.4)
+    integration_term = (
+        clamp(integration_share / INTEGRATION_TARGET) if integration_share <= INTEGRATION_CEILING else 1.0
+    )
+    e2e_term = 1.0 if e2e_share <= E2E_TARGET else clamp(1 - (e2e_share - E2E_TARGET) / E2E_TOLERANCE)
     score = 0.4 * unit_term + 0.3 * integration_term + 0.3 * e2e_term
-    if e2e_share > 0.4:
+    if e2e_share > E2E_CEILING:
         shape = "ice-cream cone — E2E heavy"
-    elif unit_share >= 0.5 and integration_share >= 0.1:
+    elif unit_share >= UNIT_FLOOR and integration_share >= INTEGRATION_FLOOR:
         shape = "healthy pyramid"
-    elif integration_share < 0.05:
+    elif integration_share < INTEGRATION_SPARSE:
         shape = "unit tests without integration tests"
-    elif unit_share < 0.3:
+    elif unit_share < UNIT_SPARSE:
         shape = "integration tests without a unit base"
     else:
         shape = "lopsided"
     detail = (
-        f"{unit_share * 100:.0f}/{integration_share * 100:.0f}/{e2e_share * 100:.0f} "
-        f"unit/integration/E2E — {shape}"
+        f"{unit_share * 100:.0f}/{integration_share * 100:.0f}/{e2e_share * 100:.0f} unit/integration/E2E — {shape}"
     )
     return (
         score,
@@ -2382,7 +2518,7 @@ def score_pyramid(s):
     )
 
 
-def score_determinism(s):
+def score_determinism(s: Stats) -> tuple[float | None, str, str]:
     """Flakiness and environment coupling: the Butterfly, the Local Hero, Chain Gang."""
     cases = s["cases"]
     if cases == 0:
@@ -2414,7 +2550,7 @@ def score_determinism(s):
     return score, detail, advice
 
 
-def score_focus(s):
+def score_focus(s: Stats) -> tuple[float | None, str, str]:
     """One case, one behaviour: the Giant, the Eager Test, Assertion Roulette."""
     cases = s["cases"]
     if cases == 0:
@@ -2441,10 +2577,8 @@ def score_focus(s):
                 0.25 * clamp((s["roulette_cases"] / cases) / 0.10),
             )
         )
-    if s["setup_lines"] > 30:
-        penalties.append(
-            (f"{s['setup_lines']}-line setup block", 0.10 * clamp((s["setup_lines"] - 30) / 50))
-        )
+    if s["setup_lines"] > HEAVY_SETUP_LINES:
+        penalties.append((f"{s['setup_lines']}-line setup block", 0.10 * clamp((s["setup_lines"] - 30) / 50)))
     score = clamp(1 - sum(p for _, p in penalties))
     detail = ", ".join(label for label, _ in penalties) or "cases are small, linear and focused"
     return (
@@ -2457,7 +2591,7 @@ def score_focus(s):
     )
 
 
-def score_risk(s):
+def score_risk(s: Stats) -> tuple[float | None, str, str]:
     """Are the files that change most often the ones under test?"""
     if not s["hot_files"]:
         return None, "no churn history to rank by", ""
@@ -2468,14 +2602,11 @@ def score_risk(s):
     if s["hot_coverage"] is not None:
         score += 0.4 * clamp(s["hot_coverage"] / 85.0)
         detail += f", {s['hot_coverage']}% covered"
-    advice = (
-        "test the code that changes most: churn is the best available proxy for where "
-        "the next bug will be"
-    )
+    advice = "test the code that changes most: churn is the best available proxy for where the next bug will be"
     return clamp(score), detail, advice
 
 
-def score_substance(s):
+def score_substance(s: Stats) -> tuple[float | None, str, str]:
     """Is there a real test behind each case, or just something shaped like one?"""
     cases = s["cases"]
     if cases == 0:
@@ -2581,7 +2712,7 @@ def score_substance(s):
     return score, detail, advice
 
 
-def score_naming(s):
+def score_naming(s: Stats) -> tuple[float | None, str, str]:
     """Do the names say what behaviour is expected, or just that a thing exists?"""
     total = s["test_names"]
     if not total:
@@ -2606,7 +2737,7 @@ def score_naming(s):
     if s["method_mirror_names"]:
         detail += f", {s['method_mirror_names']} named after a method"
     advice = 'name the behaviour, not the subject: "<unit> <expected result> when <condition>"'
-    if mirrored > 0.3:
+    if mirrored > MIRRORED_NAME_SHARE:
         advice = (
             f"{s['method_mirror_names']} test(s) are named after the method they call — "
             "one test per method mirrors the code instead of describing what it should do"
@@ -2617,7 +2748,26 @@ def score_naming(s):
     return score, detail, advice
 
 
-def score_doubles(s):
+def _doubles_advice(s: Stats, *, density: float, unmocked_layer: int) -> str:
+    """The one thing worth changing about this suite's doubles, worst first."""
+    if s["mock_only_cases"]:
+        return (
+            f"{s['mock_only_cases']} case(s) only verify that a double was called — "
+            "assert on the returned value or the resulting state instead"
+        )
+    if density > BUSY_DOUBLE_DENSITY:
+        return "trim doubles back to real seams; a case wiring several doubles mostly tests its own wiring"
+    if not s["double_cleanup"]:
+        return "reset or restore doubles between cases so state cannot leak"
+    if not unmocked_layer:
+        return (
+            "every collaborator is doubled and no integration test exercises the real "
+            "one — the bugs live in that interaction, and nothing here would see them"
+        )
+    return "keep doubles at the edges and let the rest of the suite run real code"
+
+
+def score_doubles(s: Stats) -> tuple[float | None, str, str]:
     """Are mocks, stubs and spies used at real seams, or is the suite testing itself?"""
     cases = s["cases"]
     if cases == 0:
@@ -2654,29 +2804,10 @@ def score_doubles(s):
         detail += f", {s['mock_only_cases']} assert only on the double"
     if not s["double_cleanup"]:
         detail += ", no reset/restore"
-    if s["mock_only_cases"]:
-        advice = (
-            f"{s['mock_only_cases']} case(s) only verify that a double was called — "
-            "assert on the returned value or the resulting state instead"
-        )
-    elif density > 3:
-        advice = (
-            "trim doubles back to real seams; a case wiring several doubles mostly "
-            "tests its own wiring"
-        )
-    elif not s["double_cleanup"]:
-        advice = "reset or restore doubles between cases so state cannot leak"
-    elif not unmocked_layer:
-        advice = (
-            "every collaborator is doubled and no integration test exercises the real "
-            "one — the bugs live in that interaction, and nothing here would see them"
-        )
-    else:
-        advice = "keep doubles at the edges and let the rest of the suite run real code"
-    return score, detail, advice
+    return score, detail, _doubles_advice(s, density=density, unmocked_layer=unmocked_layer)
 
 
-def score_hygiene(s):
+def score_hygiene(s: Stats) -> tuple[float | None, str, str]:
     cases = s["cases"]
     if cases == 0:
         return 0.0, "no test cases detected", "write some tests first"
@@ -2687,10 +2818,8 @@ def score_hygiene(s):
     if s["focused"]:
         penalties.append((".only/fdescribe focus left in", 0.30))
     if s["chatter"]:
-        penalties.append(
-            ("console chatter instead of assertions", 0.15 * clamp((s["chatter"] / cases) / 0.20))
-        )
-    if cases > 20 and not s["flag_files"]["parametrized"]:
+        penalties.append(("console chatter instead of assertions", 0.15 * clamp((s["chatter"] / cases) / 0.20)))
+    if cases > MANY_CASES and not s["flag_files"]["parametrized"]:
         penalties.append(("no parametrised/table-driven tests", 0.10))
     score = clamp(1.0 - sum(p for _, p in penalties))
     if penalties:
@@ -2704,7 +2833,7 @@ def score_hygiene(s):
     )
 
 
-def score_bdd(s):
+def score_bdd(s: Stats) -> tuple[float | None, str, str]:
     total = max(s["cases"], 1)
     scenarios = s["bdd_cases"]
     features = s["feature_files"]
@@ -2732,7 +2861,7 @@ def score_bdd(s):
     return score, detail, advice
 
 
-def score_ci(s):
+def score_ci(s: Stats) -> tuple[float | None, str, str]:
     if not s["ci_files"]:
         return 0.0, "no CI configuration found", "run the suite on every push/PR"
     score = 0.0
@@ -2760,9 +2889,7 @@ SCORERS = {
         "integration",
         "test real collaborators (db, queue, http) rather than mocks only",
     ),
-    "e2e": lambda s: score_layer(
-        s, "e2e", 0.07, "functional/E2E", "cover the critical user journeys end to end"
-    ),
+    "e2e": lambda s: score_layer(s, "e2e", 0.07, "functional/E2E", "cover the critical user journeys end to end"),
     "tdd": score_tdd,
     "assertions": score_assertions,
     "failure": score_failure_paths,
@@ -2780,14 +2907,14 @@ SCORERS = {
 }
 
 
-def grade_for(score):
+def grade_for(score: float) -> str:
     for floor, letter in GRADES:
         if score >= floor:
             return letter
     return "F"
 
 
-def evaluate(stats):
+def evaluate(stats: Stats) -> Report:
     results = []
     weighted = 0.0
     total_weight = 0.0
@@ -2847,9 +2974,7 @@ def evaluate(stats):
             "source_lines": stats["source_lines"],
             "test_lines": stats["test_lines"],
             "test_to_code_ratio": (
-                round(stats["test_lines"] / stats["source_lines"], 2)
-                if stats["source_lines"]
-                else None
+                round(stats["test_lines"] / stats["source_lines"], 2) if stats["source_lines"] else None
             ),
             "method_mirror_names": stats["method_mirror_names"],
             "hot_files": stats["hot_files"],
@@ -2900,7 +3025,7 @@ def evaluate(stats):
     }
 
 
-def compare(report, baseline):
+def compare(report: Report, baseline: Report) -> Report:
     """Attach per-dimension and total deltas against a previous JSON report."""
     if not isinstance(baseline, dict) or "score" not in baseline:
         raise ValueError("baseline is not a gradebook-tests JSON report")
@@ -2921,7 +3046,7 @@ def compare(report, baseline):
     return report
 
 
-def score_directories(root: Path, use_git=True):
+def score_directories(root: Path, *, use_git: bool = True) -> list[Stats]:
     """Score each immediate subdirectory that holds code of its own."""
     results = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
@@ -2947,8 +3072,8 @@ def score_directories(root: Path, use_git=True):
     return sorted(results, key=lambda r: r["score"])
 
 
-def recommendations(report, top=5):
-    ranked = [d for d in report["dimensions"] if d["score"] is not None and d["lost"] >= 0.5]
+def recommendations(report: Report, top: int = TOP_RECOMMENDATIONS) -> list[Stats]:
+    ranked = [d for d in report["dimensions"] if d["score"] is not None and d["lost"] >= MIN_POINTS_LOST_TO_RECOMMEND]
     ranked.sort(key=lambda d: d["lost"], reverse=True)
     return ranked[:top]
 
@@ -2956,14 +3081,14 @@ def recommendations(report, top=5):
 # ------------------------------------------------------------------- render
 
 
-def bar(score, width=20):
+def bar(score: float | None, width: int = BAR_WIDTH) -> str:
     if score is None:
         return "·" * width
     filled = round(score * width)
     return "█" * filled + "░" * (width - filled)
 
 
-def render_text(report, top=5, max_flags=None):
+def render_text(report: Report, top: int = TOP_RECOMMENDATIONS, max_flags: int | None = None) -> str:
     stats = report["stats"]
     out = [f"gradebook-tests {VERSION} — {report['root']}"]
     langs = ", ".join(f"{k} ({v})" for k, v in list(stats["languages"].items())[:5]) or "none"
@@ -2993,22 +3118,14 @@ def render_text(report, top=5, max_flags=None):
         if show_delta:
             value = dim.get("delta")
             delta = f"{value:+5.1f} " if value else ("      " if value is None else "    · ")
-        out.append(
-            f"  {dim['title']:<22} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} "
-            f"{delta}{dim['detail']}"
-        )
+        out.append(f"  {dim['title']:<22} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} {delta}{dim['detail']}")
     out.append("")
     headline = f"SCORE  {report['score']:.1f}/100   grade {report['grade']}"
     if show_delta:
-        headline += (
-            f"   {report['baseline']['delta']:+.1f} vs baseline ({report['baseline']['score']:.1f})"
-        )
+        headline += f"   {report['baseline']['delta']:+.1f} vs baseline ({report['baseline']['score']:.1f})"
     out.append(headline)
     if show_delta and not report["baseline"]["comparable"]:
-        out.append(
-            "note: the baseline scored a different set of dimensions — "
-            "the total is not directly comparable"
-        )
+        out.append("note: the baseline scored a different set of dimensions — the total is not directly comparable")
     if report["not_scored"]:
         out.append(f"not scored (weights redistributed): {', '.join(report['not_scored'])}")
     wins = recommendations(report, top)
@@ -3022,11 +3139,11 @@ def render_text(report, top=5, max_flags=None):
     return "\n".join(out)
 
 
-def location(finding):
+def location(finding: Finding) -> str:
     return f"{finding['file']}:{finding['line']}" if finding["line"] else finding["file"]
 
 
-def capped(findings, limit):
+def capped(findings: list[Finding], limit: int | None) -> list[Finding]:
     """None lists every finding; 0 or less hides the section."""
     if limit is None:
         return list(findings)
@@ -3048,15 +3165,15 @@ FLAG_ORDER = {
 }
 
 
-def severity_for(kind):
+def severity_for(kind: str) -> str:
     """One ranking, three buckets — editors read this, they don't re-derive it."""
     rank = FLAG_ORDER.get(kind, 9)
-    if rank <= 2:
+    if rank <= HIGH_SEVERITY_RANK:
         return "high"
-    return "medium" if rank <= 6 else "low"
+    return "medium" if rank <= MEDIUM_SEVERITY_RANK else "low"
 
 
-def render_flags(findings, limit):
+def render_flags(findings: list[Finding] | None, limit: int | None) -> list[str]:
     findings = findings or []
     shown = capped(findings, limit)
     if not shown:
@@ -3070,7 +3187,7 @@ def render_flags(findings, limit):
     return out
 
 
-def render_directories(directories):
+def render_directories(directories: list[Stats]) -> list[str]:
     if not directories:
         return []
     width = max(len(d["path"]) for d in directories)
@@ -3078,13 +3195,12 @@ def render_directories(directories):
     for entry in directories:
         counts = f"{entry['source_files']} src / {entry['test_files']} test"
         out.append(
-            f"  {entry['grade']}  {entry['score']:5.1f}  {entry['path']:<{width}}  "
-            f"{counts:<20} → {entry['top_win']}"
+            f"  {entry['grade']}  {entry['score']:5.1f}  {entry['path']:<{width}}  {counts:<20} → {entry['top_win']}"
         )
     return out
 
 
-def render_markdown(report, top=5, max_flags=None):
+def render_markdown(report: Report, top: int = TOP_RECOMMENDATIONS, max_flags: int | None = None) -> str:
     stats = report["stats"]
     out = [f"## Test suite score: **{report['score']:.1f}/100** (grade {report['grade']})", ""]
     out.append(
@@ -3098,11 +3214,7 @@ def render_markdown(report, top=5, max_flags=None):
         out.append(
             f"Baseline: **{report['baseline']['score']:.1f}** "
             f"({report['baseline']['delta']:+.1f})"
-            + (
-                ""
-                if report["baseline"]["comparable"]
-                else " — baseline scored a different set of dimensions"
-            )
+            + ("" if report["baseline"]["comparable"] else " — baseline scored a different set of dimensions")
         )
         out.append("")
         out.append("| Dimension | Score | Δ | Weight | Detail |")
@@ -3151,7 +3263,8 @@ def render_markdown(report, top=5, max_flags=None):
 # ---------------------------------------------------------------------- cli
 
 
-def main(argv=None):
+def _build_parser() -> argparse.ArgumentParser:
+    """The CLI surface, in one place."""
     parser = argparse.ArgumentParser(
         prog="gradebook-tests",
         description=__doc__,
@@ -3159,12 +3272,8 @@ def main(argv=None):
     )
     parser.add_argument("path", nargs="?", default=".", help="repository to evaluate")
     parser.add_argument("--format", choices=["text", "json", "markdown"], default="text")
-    parser.add_argument(
-        "--fail-under", type=float, metavar="N", help="exit 1 when the score is below N (CI gate)"
-    )
-    parser.add_argument(
-        "--baseline", metavar="FILE", help="a previous --format json report to diff against"
-    )
+    parser.add_argument("--fail-under", type=float, metavar="N", help="exit 1 when the score is below N (CI gate)")
+    parser.add_argument("--baseline", metavar="FILE", help="a previous --format json report to diff against")
     parser.add_argument(
         "--fail-on-drop",
         type=float,
@@ -3193,60 +3302,28 @@ def main(argv=None):
         metavar="N",
         help="how many recommendations to show (default 5)",
     )
-    parser.add_argument(
-        "--list-dimensions", action="store_true", help="print the scoring model and exit"
-    )
+    parser.add_argument("--list-dimensions", action="store_true", help="print the scoring model and exit")
     parser.add_argument("--version", action="version", version=f"gradebook-tests {VERSION}")
-    args = parser.parse_args(argv)
+    return parser
 
-    if args.list_dimensions:
-        for key, title, weight in DIMENSIONS:
-            note = "  (only when a mutation report exists)" if key == "mutation" else ""
-            print(f"{key:<12} {weight:>3} pts  {title}{note}")
-        print(
-            "\nThe always-scored dimensions total 100; any dimension that cannot be "
-            "judged is\nleft unscored and the remaining weights renormalise."
-        )
-        return 0
 
-    root = Path(args.path)
-    if not root.is_dir():
-        print(f"gradebook-tests: not a directory: {root}", file=sys.stderr)
-        return 2
-
-    if args.fail_on_drop is not None and not args.baseline:
-        print("gradebook-tests: --fail-on-drop needs --baseline", file=sys.stderr)
-        return 2
-
-    stats = collect(root, use_git=not args.no_git)
-    report = evaluate(stats)
-    report["recommendations"] = [
-        {"dimension": d["id"], "points": d["lost"], "advice": d["advice"]}
-        for d in recommendations(report, args.top)
-    ]
-    if args.by_dir:
-        report["directories"] = score_directories(root, use_git=not args.no_git)
-    if args.baseline:
-        try:
-            with open(args.baseline) as handle:
-                compare(report, json.load(handle))
-        except (OSError, ValueError) as error:
-            print(
-                f"gradebook-tests: cannot read baseline {args.baseline}: {error}", file=sys.stderr
-            )
-            return 2
-
+def _emit(report: Report, args: argparse.Namespace) -> None:
+    """The report, in whichever format was asked for."""
     if args.format == "json":
         json.dump(report, sys.stdout, indent=2, sort_keys=False)
-        print()
+        print()  # noqa: T201 — the tool's output
     elif args.format == "markdown":
-        print(render_markdown(report, args.top, args.max_flags))
+        print(render_markdown(report, args.top, args.max_flags))  # noqa: T201 — the tool's output
     else:
-        print(render_text(report, args.top, args.max_flags))
+        print(render_text(report, args.top, args.max_flags))  # noqa: T201 — the tool's output
 
+
+def _gate_failed(report: Report, args: argparse.Namespace) -> bool:
+    """Whether either gate — a floor, or a drop against a baseline — was
+    crossed. Says which on stderr, since that is the whole point of a gate."""
     failed = False
     if args.fail_under is not None and report["score"] < args.fail_under:
-        print(
+        print(  # noqa: T201 — the tool's output
             f"gradebook-tests: {report['score']:.1f} is below --fail-under {args.fail_under}",
             file=sys.stderr,
         )
@@ -3254,13 +3331,54 @@ def main(argv=None):
     if args.fail_on_drop is not None:
         drop = -report["baseline"]["delta"]
         if drop > args.fail_on_drop:
-            print(
-                f"gradebook-tests: dropped {drop:.1f} points against the baseline "
-                f"(tolerance {args.fail_on_drop})",
+            print(  # noqa: T201 — the tool's output
+                f"gradebook-tests: dropped {drop:.1f} points against the baseline (tolerance {args.fail_on_drop})",
                 file=sys.stderr,
             )
             failed = True
-    return 1 if failed else 0
+    return failed
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    if args.list_dimensions:
+        for key, title, weight in DIMENSIONS:
+            note = "  (only when a mutation report exists)" if key == "mutation" else ""
+            print(f"{key:<12} {weight:>3} pts  {title}{note}")  # noqa: T201 — the tool's output
+        print(  # noqa: T201 — the tool's output
+            "\nThe always-scored dimensions total 100; any dimension that cannot be "
+            "judged is\nleft unscored and the remaining weights renormalise."
+        )
+        return 0
+
+    root = Path(args.path)
+    if not root.is_dir():
+        print(f"gradebook-tests: not a directory: {root}", file=sys.stderr)  # noqa: T201 — the tool's output
+        return 2
+
+    if args.fail_on_drop is not None and not args.baseline:
+        print("gradebook-tests: --fail-on-drop needs --baseline", file=sys.stderr)  # noqa: T201 — the tool's output
+        return 2
+
+    stats = collect(root, use_git=not args.no_git)
+    report = evaluate(stats)
+    report["recommendations"] = [
+        {"dimension": d["id"], "points": d["lost"], "advice": d["advice"]} for d in recommendations(report, args.top)
+    ]
+    if args.by_dir:
+        report["directories"] = score_directories(root, use_git=not args.no_git)
+    if args.baseline:
+        try:
+            compare(report, json.loads(Path(args.baseline).read_text()))
+        except (OSError, ValueError) as error:
+            print(f"gradebook-tests: cannot read baseline {args.baseline}: {error}", file=sys.stderr)  # noqa: T201 — the tool's output
+            return 2
+
+    _emit(report, args)
+
+    return 1 if _gate_failed(report, args) else 0
 
 
 if __name__ == "__main__":

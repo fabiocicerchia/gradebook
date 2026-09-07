@@ -1,4 +1,4 @@
-import { Report, Tool } from './types';
+import { Report, Tool } from "./types";
 
 /**
  * The latest report per tool, plus whoever wants to hear about a new one.
