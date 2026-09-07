@@ -70,8 +70,15 @@ describe('decode', function()
       return
     end
     for _, tool in ipairs({ 'code', 'tests' }) do
-      local module = vim.fs.joinpath(root, ('gradebook-%s'):format(tool), ('gradebook_%s.py'):format(tool))
-      local out = vim.system({ 'python3', module, root, '--format', 'json' }, { text = true }):wait(120000)
+      -- Each tool is a package: run it as a module, with its component
+      -- directory on the interpreter's path.
+      local component = vim.fs.joinpath(root, ('gradebook-%s'):format(tool))
+      local out = vim
+        .system({ 'python3', '-m', ('gradebook_%s'):format(tool), root, '--format', 'json' }, {
+          text = true,
+          env = { PYTHONPATH = component },
+        })
+        :wait(120000)
       assert.is_true(out.code <= 1, out.stderr)
       local report = gradebook.decode(out.stdout)
       -- Whatever the repo scores today, the window must render it.

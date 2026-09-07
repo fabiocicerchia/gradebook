@@ -10,21 +10,20 @@ local config = require('gradebook.config')
 
 local function buckets_of(tool)
   local root = vim.fn.fnamemodify(vim.fn.resolve(debug.getinfo(1, 'S').source:sub(2)), ':p:h:h:h:h')
-  local module = vim.fs.joinpath(root, ('gradebook-%s'):format(tool), ('gradebook_%s.py'):format(tool))
-  if vim.fn.executable('python3') ~= 1 or not vim.uv.fs_stat(module) then
+  local component = vim.fs.joinpath(root, ('gradebook-%s'):format(tool))
+  local package_dir = vim.fs.joinpath(component, ('gradebook_%s'):format(tool))
+  if vim.fn.executable('python3') ~= 1 or not vim.uv.fs_stat(package_dir) then
     return nil
   end
   local out = vim.system({
     'python3',
     '-c',
     ([[
-import importlib.util, json, sys
-spec = importlib.util.spec_from_file_location("m", %q)
-module = importlib.util.module_from_spec(spec)
-sys.modules["m"] = module
-spec.loader.exec_module(module)
+import importlib, json, sys
+sys.path.insert(0, %q)
+module = importlib.import_module(%q)
 print(json.dumps(sorted({module.severity_for(kind) for kind in module.FLAG_ORDER})))
-]]):format(module),
+]]):format(component, ('gradebook_%s'):format(tool)),
   }, { text = true }):wait(20000)
   if out.code ~= 0 then
     return nil
