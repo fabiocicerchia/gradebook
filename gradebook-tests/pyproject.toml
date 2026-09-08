@@ -20,7 +20,7 @@ dev = ["pytest", "ruff"]
 gradebook-tests = "gradebook_tests:main"
 
 [tool.setuptools]
-py-modules = ["gradebook_tests"]
+packages = ["gradebook_tests"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -65,3 +65,18 @@ mypy-init-return = true
 [tool.ruff.format]
 quote-style = "double"
 docstring-code-format = true
+
+[[tool.basedpyright.executionEnvironments]]
+# gradebook_tests is one unit that happens to be spread over several files. A leading
+# underscore here means "private to the package", which is the usual Python
+# convention -- but the checker scopes it to the *file*, so every helper the
+# package shares between its own modules reads as private-used-elsewhere and
+# as unaccessed. Those reports are about the file boundary, not the code.
+#
+# Anything reaching in from outside the package is still caught: this scope is
+# the package directory and nothing else.
+root = "gradebook_tests"
+reportPrivateUsage = false
+reportUnusedFunction = false
+reportUnusedClass = false
+extraPaths = ["."]

@@ -9,8 +9,8 @@
       "extra-files": [
         "gradebook-tests/pyproject.toml",
         "gradebook-code/pyproject.toml",
-        "gradebook-tests/gradebook_tests.py",
-        "gradebook-code/gradebook_code.py",
+        "gradebook-tests/gradebook_tests/__init__.py",
+        "gradebook-code/gradebook_code/__init__.py",
         {
           "type": "json",
           "path": "extensions/vscode/package.json",

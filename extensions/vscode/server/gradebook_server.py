@@ -49,11 +49,32 @@ def load_tool(tool: str, module_path: str | None = None) -> ModuleType:
     name = f"gradebook_{tool}"
     if module_path:
         path = Path(module_path)
-        return _from_path(name, path / f"{name}.py" if path.is_dir() else path)
+        # A real file still works if someone points at one. Anything else is
+        # treated as the directory that CONTAINS the package -- including a
+        # stale `.../gradebook_<tool>.py`, which is what the editor settings
+        # and their defaults have always said, and which no longer exists.
+        if path.is_file():
+            return _from_path(name, path)
+        return _from_dir(name, path.parent if path.suffix == ".py" else path)
     try:
         return importlib.import_module(name)
     except ImportError:
-        return _from_path(name, REPO_ROOT / f"gradebook-{tool}" / f"{name}.py")
+        return _from_dir(name, REPO_ROOT / f"gradebook-{tool}")
+
+
+def _from_dir(name: str, directory: Path) -> ModuleType:
+    """Import `name` from `directory`, which contains it.
+
+    Each tool is a package now, so it cannot be loaded straight off a file
+    path: `from .base import ...` needs the package on sys.path to resolve.
+    Putting the containing directory there and importing by name is the one
+    route that works for a package and for a plain module alike.
+    """
+    if not directory.is_dir():
+        raise ImportError(f"cannot load {name}: {directory} is not a directory")
+    if str(directory) not in sys.path:
+        sys.path.insert(0, str(directory))
+    return importlib.import_module(name)
 
 
 def _from_path(name: str, path: Path) -> ModuleType:
@@ -285,8 +306,8 @@ class Server:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="gradebook_server")
-    parser.add_argument("--code", help="path to gradebook_code.py or its directory")
-    parser.add_argument("--tests", help="path to gradebook_tests.py or its directory")
+    parser.add_argument("--code", help="directory containing the gradebook_code package (or a module file)")
+    parser.add_argument("--tests", help="directory containing the gradebook_tests package (or a module file)")
     args = parser.parse_args(argv)
 
     # Nothing but protocol on stdout. Anything that prints — a warning from an

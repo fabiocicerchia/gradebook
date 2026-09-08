@@ -85,7 +85,7 @@ test("an explicit module path is honoured", () => {
     ["--code", path.join(repo, "gradebook-code"), "--tests", path.join(repo, "gradebook-tests")],
   ).get(1);
   const modules = ping?.modules as Record<string, string>;
-  assert.match(modules.code, /gradebook-code\/gradebook_code\.py$/);
+  assert.match(modules.code, /gradebook-code\/gradebook_code\/__init__\.py$/);
 });
 
 test("a module path that does not exist fails the scan, not the server", () => {
