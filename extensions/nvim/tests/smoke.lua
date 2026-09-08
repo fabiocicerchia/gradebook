@@ -33,9 +33,12 @@ vim.fn.writefile({ 'def ok(a, b):', '    return a + b' }, project .. '/src/ok.py
 vim.fn.writefile({ 'def test_ok():', '    assert 1 == 1' }, project .. '/src/test_ok.py')
 vim.uv.chdir(project)
 
+-- Each tool is a package now, so it is run as a module with its component
+-- directory on the interpreter's path, rather than as a file.
+vim.env.PYTHONPATH = repo .. '/gradebook-code:' .. repo .. '/gradebook-tests'
 local cmd = {
-  code = { 'python3', repo .. '/gradebook-code/gradebook_code.py' },
-  tests = { 'python3', repo .. '/gradebook-tests/gradebook_tests.py' },
+  code = { 'python3', '-m', 'gradebook_code' },
+  tests = { 'python3', '-m', 'gradebook_tests' },
 }
 
 print('gradebook.nvim smoke test')

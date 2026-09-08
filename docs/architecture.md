@@ -34,7 +34,7 @@ repo path ──► discover files ──► detect & weight languages ──►
 | `gradebook-*/tests/`                 | pytest suites, one per tool                                                                                                               |
 | `Makefile`                           | one entry point over two folders — each still builds, tests and lints alone                                                               |
 
-Each tool is a single module with a console-script entry point. They do not
+Each tool is a package with a console-script entry point. They do not
 import each other, and neither has a runtime dependency outside the standard
 library.
 
