@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .base import VERSION, Report
-from .collect import collect
+from .collection import collect
 from .render import render_markdown, render_text
 from .score import DIMENSIONS, compare, evaluate, recommendations, score_directories
 

@@ -28,7 +28,7 @@ from .base import (
     Report,
     Stats,
 )
-from .collect import collect
+from .collection import collect
 
 # -------------------------------------------------------------------- score
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .base import ARTIFACT_DIRS, BAR_WIDTH, SKIP_DIRS, TOP_RECOMMENDATIONS, VERSION, Finding, Report, Stats
-from .collect import collect
+from .collection import collect
 from .score import evaluate, recommendations
 from .severity import FLAG_ORDER
 

@@ -60,7 +60,7 @@ from .base import Profile as Profile
 from .base import Report as Report
 from .base import Stats as Stats
 from .cli import main as main
-from .collect import collect as collect
+from .collection import collect as collect
 from .coverage import CI_COVERAGE_RE as CI_COVERAGE_RE
 from .coverage import CI_FILES as CI_FILES
 from .coverage import CI_STRICT_RE as CI_STRICT_RE

@@ -65,7 +65,7 @@ from .churn import FIX_LIMIT as FIX_LIMIT
 from .churn import find_hotspots as find_hotspots
 from .churn import git_churn as git_churn
 from .cli import main as main
-from .collect import collect as collect
+from .collection import collect as collect
 from .declarations import CLASS_RE as CLASS_RE
 from .declarations import FUNC_RE as FUNC_RE
 from .declarations import IMPORT_RE as IMPORT_RE
