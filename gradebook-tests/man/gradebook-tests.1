@@ -1,0 +1,79 @@
+.TH GRADEBOOK\-TESTS 1 "2026-09" "gradebook" "User Commands"
+.SH NAME
+gradebook-tests \- score how effective a repository's test suite actually is
+.SH SYNOPSIS
+.B gradebook-tests
+.RI [ path ]
+.RI [ options ]
+.SH DESCRIPTION
+Scores a test suite on what it actually establishes \(em not on coverage
+alone \(em and, from the git history, whether the tests tend to arrive with
+the code or after it.
+.PP
+The default path is the current directory.
+.SH OPTIONS
+.TP
+.BI \-\-format " FORMAT"
+.BR text ,
+.B json
+or
+.B markdown
+(default text).
+.TP
+.BI \-\-fail\-under " N"
+Exit 1 when the score is below N. The CI gate.
+.TP
+.BI \-\-baseline " FILE"
+A previous
+.B "\-\-format json"
+report to diff against.
+.TP
+.BR \-\-fail\-on\-drop " [\fIN\fR]"
+With
+.BR \-\-baseline ,
+exit 1 when the score drops by more than N (default 0).
+.TP
+.B \-\-by\-dir
+Also score each immediate subdirectory that holds code.
+.TP
+.B \-\-no\-git
+Skip the git-history TDD analysis.
+.TP
+.BI \-\-top " N"
+How many recommendations to show (default 5).
+.TP
+.BI \-\-max\-flags " N"
+Cap the red flags listed (default all; 0 hides them).
+.TP
+.B \-\-list\-dimensions
+Print the scoring model and exit.
+.TP
+.B \-\-version
+Print the version and exit.
+.SH EXIT STATUS
+.TP
+.B 0
+Scored, and no gate was breached.
+.TP
+.B 1
+The score was below
+.BR \-\-fail\-under ,
+or dropped past
+.BR \-\-fail\-on\-drop .
+.SH EXAMPLES
+.PP
+Score the suite:
+.PP
+.RS
+.B gradebook-tests
+.RE
+.PP
+Without reading git history:
+.PP
+.RS
+.B gradebook-tests \-\-no\-git \-\-format markdown
+.RE
+.SH SEE ALSO
+.BR gradebook-code (1).
+Project documentation:
+https://github.com/fabiocicerchia/gradebook
