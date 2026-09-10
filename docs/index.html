@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>gradebook — Two tools that grade a repository against a weighted rubric and tell you which fix buys the most points.</title>
+<title>
+  gradebook — Two tools that grade a repository against a weighted rubric and tell you which fix buys the most points.
+</title>
 <meta name="description" content="gradebook-tests scores the test suite; gradebook-code scores the code it covers. Independent programs in sibling folders — install one, both, or neither. Neither needs config, a build, or a test run: each is a read-only pass over the working tree plus git log, across a dozen languages.">
 <!-- The palette lives in the docs theme, so the splash and /docs/ cannot drift
      apart. The path is relative to the *deployed* layout: splash at /, rendered
@@ -44,8 +46,15 @@ footer{margin-top:2.2rem;color:#5c6684;font-size:.82rem}
 <body>
 <div class="card">
   <h1>📐 gradebook</h1>
-  <p class="tagline">Two tools that grade a repository against a weighted rubric and tell you which fix buys the most points.</p>
-  <p class="desc"><strong>gradebook-tests</strong> scores the test suite; <strong>gradebook-code</strong> scores the code it covers. They are independent programs in sibling folders — install one, both, or neither. Neither needs config, a build, or a test run: each is a read-only pass over the working tree plus <code>git log</code>, across Python, JS/TS, Go, Java/Kotlin, Ruby, PHP, Rust, C#, Elixir, Scala and more.</p>
+  <p class="tagline">
+    Two tools that grade a repository against a weighted rubric and tell you which fix buys the most points.
+  </p>
+  <p class="desc">
+    <strong>gradebook-tests</strong> scores the test suite; <strong>gradebook-code</strong> scores the code it covers.
+    They are independent programs in sibling folders — install one, both, or neither. Neither needs config, a build, or
+    a test run: each is a read-only pass over the working tree plus <code>git log</code>, across Python, JS/TS, Go,
+    Java/Kotlin, Ruby, PHP, Rust, C#, Elixir, Scala and more.
+  </p>
   <div class="install-label">Install</div>
   <pre><code>pipx install ./gradebook-tests
 pipx install ./gradebook-code</code></pre>
