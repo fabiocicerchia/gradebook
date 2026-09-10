@@ -9,6 +9,18 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.4.0](https://github.com/fabiocicerchia/gradebook/compare/v0.3.0...v0.4.0) (2026-09-10)
+
+
+### Features
+
+* **packaging:** ship a man page with each wheel ([#34](https://github.com/fabiocicerchia/gradebook/issues/34)) ([25bad7d](https://github.com/fabiocicerchia/gradebook/commit/25bad7d16d4778b93d253f96363f526b1f4b29cc))
+
+
+### Bug Fixes
+
+* **ci:** pin the editorconfig-checker binary version ([#23](https://github.com/fabiocicerchia/gradebook/issues/23)) ([c2212ab](https://github.com/fabiocicerchia/gradebook/commit/c2212abd9b28ee323b550c5563f160f52178a79d))
+
 ## [0.3.0](https://github.com/fabiocicerchia/gradebook/compare/v0.2.1...v0.3.0) (2026-09-01)
 
 ### Features
