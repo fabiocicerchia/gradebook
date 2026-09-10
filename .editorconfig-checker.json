@@ -1,8 +1,7 @@
 {
   "Exclude": [
     "^LICENSE$",
-    "^apply\\-settings\\.sh$",
-    "^check\\-drift\\.sh$"
+    "^Makefile$"
   ],
   "Disable": {
     "IndentSize": true
