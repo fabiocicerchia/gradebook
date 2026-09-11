@@ -8,22 +8,67 @@
   repository those dimensions are dropped as unscored and the remaining weights
   renormalise — `gradebook-tests --no-git` skips them deliberately.
 
-## Setup
+## Install
 
-Install either tool, or both:
+Both tools are ordinary Python packages, so `pip` installs them and so does
+`pipx`. Reach for `pipx` when you want the two commands on `$PATH` without
+touching any project's environment; reach for `pip` when you want them *inside*
+one — a virtualenv, a CI job, a Docker layer. The arguments below are identical
+either way.
+
+Neither package is on PyPI yet, so there is no bare `pip install gradebook-code`
+to run — the repository is the package. From a checkout:
 
 ```sh
-pipx install ./gradebook-tests
-pipx install ./gradebook-code
+git clone https://github.com/fabiocicerchia/gradebook
+pip install ./gradebook/gradebook-tests
+pip install ./gradebook/gradebook-code
 ```
 
-For development in this repo:
+Or without one. Each tool is a subdirectory of the same repository, which is
+what `#subdirectory=` tells pip:
+
+```sh
+pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+```
+
+Quote the whole spec — `#` starts a comment in most shells. That form tracks
+the default branch; pin a release with `@<tag>` before the fragment, which is
+what you want in CI:
+
+```sh
+pip install "git+https://github.com/fabiocicerchia/gradebook.git@v0.4.0#subdirectory=gradebook-code"
+```
+
+The tags are on the
+[releases page](https://github.com/fabiocicerchia/gradebook/releases).
+
+Install one, both, or neither: they are independent programs and a missing one
+never stops the other from scoring.
+
+Check it landed — and note the man page rides along in the wheel, so a system
+or `--user` install puts `gradebook-code(1)` on the default manpath:
+
+```sh
+gradebook-code --version
+gradebook-tests --help
+man gradebook-code
+```
+
+To remove them, `pip uninstall gradebook-tests gradebook-code` (the
+distribution names, with hyphens; `pipx uninstall` takes one at a time).
+
+### Development in this repo
 
 ```sh
 make setup   # editable installs of both, dev tooling, pre-commit hook
 make test    # both suites
 make lint    # the whole gate
 ```
+
+`make install` is the non-editable equivalent: a plain `pip install` of both
+directories.
 
 ## Run
 

@@ -17,7 +17,8 @@ panel.
 Python 3.10+, plus the tools themselves:
 
 ```sh
-pipx install gradebook-code gradebook-tests
+pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code" \
+            "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
 ```
 
 Working from a checkout instead? Point `gradebook.codePath` and
