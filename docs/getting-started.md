@@ -37,6 +37,11 @@ pipx install ./gradebook/gradebook-code
 Install one, both, or neither: they are independent programs and a missing one
 never stops the other from scoring.
 
+One exception to all of this: the **VS Code extension imports the two modules**
+rather than running the commands, so a sealed pipx virtualenv is not enough for
+it on its own — see [Editor integration](editors.md#vs-code). The Neovim plugin
+shells out to the CLIs, so pipx suits it fine.
+
 ### With pip, inside an environment
 
 `pip` takes exactly the same arguments, and is the right tool when you want the

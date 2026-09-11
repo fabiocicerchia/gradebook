@@ -14,14 +14,23 @@ panel.
 
 ## Requirements
 
-Python 3.10+, plus the tools themselves:
+Python 3.10+, plus the tools themselves. The scan server *imports* them, so
+they have to be installed into an interpreter it can use — a `pipx` install is
+sealed in its own virtualenv and will not do on its own:
 
 ```sh
-pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
-pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+python3 -m venv ~/.venvs/gradebook
+~/.venvs/gradebook/bin/pip install \
+  "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code" \
+  "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
 ```
 
-Working from a checkout instead? Point `gradebook.codePath` and
+Then point `gradebook.pythonPath` at `/home/you/.venvs/gradebook/bin/python` —
+in full, since `~` is not expanded. Already have them under pipx? `pipx inject
+gradebook-code "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"` puts both in one virtualenv
+and `pythonPath` can name that one instead.
+
+Working from a checkout, install nothing: point `gradebook.codePath` and
 `gradebook.testsPath` at `gradebook-code/` and `gradebook-tests/`.
 
 ## What it does
