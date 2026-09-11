@@ -65,19 +65,22 @@ Both follow the same shape, so learning one teaches you the other:
 
 ## Install
 
-Ordinary Python packages — `pip` or `pipx`, straight from the repository:
+Command-line tools, so `pipx` — a virtualenv each, both commands on `$PATH`,
+and no argument with a distro that externally-manages its Python:
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
 ```
 
-From a checkout it is the directory: `pip install ./gradebook-code`, or
-`pipx install ./gradebook-code` to keep it out of the current environment. Pin
-a release in CI with `@<tag>` before the `#`.
+`pip` takes the same arguments when you want them inside an environment you
+already have — a virtualenv, a CI job, a Docker layer — and a checkout is
+installable as a directory: `pipx install ./gradebook-code`. Pin a release in
+CI with `@<tag>` before the `#`.
 
-Python 3.10+, no dependencies, not on PyPI yet — so `pip install gradebook-code`
-on its own finds nothing. Developing on it? `make setup`. More in
+Python 3.10+, no dependencies, not on PyPI yet — so a bare `gradebook-code`
+package name finds nothing. Developing on it? `make setup`. The venv, PEP 668
+and CI variants are in
 [`docs/getting-started.md`](docs/getting-started.md#install).
 
 ## Usage

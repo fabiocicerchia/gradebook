@@ -42,9 +42,10 @@ wrapper.
 shape `--baseline` reads.
 
 ```yaml
-# pin a tag, so a CI gate never moves under you:
-# https://github.com/fabiocicerchia/gradebook/releases
-- run: pip install "git+https://github.com/fabiocicerchia/gradebook.git@v0.4.0#subdirectory=gradebook-code"
+# pipx is preinstalled on GitHub-hosted runners, and sidesteps PEP 668 on
+# any image whose python is externally managed. Pin a tag, so the gate
+# never moves under you: https://github.com/fabiocicerchia/gradebook/releases
+- run: pipx install "git+https://github.com/fabiocicerchia/gradebook.git@v0.4.0#subdirectory=gradebook-code"
 - run: gradebook-code . --format markdown >> "$GITHUB_STEP_SUMMARY"
 - run: gradebook-code . --baseline code-baseline.json --fail-on-drop
 ```

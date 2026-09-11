@@ -53,7 +53,7 @@ Red flags (1):
 ## Usage
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"   # or pipx, or ./gradebook-tests from a checkout
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"   # or pip in a virtualenv, or ./gradebook-tests from a checkout
 gradebook-tests .                          # score the repo you are in
 gradebook-tests ../other-repo              # score anything, no setup needed
 gradebook-tests . --by-dir                 # score each subproject, worst first

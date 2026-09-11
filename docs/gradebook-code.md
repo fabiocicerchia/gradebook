@@ -53,7 +53,7 @@ Red flags (1):
 ## Usage
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"   # or pipx, or ./gradebook-code from a checkout
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"   # or pip in a virtualenv, or ./gradebook-code from a checkout
 gradebook-code .                          # score the repo you are in
 gradebook-code ../other-repo              # score anything, no setup needed
 gradebook-code . --by-dir                 # score each subproject, worst first

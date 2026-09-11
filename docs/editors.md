@@ -36,8 +36,8 @@ scanning on save is the default and scanning as you type is viable, debounced.
 ## VS Code
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code" \
-            "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
 ```
 
 Install the extension from the marketplace, or side-load a build:

@@ -56,12 +56,12 @@ footer{margin-top:2.2rem;color:#5c6684;font-size:.82rem}
     Java/Kotlin, Ruby, PHP, Rust, C#, Elixir, Scala and more.
   </p>
   <div class="install-label">Install</div>
-  <pre><code>pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"</code></pre>
+  <pre><code>pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"</code></pre>
   <p class="alt">
     then: <code>gradebook-tests .</code> and <code>gradebook-code .</code> &middot;
-    <code>pipx</code> takes the same arguments, and from a checkout it is just
-    <code>pip install ./gradebook-code</code>
+    <code>pip</code> takes the same arguments inside a virtualenv, and a checkout
+    installs as a directory: <code>pipx install ./gradebook-code</code>
   </p>
   <div class="links">
     <a class="btn" href="https://github.com/fabiocicerchia/gradebook">GitHub →</a>

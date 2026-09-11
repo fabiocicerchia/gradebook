@@ -17,9 +17,9 @@ Java/Kotlin, Ruby, PHP, Rust, C#, Elixir, Scala and Gherkin repos out of the
 box.
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
-# from a checkout of the repo, the directory is the package: pip install ./gradebook-tests
-# pipx takes the same arguments, if you would rather it lived outside this environment
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+# from a checkout of the repo, the directory is the package: pipx install ./gradebook-tests
+# pip takes the same arguments, inside a virtualenv or a CI job
 
 gradebook-tests .                       # score the repo you are in
 gradebook-tests . --by-dir              # per subproject, worst first

@@ -10,45 +10,75 @@
 
 ## Install
 
-Both tools are ordinary Python packages, so `pip` installs them and so does
-`pipx`. Reach for `pipx` when you want the two commands on `$PATH` without
-touching any project's environment; reach for `pip` when you want them *inside*
-one — a virtualenv, a CI job, a Docker layer. The arguments below are identical
-either way.
+These are command-line tools, so **`pipx` is the installer to reach for**: it
+gives each one its own virtualenv and puts the command on `$PATH`, without
+touching any project's environment — and it is the form that works on Debian,
+Ubuntu, Fedora and Homebrew Python, where installing into the system
+interpreter is refused outright (see [below](#error-externally-managed-environment)).
 
-Neither package is on PyPI yet, so there is no bare `pip install gradebook-code`
-to run — the repository is the package. From a checkout:
+Neither package is on PyPI yet, so there is no bare `pipx install
+gradebook-code` to run — the repository is the package, and each tool is a
+subdirectory of it, which is what `#subdirectory=` says:
+
+```sh
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+```
+
+Quote the whole spec — `#` starts a comment in most shells. From a checkout,
+the directory is the package:
 
 ```sh
 git clone https://github.com/fabiocicerchia/gradebook
-pip install ./gradebook/gradebook-tests
-pip install ./gradebook/gradebook-code
+pipx install ./gradebook/gradebook-tests
+pipx install ./gradebook/gradebook-code
 ```
 
-Or without one. Each tool is a subdirectory of the same repository, which is
-what `#subdirectory=` tells pip:
+Install one, both, or neither: they are independent programs and a missing one
+never stops the other from scoring.
+
+### With pip, inside an environment
+
+`pip` takes exactly the same arguments, and is the right tool when you want the
+commands *inside* a particular environment rather than on `$PATH` — a
+virtualenv, a CI job, a Docker layer:
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+python3 -m venv .venv
+.venv/bin/pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+.venv/bin/gradebook-code .
 ```
 
-Quote the whole spec — `#` starts a comment in most shells. That form tracks
-the default branch; pin a release with `@<tag>` before the fragment, which is
-what you want in CI:
+### Pin a release
+
+Every form above tracks the default branch. Put `@<tag>` before the fragment to
+pin one instead, which is what you want in CI — either installer takes it:
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git@v0.4.0#subdirectory=gradebook-code"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git@v0.4.0#subdirectory=gradebook-code"
 ```
 
 The tags are on the
 [releases page](https://github.com/fabiocicerchia/gradebook/releases).
 
-Install one, both, or neither: they are independent programs and a missing one
-never stops the other from scoring.
+### `error: externally-managed-environment`
 
-Check it landed — and note the man page rides along in the wheel, so a system
-or `--user` install puts `gradebook-code(1)` on the default manpath:
+```text
+error: externally-managed-environment
+
+× This environment is externally managed
+```
+
+That is [PEP 668](https://peps.python.org/pep-0668/), and it is pip refusing to
+install into the interpreter your distribution's own packages depend on —
+Debian, Ubuntu, Fedora and Homebrew all ship one. It is not about these tools;
+`pip install --user` is refused for the same reason.
+
+Use `pipx`, which sidesteps it by building a virtualenv per tool, or a venv of
+your own — both are above. `--break-system-packages` does force it through, but
+that flag is the risk the message is warning you about, not a fix for it.
+
+### Check it landed
 
 ```sh
 gradebook-code --version
@@ -56,8 +86,14 @@ gradebook-tests --help
 man gradebook-code
 ```
 
-To remove them, `pip uninstall gradebook-tests gradebook-code` (the
-distribution names, with hyphens; `pipx uninstall` takes one at a time).
+The man page rides along in the wheel. `pipx` puts it where `man` looks;
+a system or `--user` install lands it on the default manpath; inside a
+virtualenv it sits under `.venv/share/man` and `man` will not find it unless
+you point `MANPATH` there.
+
+To remove them: `pipx uninstall gradebook-code` (one at a time), or
+`pip uninstall gradebook-tests gradebook-code` — the distribution names, with
+hyphens.
 
 ### Development in this repo
 
@@ -68,7 +104,8 @@ make lint    # the whole gate
 ```
 
 `make install` is the non-editable equivalent: a plain `pip install` of both
-directories.
+directories. Both run pip against whichever interpreter is active, so run them
+in a virtualenv.
 
 ## Run
 

@@ -13,9 +13,9 @@ No config, no build, no test run: a read-only pass over the working tree plus
 Ruby, PHP, Rust, C#, Elixir, Scala and more.
 
 ```sh
-pip install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
-# from a checkout of the repo, the directory is the package: pip install ./gradebook-code
-# pipx takes the same arguments, if you would rather it lived outside this environment
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+# from a checkout of the repo, the directory is the package: pipx install ./gradebook-code
+# pip takes the same arguments, inside a virtualenv or a CI job
 
 gradebook-code .                       # score the repo you are in
 gradebook-code ../other-repo           # score anything, no setup needed
