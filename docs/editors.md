@@ -35,9 +35,40 @@ scanning on save is the default and scanning as you type is viable, debounced.
 
 ## VS Code
 
+The extension does not shell out to the CLIs — the scan server **imports** the
+two modules into the interpreter `gradebook.pythonPath` names, `python3` by
+default. A `pipx` install alone is therefore not enough: sealing each tool in
+its own virtualenv is precisely what stops another interpreter importing it.
+Give the extension one interpreter that has both:
+
 ```sh
-pipx install gradebook-code gradebook-tests
+python3 -m venv ~/.venvs/gradebook
+~/.venvs/gradebook/bin/pip install \
+  "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code" \
+  "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
 ```
+
+```json
+"gradebook.pythonPath": "/home/you/.venvs/gradebook/bin/python"
+```
+
+Spell that path out in full — it is handed to `spawn` as given, so `~` is not
+expanded.
+
+Already installed them with pipx for the command line? Add the second tool to
+the first one's virtualenv and point at that, rather than keeping a third copy:
+
+```sh
+pipx inject gradebook-code "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
+```
+
+```json
+"gradebook.pythonPath": "/home/you/.local/share/pipx/venvs/gradebook-code/bin/python"
+```
+
+Working from a checkout, there is nothing to install: leave `pythonPath` alone
+and point `gradebook.codePath` and `gradebook.testsPath` at the `gradebook-code`
+and `gradebook-tests` folders.
 
 Install the extension from the marketplace, or side-load a build:
 
@@ -79,9 +110,20 @@ works — an empty `codePath`/`testsPath` resolves against the workspace root
 before falling back to the installed package. For a checkout somewhere else,
 point the two settings at it.
 
-If a tool cannot be found the scan says so, with the command that fixes it.
-The two are independent: one missing package does not stop the other from
-scoring.
+If a tool cannot be found the scan says so. The two are independent: one
+missing package does not stop the other from scoring.
+
+```text
+gradebook-tests is not available (cannot load gradebook_tests:
+/home/you/.vscode/gradebook-tests is not a directory)
+```
+
+That means the interpreter the server ran could not import the module — most
+often `python3` being asked to import a pipx-installed tool. The path it names
+is the last resort in the chain, the sibling folder of a checkout; alongside an
+installed extension it resolves to nonsense, so read it as "nothing in the
+chain worked", not as a folder to create. Set `gradebook.pythonPath` or the two
+path settings, per the section above.
 
 ## Neovim
 

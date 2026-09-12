@@ -10,7 +10,8 @@ No LSP — it shells out to the two CLIs and publishes through `vim.diagnostic`.
 Neovim 0.10+ and the tools themselves:
 
 ```sh
-pipx install gradebook-code gradebook-tests
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-code"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-tests"
 ```
 
 ## Install
