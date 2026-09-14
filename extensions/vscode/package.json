@@ -109,12 +109,12 @@
         "gradebook.codePath": {
           "type": "string",
           "default": "",
-          "description": "Path to gradebook_code.py or the folder holding it. Empty means gradebook-code/gradebook_code.py in the workspace root if there is one, then the installed gradebook-code package."
+          "description": "Folder holding the gradebook_code package (a module file also works). Empty means the installed gradebook-code package, then a gradebook-code/ folder in a checkout."
         },
         "gradebook.testsPath": {
           "type": "string",
           "default": "",
-          "description": "Path to gradebook_tests.py or the folder holding it. Empty means gradebook-tests/gradebook_tests.py in the workspace root if there is one, then the installed gradebook-tests package."
+          "description": "Folder holding the gradebook_tests package (a module file also works). Empty means the installed gradebook-tests package, then a gradebook-tests/ folder in a checkout."
         },
         "gradebook.tools": {
           "type": "array",

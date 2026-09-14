@@ -1,6 +1,7 @@
 import * as assert from "node:assert/strict";
 import { test } from "node:test";
-import { modulePath, readConfig, withWorkspaceDefaults } from "../config";
+import { modulePath, readConfig, withWorkspaceRoot } from "../config";
+import { serverArgv } from "../engine";
 import { Store } from "../store";
 import { Report } from "../types";
 import { configuration } from "./vscode-shim";
@@ -36,39 +37,31 @@ test("the store keeps one report per tool and notifies on change", () => {
 
 // --- module resolution ------------------------------------------------------
 //
-// The bug these cover: installed from a VSIX, the server sits under the
-// extensions directory, so the path it derives from its own location points at
-// nothing. With both packages uninstalled — which is every fresh clone, since
-// neither is on PyPI yet — "Scan Workspace" then found no tool and said
-// nothing. Opening the gradebook repo has to work on its own.
+// The bug these cover: the workspace used to be probed here and passed as
+// `--code`/`--tests`, which outranks the installed package on the server side.
+// A gradebook checkout open in the editor then graded every other project with
+// its own working tree. It goes over as a search root instead, and the server
+// only reaches for it when nothing is installed.
 
-test("an open checkout supplies the module paths", () => {
-  const onDisk = ["/repo/gradebook-code/gradebook_code.py", "/repo/gradebook-tests/gradebook_tests.py"];
-  const resolved = withWorkspaceDefaults(readConfig(), "/repo", (f) => onDisk.includes(f));
-  assert.equal(modulePath(resolved, "code"), "/repo/gradebook-code/gradebook_code.py");
-  assert.equal(modulePath(resolved, "tests"), "/repo/gradebook-tests/gradebook_tests.py");
+test("the open folder travels as a root, not as a module path", () => {
+  const resolved = withWorkspaceRoot(readConfig(), "/repo");
+  assert.equal(resolved.root, "/repo");
+  assert.equal(modulePath(resolved, "code"), "");
+  assert.equal(modulePath(resolved, "tests"), "");
 });
 
-test("an explicit setting beats the checkout", () => {
-  configuration.gradebook = { codePath: "/elsewhere/gradebook_code.py" };
-  const resolved = withWorkspaceDefaults(readConfig(), "/repo", () => true);
-  assert.equal(modulePath(resolved, "code"), "/elsewhere/gradebook_code.py");
+test("an explicit setting is left untouched", () => {
+  configuration.gradebook = { codePath: "/elsewhere/gradebook-code" };
+  const resolved = withWorkspaceRoot(readConfig(), "/repo");
+  assert.equal(modulePath(resolved, "code"), "/elsewhere/gradebook-code");
   delete configuration.gradebook;
 });
 
-test("a workspace that is not a gradebook checkout is left alone", () => {
-  const resolved = withWorkspaceDefaults(readConfig(), "/some/app", () => false);
-  assert.equal(modulePath(resolved, "code"), "");
-  assert.equal(modulePath(resolved, "tests"), "");
+test("with no folder open there is no root", () => {
+  assert.equal(withWorkspaceRoot(readConfig(), undefined).root, undefined);
 });
 
-test("one tool present does not invent a path for the other", () => {
-  const resolved = withWorkspaceDefaults(readConfig(), "/repo", (f) => f.includes("gradebook-code"));
-  assert.equal(modulePath(resolved, "code"), "/repo/gradebook-code/gradebook_code.py");
-  assert.equal(modulePath(resolved, "tests"), "");
-});
-
-test("with no folder open there is nothing to resolve against", () => {
-  const resolved = withWorkspaceDefaults(readConfig(), undefined, () => true);
-  assert.equal(modulePath(resolved, "code"), "");
+test("the root reaches the server after the module paths", () => {
+  const argv = serverArgv("/ext/server/gradebook_server.py", withWorkspaceRoot(readConfig(), "/repo"));
+  assert.deepEqual(argv, ["/ext/server/gradebook_server.py", "--root", "/repo"]);
 });
