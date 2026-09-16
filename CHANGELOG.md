@@ -9,6 +9,13 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.4.1](https://github.com/fabiocicerchia/gradebook/compare/v0.4.0...v0.4.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* **vscode:** let an installed package outrank the open workspace ([#48](https://github.com/fabiocicerchia/gradebook/issues/48)) ([54ab889](https://github.com/fabiocicerchia/gradebook/commit/54ab889c65fcde1d00af9be28bcc757cae95c600))
+
 ## [0.4.0](https://github.com/fabiocicerchia/gradebook/compare/v0.3.0...v0.4.0) (2026-09-10)
 
 
