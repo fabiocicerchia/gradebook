@@ -37,14 +37,20 @@ PROTOCOL_VERSION = 1
 TOOLS = ("code", "tests")
 
 # extensions/vscode/server/ -> repo root, for a checkout with no install.
-REPO_ROOT = Path(__file__).resolve().parents[3]
+# Guarded: copied somewhere shallower there is no fourth parent, and an
+# IndexError at import time kills the server before it can say why.
+_HERE = Path(__file__).resolve()
+_REPO_DEPTH = 3
+REPO_ROOT = _HERE.parents[_REPO_DEPTH] if len(_HERE.parents) > _REPO_DEPTH else _HERE.parent
 
 
-def load_tool(tool: str, module_path: str | None = None) -> ModuleType:
+def load_tool(tool: str, module_path: str | None = None, workspace: str | None = None) -> ModuleType:
     """Import a gradebook module, preferring an explicit path.
 
-    An explicit path wins, then an installed package, then the sibling folder
-    in this checkout — so the extension works from pipx or from a clone.
+    An explicit path wins, then an installed package, then a checkout: this
+    one, or the folder open in the editor. The workspace comes last on purpose
+    — it is a guess, and a gradebook checkout that happens to be open must not
+    replace the installed package everywhere else.
     """
     name = f"gradebook_{tool}"
     if module_path:
@@ -56,10 +62,18 @@ def load_tool(tool: str, module_path: str | None = None) -> ModuleType:
         if path.is_file():
             return _from_path(name, path)
         return _from_dir(name, path.parent if path.suffix == ".py" else path)
-    try:
+    with contextlib.suppress(ImportError):
         return importlib.import_module(name)
-    except ImportError:
-        return _from_dir(name, REPO_ROOT / f"gradebook-{tool}")
+    # Installed from a VSIX, REPO_ROOT points under the extensions directory
+    # and matches nothing; open the gradebook repo and the workspace does.
+    roots = [REPO_ROOT, *([Path(workspace)] if workspace else [])]
+    for root in roots:
+        directory = root / f"gradebook-{tool}"
+        if directory.is_dir():
+            return _from_dir(name, directory)
+    raise ImportError(
+        f"cannot load {name}: not installed, and no gradebook-{tool}/ under {' or '.join(map(str, roots))}"
+    )
 
 
 def _from_dir(name: str, directory: Path) -> ModuleType:
@@ -102,19 +116,9 @@ REQUIRED_API = (
 )
 
 
-def _require_api(tool: str, module: ModuleType) -> None:
-    """Raise if the installed tool predates the API this extension calls."""
-    missing = missing_api(module)
-    if missing:
-        raise ImportError(
-            f"gradebook-{tool} at {getattr(module, '__file__', '?')} is too old for "
-            f"this extension: it has no {', '.join(missing)}"
-        )
-
-
-def _load_checked(tool: str, hint: str | None) -> ModuleType:
+def _load_checked(tool: str, hint: str | None, workspace: str | None = None) -> ModuleType:
     """The tool's module, or an ImportError saying which API it predates."""
-    module = load_tool(tool, hint)
+    module = load_tool(tool, hint, workspace)
     missing = missing_api(module)
     if missing:
         raise ImportError(
@@ -129,10 +133,11 @@ def missing_api(module: ModuleType) -> list[str]:
 
 
 class Server:
-    def __init__(self, hints: dict[str, str], out: TextIO) -> None:
+    def __init__(self, hints: dict[str, str], out: TextIO, workspace: str | None = None) -> None:
         # Loaded on demand, not up front: the two tools are separate packages,
         # and `tools: ["code"]` must not fail because the other one is absent.
         self.hints = hints
+        self.workspace = workspace
         self.modules = {}
         self.failures = {}
         self.out = out
@@ -174,12 +179,12 @@ class Server:
         if tool in self.failures:
             raise ValueError(self.failures[tool])
         try:
-            module = _load_checked(tool, self.hints.get(tool))
+            module = _load_checked(tool, self.hints.get(tool), self.workspace)
         except Exception as exc:  # turned into advice below
             self.failures[tool] = (
                 f"gradebook-{tool} is not available ({exc}). Install it with "
                 f"`pip install gradebook-{tool}`, or set `gradebook.{tool}Path` to the "
-                f"folder holding gradebook_{tool}.py."
+                f"folder holding the gradebook_{tool} package."
             )
             raise ValueError(self.failures[tool]) from exc
         self.modules[tool] = module
@@ -308,6 +313,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="gradebook_server")
     parser.add_argument("--code", help="directory containing the gradebook_code package (or a module file)")
     parser.add_argument("--tests", help="directory containing the gradebook_tests package (or a module file)")
+    parser.add_argument("--root", help="open workspace, searched for gradebook-<tool>/ only if nothing is installed")
     args = parser.parse_args(argv)
 
     # Nothing but protocol on stdout. Anything that prints — a warning from an
@@ -321,7 +327,7 @@ def main(argv: list[str] | None = None) -> int:
     # with it. Only something unrecoverable is fatal here.
     hints = {tool: getattr(args, tool) or os.environ.get(f"GRADEBOOK_{tool.upper()}_MODULE") for tool in TOOLS}
     try:
-        server = Server(hints, out)
+        server = Server(hints, out, args.root or os.environ.get("GRADEBOOK_ROOT"))
     except Exception as exc:
         out.write(json.dumps({"id": 0, "ok": False, "fatal": True, "error": f"{exc}"}) + "\n")
         out.flush()

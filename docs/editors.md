@@ -97,8 +97,8 @@ make ext-install     # builds gradebook-<version>.vsix and installs it
 | `gradebook.run`                  | `onSave`           | `onSave`, `onType` or `manual`                                                                         |
 | `gradebook.debounceMs`           | `400`              | Idle time before an `onType` scan                                                                      |
 | `gradebook.pythonPath`           | `python3`          | Interpreter for the scan server                                                                        |
-| `gradebook.codePath`             | `""`               | `gradebook_code.py` or its folder. Empty finds a checkout in the workspace, then the installed package |
-| `gradebook.testsPath`            | `""`               | `gradebook_tests.py` or its folder, same fallback                                                      |
+| `gradebook.codePath`             | `""`               | Folder holding `gradebook_code`. Empty uses the installed package, then a checkout                     |
+| `gradebook.testsPath`            | `""`               | Folder holding `gradebook_tests`, same fallback                                                        |
 | `gradebook.tools`                | `["code","tests"]` | Which tools to run                                                                                     |
 | `gradebook.scanProjectOnStartup` | `true`             | Scan once when the window opens                                                                        |
 | `gradebook.failUnder`            | `0`                | Flag the status bar below this score                                                                   |

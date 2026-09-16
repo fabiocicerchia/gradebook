@@ -38,6 +38,9 @@ export function serverArgv(serverPath: string, config: Config): string[] {
   if (config.testsPath) {
     argv.push("--tests", config.testsPath);
   }
+  if (config.root) {
+    argv.push("--root", config.root);
+  }
   return argv;
 }
 
@@ -62,7 +65,8 @@ export class Engine {
     const changed =
       config.pythonPath !== this.config.pythonPath ||
       config.codePath !== this.config.codePath ||
-      config.testsPath !== this.config.testsPath;
+      config.testsPath !== this.config.testsPath ||
+      config.root !== this.config.root;
     this.config = config;
     if (changed) {
       this.restart();

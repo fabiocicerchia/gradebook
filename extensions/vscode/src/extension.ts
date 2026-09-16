@@ -1,9 +1,8 @@
-import * as fs from "node:fs";
 import * as path from "node:path";
 
 import * as vscode from "vscode";
 
-import { Config, readConfig, withWorkspaceDefaults } from "./config";
+import { Config, readConfig, withWorkspaceRoot } from "./config";
 import { Diagnostics } from "./diagnostics";
 import { Engine } from "./engine";
 import { Entry, FindingsProvider, Filter, SEVERITIES, TOOLS } from "./findingsView";
@@ -25,7 +24,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const status = new StatusBar();
 
   const workspaceRoot = () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const currentConfig = (): Config => withWorkspaceDefaults(readConfig(), workspaceRoot(), fs.existsSync);
+  const currentConfig = (): Config => withWorkspaceRoot(readConfig(), workspaceRoot());
 
   let config: Config = currentConfig();
   const serverPath = context.asAbsolutePath(path.join("server", "gradebook_server.py"));
