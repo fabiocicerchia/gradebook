@@ -106,24 +106,27 @@ make ext-install     # builds gradebook-<version>.vsix and installs it
 | `gradebook.trace`                | `false`            | Log every request and response                                                                         |
 
 Neither package installed? Opening the gradebook repository itself still
-works — an empty `codePath`/`testsPath` resolves against the workspace root
-before falling back to the installed package. For a checkout somewhere else,
-point the two settings at it.
+works — an empty `codePath`/`testsPath` takes the installed package first and
+falls back to a checkout, this one or the folder open in the editor, only when
+nothing is installed. A checkout never displaces an installed package: an open
+gradebook working tree would otherwise grade every other project. For a
+checkout somewhere else, point the two settings at it.
 
 If a tool cannot be found the scan says so. The two are independent: one
 missing package does not stop the other from scoring.
 
 ```text
-gradebook-tests is not available (cannot load gradebook_tests:
-/home/you/.vscode/gradebook-tests is not a directory)
+gradebook-tests is not available (cannot load gradebook_tests: not installed,
+and no gradebook-tests/ under /home/you/.vscode or /home/you/some/project)
 ```
 
 That means the interpreter the server ran could not import the module — most
-often `python3` being asked to import a pipx-installed tool. The path it names
-is the last resort in the chain, the sibling folder of a checkout; alongside an
-installed extension it resolves to nonsense, so read it as "nothing in the
-chain worked", not as a folder to create. Set `gradebook.pythonPath` or the two
-path settings, per the section above.
+often `python3` being asked to import a pipx-installed tool. The paths it names
+are the end of the chain, the `gradebook-tests/` folder of a checkout; alongside
+an installed extension the first is the extensions directory and matches
+nothing, and the second is whatever folder you happen to have open. Read the
+whole line as "nothing in the chain worked", not as a folder to create. Set
+`gradebook.pythonPath` or the two path settings, per the section above.
 
 ## Neovim
 
