@@ -35,8 +35,14 @@ directory, so the path has to travel with the command:
 ```lua
 require('gradebook').setup({
   cmd = {
-    code = { 'env', 'PYTHONPATH=/path/to/gradebook-code', 'python3', '-m', 'gradebook_code' },
-    tests = { 'env', 'PYTHONPATH=/path/to/gradebook-tests', 'python3', '-m', 'gradebook_tests' },
+    code = {
+      'env', 'PYTHONPATH=/path/to/gradebook-code',
+      'python3', '-m', 'gradebook_code',
+    },
+    tests = {
+      'env', 'PYTHONPATH=/path/to/gradebook-tests',
+      'python3', '-m', 'gradebook_tests',
+    },
   },
 })
 ```

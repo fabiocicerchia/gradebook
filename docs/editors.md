@@ -175,7 +175,12 @@ require('gradebook').setup({
 packages, so put the checkout on `PYTHONPATH` and import by name:
 
 ```lua
-cmd = { code = { 'env', 'PYTHONPATH=/path/to/gradebook-code', 'python3', '-m', 'gradebook_code' } }
+cmd = {
+  code = {
+    'env', 'PYTHONPATH=/path/to/gradebook-code',
+    'python3', '-m', 'gradebook_code',
+  },
+}
 ```
 
 ## Building them
