@@ -9,7 +9,8 @@ M.defaults = {
   tools = { 'code', 'tests' },
 
   --- How to run each tool. A list, so an interpreter can go in front of it:
-  --- `{ 'env', 'PYTHONPATH=/path/to/gradebook-code', 'python3', '-m', 'gradebook_code' }`
+  --- `{ 'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-code',
+  --- 'python3', '-m', 'gradebook_code' }`
   --- for a checkout: each tool is a package, imported by name off PYTHONPATH.
   cmd = {
     code = { 'gradebook-code' },

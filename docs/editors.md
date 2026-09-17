@@ -172,12 +172,14 @@ require('gradebook').setup({
 ```
 
 `cmd` is a list per tool, so a checkout needs no install — the tools are
-packages, so put the checkout on `PYTHONPATH` and import by name:
+packages, so put the checkout on `PYTHONPATH` and import by name.
+`PYTHONSAFEPATH` keeps the graded repo off `sys.path`, where `-m` would
+otherwise put it and let a stray `types.py` shadow the standard library:
 
 ```lua
 cmd = {
   code = {
-    'env', 'PYTHONPATH=/path/to/gradebook-code',
+    'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-code',
     'python3', '-m', 'gradebook_code',
   },
 }

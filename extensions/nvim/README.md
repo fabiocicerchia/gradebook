@@ -30,17 +30,19 @@ lazy.nvim:
 Working from a checkout instead? Point `cmd` at the packages. Each tool is a
 package, not a loose file, so it is imported by name with the checkout on
 `PYTHONPATH` — the plugin spawns `cmd` as given, without setting a working
-directory, so the path has to travel with the command:
+directory, so the path has to travel with the command. `PYTHONSAFEPATH`
+keeps the graded repo itself off `sys.path`, where `-m` would otherwise put
+it and let a stray `types.py` shadow the standard library:
 
 ```lua
 require('gradebook').setup({
   cmd = {
     code = {
-      'env', 'PYTHONPATH=/path/to/gradebook-code',
+      'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-code',
       'python3', '-m', 'gradebook_code',
     },
     tests = {
-      'env', 'PYTHONPATH=/path/to/gradebook-tests',
+      'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-tests',
       'python3', '-m', 'gradebook_tests',
     },
   },

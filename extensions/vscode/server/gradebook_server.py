@@ -185,9 +185,11 @@ class Server:
         except Exception as exc:  # turned into advice below
             self.failures[tool] = (
                 f"gradebook-{tool} is not available ({exc}). Neither tool is on "
-                f'PyPI: install it with `pipx install "{GIT_INSTALL}{tool}"` and point '
-                f"`gradebook.pythonPath` at that interpreter, or set "
-                f"`gradebook.{tool}Path` to the folder holding the gradebook_{tool} package."
+                f"PyPI, and one interpreter serves both, so install both from "
+                f"`{GIT_INSTALL}<tool>` into a single virtualenv and point "
+                f"`gradebook.pythonPath` at it — a pipx venv holding one tool cannot "
+                f"run the other. Or set `gradebook.{tool}Path` to the folder holding "
+                f"the gradebook_{tool} package."
             )
             raise ValueError(self.failures[tool]) from exc
         self.modules[tool] = module

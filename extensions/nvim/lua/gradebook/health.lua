@@ -21,7 +21,7 @@ function M.check()
           -- Neither tool is on PyPI, and each is a package rather than a
           -- loose file: it is imported by name off PYTHONPATH.
           ('pipx install "%s%s"'):format(INSTALL_URL, tool),
-          ("or set cmd.%s = { 'env', 'PYTHONPATH=/path/to/gradebook-%s', 'python3', '-m', 'gradebook_%s' }"):format(
+          ("or set cmd.%s = { 'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-%s', 'python3', '-m', 'gradebook_%s' }"):format(
             tool,
             tool,
             tool
