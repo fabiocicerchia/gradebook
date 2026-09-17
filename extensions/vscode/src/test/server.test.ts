@@ -130,7 +130,8 @@ test("a scan with no tool reachable explains how to fix it", () => {
   const reply = talk([{ id: 1, op: "scanProject", root: repo, tool: "code" }], NOWHERE).get(1);
   assert.equal(reply?.ok, false);
   assert.match(reply?.error ?? "", /gradebook-code is not available/);
-  assert.match(reply?.error ?? "", /pip install gradebook-code/);
+  assert.match(reply?.error ?? "", /pipx install "git\+https:\/\/github\.com\/.*gradebook-code"/);
+  assert.match(reply?.error ?? "", /gradebook\.pythonPath/);
   assert.match(reply?.error ?? "", /gradebook\.codePath/);
 });
 

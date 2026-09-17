@@ -27,16 +27,22 @@ lazy.nvim:
 }
 ```
 
-Working from a checkout instead? Point `cmd` at the modules:
+Working from a checkout instead? Point `cmd` at the packages. Each tool is a
+package, not a loose file, so it is imported by name with the checkout on
+`PYTHONPATH` — the plugin spawns `cmd` as given, without setting a working
+directory, so the path has to travel with the command:
 
 ```lua
 require('gradebook').setup({
   cmd = {
-    code = { 'python3', '/path/to/gradebook-code/gradebook_code.py' },
-    tests = { 'python3', '/path/to/gradebook-tests/gradebook_tests.py' },
+    code = { 'env', 'PYTHONPATH=/path/to/gradebook-code', 'python3', '-m', 'gradebook_code' },
+    tests = { 'env', 'PYTHONPATH=/path/to/gradebook-tests', 'python3', '-m', 'gradebook_tests' },
   },
 })
 ```
+
+That form needs no install, but `env` is a Unix tool. On Windows, install into a
+virtualenv and point `cmd` at the console scripts it puts in `Scripts/`.
 
 ## Commands
 
