@@ -130,7 +130,12 @@ test("a scan with no tool reachable explains how to fix it", () => {
   const reply = talk([{ id: 1, op: "scanProject", root: repo, tool: "code" }], NOWHERE).get(1);
   assert.equal(reply?.ok, false);
   assert.match(reply?.error ?? "", /gradebook-code is not available/);
-  assert.match(reply?.error ?? "", /pip install gradebook-code/);
+  // Not `pip install`: neither tool is on PyPI, and one interpreter serves
+  // both, so the advice has to say "install both into one virtualenv".
+  assert.match(reply?.error ?? "", /git\+https:\/\/github\.com\/.*gradebook-<tool>/);
+  assert.match(reply?.error ?? "", /single virtualenv/);
+  assert.match(reply?.error ?? "", /gradebook\.pythonPath/);
+  assert.doesNotMatch(reply?.error ?? "", /pip install gradebook/);
   assert.match(reply?.error ?? "", /gradebook\.codePath/);
 });
 
