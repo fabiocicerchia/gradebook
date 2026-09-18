@@ -8,6 +8,7 @@ import pytest
 from gradebook_code import (
     DEFAULT_PROFILE,
     FLAG_ORDER,
+    VERSION,
     analyse_file,
     blend_profile,
     body_of,
@@ -917,3 +918,28 @@ def test_cli_rejects_bad_input(tmp_path):
 def test_cli_lists_dimensions(capsys):
     assert main(["--list-dimensions"]) == 0
     assert "Simplicity (KISS)" in capsys.readouterr().out
+
+
+def test_version_matches_the_packaging_metadata():
+    """The constant and pyproject.toml are bumped by release-please together.
+
+    They drifted once: the constant moved into base.py and the release
+    manifest went on pointing at __init__.py, so 0.4.0 and 0.4.1 both
+    shipped reporting 0.3.0.
+    """
+    root = Path(__file__).resolve().parents[1]
+    pyproject = root / "pyproject.toml"
+    declared = next(
+        line.split("=", 1)[1].split("#")[0].strip().strip('"')
+        for line in pyproject.read_text().splitlines()
+        if line.startswith("version")
+    )
+    assert declared == VERSION
+
+    # Both of the above are moved by the same extra-files entries, so they can
+    # go stale together if those entries break again. version.txt is written by
+    # release-please itself and cannot; check it too when this is a checkout
+    # rather than an installed copy standing alone.
+    released = root.parent / "version.txt"
+    if released.is_file():
+        assert released.read_text().strip() == VERSION
