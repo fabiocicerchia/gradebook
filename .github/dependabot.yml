@@ -5,6 +5,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # Everything else rides in one pull request rather than one each.
+      actions:
+        patterns: ["*"]
 
   # Both packages declare `dependencies = []`, so these entries exist for the
   # build backend and the dev extras — and to notice the day that changes.
