@@ -60,7 +60,7 @@ Every form above tracks the default branch. Put `@<tag>` before the fragment to
 pin one instead, which is what you want in CI — either installer takes it:
 
 ```sh
-pipx install "git+https://github.com/fabiocicerchia/gradebook.git@v0.4.0#subdirectory=gradebook-code"
+pipx install "git+https://github.com/fabiocicerchia/gradebook.git@v0.4.1#subdirectory=gradebook-code"
 ```
 
 The tags are on the
