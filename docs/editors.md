@@ -174,11 +174,24 @@ require('gradebook').setup({
 })
 ```
 
-`cmd` is a list per tool, so a checkout needs no install:
+Working from a checkout? Install it into a virtualenv and point `cmd` at the
+console scripts that produces:
+
+```sh
+python3 -m venv ~/.venvs/gradebook
+~/.venvs/gradebook/bin/pip install \
+  -e /path/to/gradebook-code \
+  -e /path/to/gradebook-tests
+```
 
 ```lua
-cmd = { code = { 'python3', '/path/to/gradebook-code/gradebook_code.py' } }
+cmd = { code = { '/home/you/.venvs/gradebook/bin/gradebook-code' } }
 ```
+
+Not `python3 -m gradebook_code`: `-m` puts the working directory first on
+`sys.path`, and the plugin sets none, so the graded repository would land there
+and a stray `types.py` in it would shadow the standard library. A console script
+resolves `sys.path[0]` to its own directory instead, on every supported Python.
 
 ## Building them
 

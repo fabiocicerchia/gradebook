@@ -27,16 +27,34 @@ lazy.nvim:
 }
 ```
 
-Working from a checkout instead? Point `cmd` at the modules:
+Working from a checkout instead? Install it into a virtualenv and point `cmd` at
+the console scripts that produces:
+
+```sh
+python3 -m venv ~/.venvs/gradebook
+~/.venvs/gradebook/bin/pip install \
+  -e /path/to/gradebook-code \
+  -e /path/to/gradebook-tests
+```
 
 ```lua
 require('gradebook').setup({
   cmd = {
-    code = { 'python3', '/path/to/gradebook-code/gradebook_code.py' },
-    tests = { 'python3', '/path/to/gradebook-tests/gradebook_tests.py' },
+    code = { '/home/you/.venvs/gradebook/bin/gradebook-code' },
+    tests = { '/home/you/.venvs/gradebook/bin/gradebook-tests' },
   },
 })
 ```
+
+Spell the paths out in full: the plugin spawns `cmd` as given, so `~` is not
+expanded. On Windows the scripts land in `Scripts\` instead of `bin/`.
+
+Not `python3 -m gradebook_code`: `-m` puts the working directory first on
+`sys.path`, and the plugin sets no working directory, so the graded repository
+would land there and a stray `types.py` in it would shadow the standard library.
+A console script resolves `sys.path[0]` to its own directory instead. (`-P` and
+`PYTHONSAFEPATH` would also fix that, but both are Python 3.11+, and these tools
+support 3.10.)
 
 ## Commands
 

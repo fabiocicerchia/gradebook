@@ -8,8 +8,11 @@ M.defaults = {
   --- Which of the two tools to run.
   tools = { 'code', 'tests' },
 
-  --- How to run each tool. A list, so an interpreter can go in front of it:
-  --- `{ 'python3', '/path/to/gradebook_code.py' }` for a checkout.
+  --- How to run each tool. A list, so an interpreter can go in front of it.
+  --- For a checkout, install it into a virtualenv and name that venv's console
+  --- script: `{ '/path/to/venv/bin/gradebook-code' }`. Not `python3 -m`, which
+  --- puts the working directory first on sys.path and lets the graded
+  --- repository shadow the stdlib.
   cmd = {
     code = { 'gradebook-code' },
     tests = { 'gradebook-tests' },

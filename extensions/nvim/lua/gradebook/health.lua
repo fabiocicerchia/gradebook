@@ -16,8 +16,15 @@ function M.check()
       vim.health.error(
         ('%s is not executable'):format(cmd[1]),
         {
-          'pipx install gradebook-' .. tool,
-          "or set cmd." .. tool .. " = { 'python3', '/path/to/gradebook_" .. tool .. ".py' }",
+          -- Neither tool is on PyPI, and each is a package rather than a
+          -- loose file: it is imported by name off PYTHONPATH.
+          ('pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-%s"'):format(
+            tool
+          ),
+          ("or install a checkout into a virtualenv and set cmd.%s = { '/path/to/venv/bin/gradebook-%s' }"):format(
+            tool,
+            tool
+          ),
         }
       )
     else
