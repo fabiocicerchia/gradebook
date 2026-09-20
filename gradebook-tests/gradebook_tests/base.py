@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from typing import Any
 
-VERSION = "0.3.0"  # x-release-please-version
+VERSION = "0.4.1"  # x-release-please-version
 
 # The shapes this module passes around. All JSON-shaped: the report is written
 # out as JSON and read back by the extension and by --baseline, so nothing here
