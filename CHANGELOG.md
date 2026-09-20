@@ -9,6 +9,15 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.4.2](https://github.com/fabiocicerchia/gradebook/compare/v0.4.1...v0.4.2) (2026-09-20)
+
+
+### Bug Fixes
+
+* **ci:** keep actions: read on the job that uploads sarif ([#58](https://github.com/fabiocicerchia/gradebook/issues/58)) ([bfe4728](https://github.com/fabiocicerchia/gradebook/commit/bfe4728ef90618ae3d699dff56a7c1803724ef86))
+* replace install and checkout instructions that cannot work ([#52](https://github.com/fabiocicerchia/gradebook/issues/52)) ([656a90f](https://github.com/fabiocicerchia/gradebook/commit/656a90f8289870d194e4b02ed2753773de42f4a7))
+* stop the module VERSION constants drifting from the release ([#51](https://github.com/fabiocicerchia/gradebook/issues/51)) ([5f8344f](https://github.com/fabiocicerchia/gradebook/commit/5f8344fb165f4973989a826b90177652d1695838))
+
 ## [0.4.1](https://github.com/fabiocicerchia/gradebook/compare/v0.4.0...v0.4.1) (2026-09-16)
 
 
