@@ -40,20 +40,19 @@ Neovim 0.10 or newer, and the two tools on $PATH: >
 >lua
   require('gradebook').setup({})
 <
-From a checkout, point `cmd` at the packages instead: >lua
+From a checkout, install it into a virtualenv and point `cmd` at the
+console scripts. Not `python3 -m`: that puts the working directory first
+on 'sys.path', and the graded repository would shadow the stdlib. >
 
+  python3 -m venv ~/.venvs/gradebook
+  ~/.venvs/gradebook/bin/pip install -e /path/to/gradebook-code
+  ~/.venvs/gradebook/bin/pip install -e /path/to/gradebook-tests
+<
+>lua
   require('gradebook').setup({
     cmd = {
-      code = {
-        'env', 'PYTHONSAFEPATH=1',
-        'PYTHONPATH=/path/to/gradebook-code',
-        'python3', '-m', 'gradebook_code',
-      },
-      tests = {
-        'env', 'PYTHONSAFEPATH=1',
-        'PYTHONPATH=/path/to/gradebook-tests',
-        'python3', '-m', 'gradebook_tests',
-      },
+      code = { '/home/you/.venvs/gradebook/bin/gradebook-code' },
+      tests = { '/home/you/.venvs/gradebook/bin/gradebook-tests' },
     },
   })
 <
@@ -85,8 +84,8 @@ tools                   (list, default { 'code', 'tests' })
 
 cmd                     (table of lists, default gradebook-code /
                         gradebook-tests) The command for each tool. A list, so
-                        an interpreter and its environment can go in front of
-                        it; see |gradebook-setup| for the checkout form.
+                        an interpreter can go in front of it; see
+                        |gradebook-setup| for the checkout form.
 
 run                     (string, default 'on_save')
                         'on_save', 'on_type' or 'manual'. A full scan of a

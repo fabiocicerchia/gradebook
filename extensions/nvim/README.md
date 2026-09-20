@@ -27,30 +27,34 @@ lazy.nvim:
 }
 ```
 
-Working from a checkout instead? Point `cmd` at the packages. Each tool is a
-package, not a loose file, so it is imported by name with the checkout on
-`PYTHONPATH` — the plugin spawns `cmd` as given, without setting a working
-directory, so the path has to travel with the command. `PYTHONSAFEPATH`
-keeps the graded repo itself off `sys.path`, where `-m` would otherwise put
-it and let a stray `types.py` shadow the standard library:
+Working from a checkout instead? Install it into a virtualenv and point `cmd` at
+the console scripts that produces:
+
+```sh
+python3 -m venv ~/.venvs/gradebook
+~/.venvs/gradebook/bin/pip install \
+  -e /path/to/gradebook-code \
+  -e /path/to/gradebook-tests
+```
 
 ```lua
 require('gradebook').setup({
   cmd = {
-    code = {
-      'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-code',
-      'python3', '-m', 'gradebook_code',
-    },
-    tests = {
-      'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-tests',
-      'python3', '-m', 'gradebook_tests',
-    },
+    code = { '/home/you/.venvs/gradebook/bin/gradebook-code' },
+    tests = { '/home/you/.venvs/gradebook/bin/gradebook-tests' },
   },
 })
 ```
 
-That form needs no install, but `env` is a Unix tool. On Windows, install into a
-virtualenv and point `cmd` at the console scripts it puts in `Scripts/`.
+Spell the paths out in full: the plugin spawns `cmd` as given, so `~` is not
+expanded. On Windows the scripts land in `Scripts\` instead of `bin/`.
+
+Not `python3 -m gradebook_code`: `-m` puts the working directory first on
+`sys.path`, and the plugin sets no working directory, so the graded repository
+would land there and a stray `types.py` in it would shadow the standard library.
+A console script resolves `sys.path[0]` to its own directory instead. (`-P` and
+`PYTHONSAFEPATH` would also fix that, but both are Python 3.11+, and these tools
+support 3.10.)
 
 ## Commands
 

@@ -21,8 +21,7 @@ function M.check()
           ('pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-%s"'):format(
             tool
           ),
-          ("or set cmd.%s = { 'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-%s', 'python3', '-m', 'gradebook_%s' }"):format(
-            tool,
+          ("or install a checkout into a virtualenv and set cmd.%s = { '/path/to/venv/bin/gradebook-%s' }"):format(
             tool,
             tool
           ),

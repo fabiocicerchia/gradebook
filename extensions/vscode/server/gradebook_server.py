@@ -186,8 +186,9 @@ class Server:
                 "PyPI, and one interpreter serves both, so install both from "
                 "`git+https://github.com/fabiocicerchia/gradebook.git"
                 "#subdirectory=gradebook-<tool>` into a single virtualenv and point "
-                "`gradebook.pythonPath` at it — a pipx venv holding one tool cannot "
-                f"run the other. Or set `gradebook.{tool}Path` to the folder holding "
+                "`gradebook.pythonPath` at that venv's `bin/python` — a pipx venv holding "
+                "one tool cannot run the other. "
+                f"Or set `gradebook.{tool}Path` to the folder holding "
                 f"the gradebook_{tool} package."
             )
             raise ValueError(self.failures[tool]) from exc
