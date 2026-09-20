@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.1"  # x-release-please-version
+VERSION = "0.4.2"  # x-release-please-version
 
 # The shapes this module passes around. All JSON-shaped: the report is written
 # out as JSON and read back by the extension, so nothing here is richer than
