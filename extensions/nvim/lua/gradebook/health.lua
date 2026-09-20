@@ -1,7 +1,5 @@
 local M = {}
 
-local INSTALL_URL = 'git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-'
-
 function M.check()
   vim.health.start('gradebook')
   local opts = require('gradebook').options
@@ -20,7 +18,9 @@ function M.check()
         {
           -- Neither tool is on PyPI, and each is a package rather than a
           -- loose file: it is imported by name off PYTHONPATH.
-          ('pipx install "%s%s"'):format(INSTALL_URL, tool),
+          ('pipx install "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-%s"'):format(
+            tool
+          ),
           ("or set cmd.%s = { 'env', 'PYTHONSAFEPATH=1', 'PYTHONPATH=/path/to/gradebook-%s', 'python3', '-m', 'gradebook_%s' }"):format(
             tool,
             tool,

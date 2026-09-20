@@ -34,8 +34,6 @@ from types import ModuleType
 from typing import Any, TextIO
 
 PROTOCOL_VERSION = 1
-# Neither tool is published to PyPI, so the advice below cannot say "pip install".
-GIT_INSTALL = "git+https://github.com/fabiocicerchia/gradebook.git#subdirectory=gradebook-"
 TOOLS = ("code", "tests")
 
 # extensions/vscode/server/ -> repo root, for a checkout with no install.
@@ -185,9 +183,10 @@ class Server:
         except Exception as exc:  # turned into advice below
             self.failures[tool] = (
                 f"gradebook-{tool} is not available ({exc}). Neither tool is on "
-                f"PyPI, and one interpreter serves both, so install both from "
-                f"`{GIT_INSTALL}<tool>` into a single virtualenv and point "
-                f"`gradebook.pythonPath` at it — a pipx venv holding one tool cannot "
+                "PyPI, and one interpreter serves both, so install both from "
+                "`git+https://github.com/fabiocicerchia/gradebook.git"
+                "#subdirectory=gradebook-<tool>` into a single virtualenv and point "
+                "`gradebook.pythonPath` at it — a pipx venv holding one tool cannot "
                 f"run the other. Or set `gradebook.{tool}Path` to the folder holding "
                 f"the gradebook_{tool} package."
             )
