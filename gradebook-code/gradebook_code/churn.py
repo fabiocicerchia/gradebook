@@ -26,7 +26,7 @@ def git_churn(root: Path, limit: int = FIX_LIMIT) -> dict[str, int]:
 
     def run(*args: str) -> str | None:
         try:
-            result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own
+            result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own  # nosec B603
                 [_GIT, "-C", str(root), *args],
                 capture_output=True,
                 text=True,
