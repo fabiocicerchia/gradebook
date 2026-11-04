@@ -6,7 +6,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from .base import _GIT, HISTORY_LIMIT, LANG_BY_EXT, LIST_LIMIT, MIN_CHURN_FILES, Stats
+from .base import _GIT, HISTORY_LIMIT, LANG_BY_EXT, LIST_LIMIT, MIN_CHURN_FILES, Finding, Stats
 from .detection import is_test_file
 
 # ---------------------------------------------------------------------- git
@@ -21,7 +21,7 @@ def git_history(root: Path, limit: int = HISTORY_LIMIT) -> Stats | None:
 
     def run(*args: str) -> str | None:
         try:
-            result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own
+            result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own  # nosec B603
                 [_GIT, "-C", str(root), *args],
                 capture_output=True,
                 text=True,
@@ -55,7 +55,7 @@ def git_history(root: Path, limit: int = HISTORY_LIMIT) -> Stats | None:
 
     commits = source_commits = cochanged = test_only = 0
     fix_commits = fix_commits_with_tests = 0
-    file_commits = {}
+    file_commits: dict[str, list[int]] = {}
     for position, chunk in enumerate(log.split("\x00")):
         rows = chunk.splitlines()
         subject = rows[0] if rows else ""
@@ -95,7 +95,7 @@ def git_history(root: Path, limit: int = HISTORY_LIMIT) -> Stats | None:
 
 
 def find_hotspots(
-    file_commits: dict[str, int],
+    file_commits: dict[str, list[int]],
     source_files: list[str],
     tested: set[str],
     coverage_by_file: dict[str, float],
@@ -111,7 +111,7 @@ def find_hotspots(
         return None  # too little history to say which files are hot
     hot_count = max(5, round(len(churn) * 0.2))
     hot = churn[:hot_count]
-    findings = []
+    findings: list[Finding] = []
     covered = []
     untested = 0
     for count, path in hot:

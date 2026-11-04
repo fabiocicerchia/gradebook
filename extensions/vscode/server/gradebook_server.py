@@ -133,21 +133,21 @@ def missing_api(module: ModuleType) -> list[str]:
 
 
 class Server:
-    def __init__(self, hints: dict[str, str], out: TextIO, workspace: str | None = None) -> None:
+    def __init__(self, hints: dict[str, str | None], out: TextIO, workspace: str | None = None) -> None:
         # Loaded on demand, not up front: the two tools are separate packages,
         # and `tools: ["code"]` must not fail because the other one is absent.
         self.hints = hints
         self.workspace = workspace
-        self.modules = {}
-        self.failures = {}
+        self.modules: dict[str, ModuleType] = {}
+        self.failures: dict[str, str] = {}
         self.out = out
         self.out_lock = threading.Lock()
-        self.inbox = queue.Queue()
+        self.inbox: queue.Queue[str | None] = queue.Queue()
         # The last report per (root, tool). `invalidate` drops it; nothing here
         # serves a stale one, so this exists only so the client can ask again
         # without paying for a rescan it did not want.
-        self.reports = {}
-        self.cancelled = set()
+        self.reports: dict[tuple[str, str], dict[str, Any]] = {}
+        self.cancelled: set[Any] = set()
         self.active_scan = None
 
     # --- transport -------------------------------------------------------

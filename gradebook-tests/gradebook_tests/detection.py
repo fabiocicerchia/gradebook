@@ -539,7 +539,7 @@ def classify_name(name: str) -> tuple[bool, bool, bool]:
     return placeholder, descriptive, condition
 
 
-def extract_names(text: str, lang: str) -> set[str]:
+def extract_names(text: str, lang: str) -> list[str]:
     names = []
     for pattern in NAME_RE.get(lang, []):
         for match in pattern.finditer(text):
@@ -687,7 +687,7 @@ def blend_profile(language_lines: dict[str, int]) -> Profile:
         cases += target_cases * share
         bare += share if bare_check else 0.0
         spec += share if spec_ok else 0.0
-    dominant = sorted(language_lines, key=language_lines.get, reverse=True)[:2]
+    dominant = sorted(language_lines, key=lambda lang: language_lines[lang], reverse=True)[:2]
     return {
         "test_code_ratio": round(ratio, 2),
         "cases_per_source": round(cases, 2),
@@ -847,7 +847,7 @@ def normalise_body(block: str) -> str:
     return re.sub(r"\s+", " ", body).strip()
 
 
-def imported_project_names(text: str, lang: str, modules: set[str]) -> set[str]:
+def imported_project_names(text: str, lang: str, modules: set[str]) -> list[str]:
     """Names a test pulls in from the project's own code."""
     names = []
     if lang == "python":
@@ -881,7 +881,7 @@ def read_text(path: Path) -> str | None:
         return None
 
 
-def walk(root: Path) -> Iterator[tuple[Path, Path]]:
+def walk(root: Path) -> Iterator[tuple[Path, Path, bool]]:
     """Yield (absolute_path, relative_path, in_artifact_dir) for every file."""
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)

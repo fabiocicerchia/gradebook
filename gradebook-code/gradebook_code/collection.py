@@ -239,7 +239,7 @@ def _accumulate(
 
 
 def collect(root: Path) -> Stats:
-    stats = {
+    stats: Stats = {
         "root": str(root.resolve()),
         "files": 0,
         "lines": 0,

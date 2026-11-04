@@ -1,4 +1,5 @@
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -287,6 +288,9 @@ def test_ci_without_tests_scores_low(tmp_path):
 # --------------------------------------------------------------------- TDD
 
 
+GIT = shutil.which("git") or "git"
+
+
 def git_repo(path):
     env = {
         "GIT_AUTHOR_NAME": "t",
@@ -295,13 +299,13 @@ def git_repo(path):
         "GIT_COMMITTER_EMAIL": "t@e",
         "PATH": "/usr/bin:/bin",
     }
-    subprocess.run(["git", "init", "-q", str(path)], check=True, env=env)
+    subprocess.run([GIT, "init", "-q", str(path)], check=True, env=env)  # nosec B603 — fixed argv
     return env
 
 
 def commit(path, env, message):
-    subprocess.run(["git", "-C", str(path), "add", "-A"], check=True, env=env)
-    subprocess.run(["git", "-C", str(path), "commit", "-q", "-m", message], check=True, env=env)
+    subprocess.run([GIT, "-C", str(path), "add", "-A"], check=True, env=env)  # nosec B603 — fixed argv
+    subprocess.run([GIT, "-C", str(path), "commit", "-q", "-m", message], check=True, env=env)  # nosec B603 — fixed argv
 
 
 def test_tdd_rewards_tests_shipped_with_source(tmp_path):
