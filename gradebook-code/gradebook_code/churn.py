@@ -7,7 +7,7 @@ import subprocess
 from collections import Counter
 from pathlib import Path
 
-from .base import HOTSPOT_LIMIT, MIN_CHANGED_FOR_HOTSPOTS, MIN_FILES_FOR_HOTSPOTS, Stats
+from .base import HOTSPOT_LIMIT, MIN_CHANGED_FOR_HOTSPOTS, MIN_FILES_FOR_HOTSPOTS, Finding, Stats
 
 # ------------------------------------------------------------------- churn
 
@@ -16,7 +16,7 @@ FIX_LIMIT = 800
 _GIT = shutil.which("git") or "git"
 
 
-def git_churn(root: Path, limit: int = FIX_LIMIT) -> dict[str, int] | None:
+def git_churn(root: Path, limit: int = FIX_LIMIT) -> dict[str, int]:
     """How many commits touched each file, keyed the same way as the scan.
 
     `git log` reports paths from the repository root, so when the scan starts
@@ -44,7 +44,7 @@ def git_churn(root: Path, limit: int = FIX_LIMIT) -> dict[str, int] | None:
     log = run("log", "-n", str(limit), "--no-merges", "--name-only", "--pretty=format:%x00", "--", ".")
     if not log:
         return {}
-    counts = Counter()
+    counts: Counter[str] = Counter()
     for line in log.splitlines():
         path = line.strip()
         if not path or path.startswith("\x00"):
@@ -73,7 +73,7 @@ def find_hotspots(
     hot = changed[:hot_count]
     overall = sum(complexity for _, _, complexity in scored) / max(len(scored), 1)
     hot_average = sum(complexity for _, _, complexity in hot) / len(hot)
-    findings = []
+    findings: list[Finding] = []
     for path, commits, complexity in sorted(hot, key=lambda e: -(e[1] * e[2])):
         if complexity <= overall or len(findings) >= limit:
             continue

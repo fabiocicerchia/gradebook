@@ -169,7 +169,7 @@ def blend_profile(language_lines: dict[str, int]) -> Profile:
         "max_complexity": round(values[1]),
         "max_params": round(values[2]),
         "max_nesting": round(values[3], 1),
-        "languages": sorted(language_lines, key=language_lines.get, reverse=True)[:2],
+        "languages": sorted(language_lines, key=language_lines.__getitem__, reverse=True)[:2],
     }
 
 
@@ -182,7 +182,7 @@ def read_text(path: Path) -> str | None:
         return None
 
 
-def walk(root: Path) -> Iterator[Path]:
+def walk(root: Path) -> Iterator[tuple[Path, Path]]:
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
         for name in sorted(filenames):

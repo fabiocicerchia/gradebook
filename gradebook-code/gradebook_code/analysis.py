@@ -56,7 +56,7 @@ def analyse_file(rel: Path, text: str, lang: str, profile: Profile) -> FileInfo:
     class_re = CLASS_RE.get(lang)
     code = strip_noise(text, lang)
     lines = [ln for ln in text.splitlines() if ln.strip()]
-    info = {
+    info: FileInfo = {
         "file": str(rel),
         "lang": lang,
         "lines": len(lines),
@@ -137,7 +137,7 @@ DECLARATION_RE = re.compile(r"^\s*(?:import|from|package|use|require|#include|\w
 
 
 def find_duplicate_blocks(
-    files: list[FileInfo], window: int = DUPE_WINDOW, limit: int = DUPE_LIMIT
+    files: list[tuple[str, str]], window: int = DUPE_WINDOW, limit: int = DUPE_LIMIT
 ) -> tuple[int, list[Finding]]:
     """Windows of consecutive lines that appear verbatim somewhere else.
 
@@ -145,10 +145,10 @@ def find_duplicate_blocks(
     imports — repeats legitimately and would otherwise dominate, so a window
     only counts when most of it is actual statements.
     """
-    seen = {}
-    duplicated_lines = set()
-    findings = []
-    reported = set()
+    seen: dict[str, tuple[str, int]] = {}
+    duplicated_lines: set[tuple[str, int]] = set()
+    findings: list[Finding] = []
+    reported: set[tuple[str, int]] = set()
     for path, text in files:
         rows = [
             (index + 1, normalise_line(line))
@@ -189,9 +189,9 @@ def find_duplicate_blocks(
 
 def find_cycles(graph: dict[str, set[str]], limit: int = CYCLE_LIMIT) -> list[list[str]]:
     """Import cycles between the repo's own modules."""
-    colour = {}
-    stack = []
-    cycles = []
+    colour: dict[str, int] = {}
+    stack: list[str] = []
+    cycles: list[list[str]] = []
 
     def visit(node: str) -> None:
         colour[node] = 1

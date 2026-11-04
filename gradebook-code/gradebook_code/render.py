@@ -48,7 +48,7 @@ def render_flags(findings: list[Finding] | None, limit: int | None) -> list[str]
     return out
 
 
-def render_directories(directories: list[Stats]) -> list[str]:
+def render_directories(directories: list[Stats] | None) -> list[str]:
     if not directories:
         return []
     width = max(len(d["path"]) for d in directories)
