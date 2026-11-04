@@ -156,7 +156,7 @@ def score_tdd(s: Stats) -> tuple[float | None, str, str]:
     advice = "ship tests in the same commit as the code they cover — aim for 60%+ of source commits touching tests"
     if fixes:
         detail += f", {git['fix_commits_with_tests']}/{fixes} bugfixes shipped a test"
-        if fix_ratio < FIX_COMMIT_SHARE:
+        if fix_ratio is not None and fix_ratio < FIX_COMMIT_SHARE:
             advice = (
                 f"{fixes - git['fix_commits_with_tests']} of {fixes} bugfix commits shipped "
                 "no test — a fix without a regression test is a bug free to come back"

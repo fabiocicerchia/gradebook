@@ -10,7 +10,7 @@ from .base import DECORATIVE_COVERAGE, JS_EXT, LIST_LIMIT, MIN_CHANGES, MIN_CLUS
 # --------------------------------------------------------------- substance
 
 
-def source_stem(rel: Path) -> str:
+def source_stem(rel: Path) -> str | None:
     """The source file stem a test file is named after, if any."""
     stem = rel.stem
     name = stem
@@ -32,18 +32,18 @@ def source_stem(rel: Path) -> str:
 
 
 def find_duplicates(
-    bodies_by_file: dict[str, list[tuple[str, int, str]]], limit: int = LIST_LIMIT, min_cluster: int = MIN_CLUSTER
+    bodies_by_file: list[tuple[str, list[tuple[str, int]]]], limit: int = LIST_LIMIT, min_cluster: int = MIN_CLUSTER
 ) -> tuple[int, list[Finding]]:
     """Cases whose bodies are identical once names and literals are stripped.
 
     Two matching bodies are common and often legitimate; three or more is a
     copy-paste run, and the fix is one parametrised case.
     """
-    clusters = {}
+    clusters: dict[str, list[tuple[str, int]]] = {}
     for file, bodies in bodies_by_file:
         for body, line in bodies:
             clusters.setdefault(body, []).append((file, line))
-    findings = []
+    findings: list[Finding] = []
     redundant = 0
     for places in sorted(clusters.values(), key=len, reverse=True):
         if len(places) < min_cluster:
@@ -64,11 +64,11 @@ def find_duplicates(
 
 
 def find_phantoms(
-    imports_by_file: dict[str, set[str]], symbols: set[str], limit: int = LIST_LIMIT
+    imports_by_file: list[tuple[str, list[str]]], symbols: set[str], limit: int = LIST_LIMIT
 ) -> tuple[int, list[Finding]]:
     """Test imports of project symbols that no source file defines."""
-    findings = []
-    seen = set()
+    findings: list[Finding] = []
+    seen: set[tuple[str, str]] = set()
     for file, names in imports_by_file:
         for name in names:
             if name in symbols or (file, name) in seen:
@@ -87,14 +87,14 @@ def find_phantoms(
 
 
 def find_stale(
-    pairs: list[tuple[str, str]], file_commits: dict[str, int], min_changes: int = MIN_CHANGES, limit: int = LIST_LIMIT
+    pairs: list[tuple[str, str]], file_commits: dict[str, list[int]], min_changes: int = MIN_CHANGES, limit: int = LIST_LIMIT
 ) -> tuple[int, list[Finding]]:
     """Tests frozen while the code they cover kept changing.
 
     Positions come from `git log` newest-first, so a lower number is a more
     recent commit.
     """
-    findings = []
+    findings: list[Finding] = []
     stale = 0
     for test_file, source_file in pairs:
         test_positions = file_commits.get(test_file)
@@ -124,7 +124,7 @@ def find_decorative(
     limit: int = LIST_LIMIT,
 ) -> tuple[int, list[Finding]]:
     """Source files that have a test file and are still barely covered."""
-    findings = []
+    findings: list[Finding] = []
     decorative = 0
     for test_file, source_file in pairs:
         pct = file_coverage.get(source_file)

@@ -144,7 +144,7 @@ def jacoco_files(text: str) -> dict[str, float]:
 
 
 def go_profile_files(text: str) -> dict[str, float]:
-    totals = {}
+    totals: dict[str, tuple[int, int]] = {}
     for line in text.splitlines():
         match = re.match(r"^(.+?):\d+\.\d+,\d+\.\d+ (\d+) (\d+)$", line)
         if not match:

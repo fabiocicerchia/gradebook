@@ -51,8 +51,8 @@ class _WalkState:
     test_paths: list[Path] = field(default_factory=list)
     source_paths: list[str] = field(default_factory=list)
     source_by_stem: dict[str, Path] = field(default_factory=dict)
-    bodies_by_file: list[tuple[str, list]] = field(default_factory=list)
-    imports_by_file: list[tuple[str, set[str]]] = field(default_factory=list)
+    bodies_by_file: list[tuple[str, list[tuple[str, int]]]] = field(default_factory=list)
+    imports_by_file: list[tuple[str, list[str]]] = field(default_factory=list)
 
 
 @dataclass
