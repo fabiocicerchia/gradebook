@@ -87,7 +87,10 @@ def find_phantoms(
 
 
 def find_stale(
-    pairs: list[tuple[str, str]], file_commits: dict[str, list[int]], min_changes: int = MIN_CHANGES, limit: int = LIST_LIMIT
+    pairs: list[tuple[str, str]],
+    file_commits: dict[str, list[int]],
+    min_changes: int = MIN_CHANGES,
+    limit: int = LIST_LIMIT,
 ) -> tuple[int, list[Finding]]:
     """Tests frozen while the code they cover kept changing.
 
