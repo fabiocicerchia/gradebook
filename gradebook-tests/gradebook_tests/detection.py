@@ -1065,6 +1065,56 @@ def _brittle_and_private(rel: Path, text: str) -> tuple[list[Finding], list[Find
     return brittle, suppressed
 
 
+def _name_tally(names: list[str]) -> tuple[int, int, int, int, list[str]]:
+    """Placeholder, descriptive and conditional counts, total words, and the
+    names that do not describe anything."""
+    placeholder = descriptive = conditional = words = 0
+    bad_names = []
+    for name in names:
+        is_placeholder, is_descriptive, has_condition = classify_name(name)
+        words += len(name_words(name))
+        placeholder += is_placeholder
+        descriptive += is_descriptive
+        conditional += has_condition
+        if not is_descriptive:
+            bad_names.append(name)
+    return placeholder, descriptive, conditional, words, bad_names
+
+
+def _setup_lines(text: str) -> int:
+    """Non-blank lines in the indented body of the first setUp/beforeEach."""
+    setup_lines = 0
+    setup_match = SETUP_BLOCK_RE.search(text)
+    if setup_match:
+        rest = text[setup_match.end() :].splitlines()
+        for line in rest:
+            if line.strip() and not line[:1].isspace():
+                break
+            setup_lines += 1 if line.strip() else 0
+    return setup_lines
+
+
+def _suppressed_failures(rel: Path, text: str) -> list[Finding]:
+    suppressed = []
+    for pattern, message in (
+        (COMMENTED_ASSERT_RE, "assertion commented out"),
+        (GREEDY_CATCH_RE, "failure logged and swallowed — the test still passes"),
+        (SWALLOW_RE, "failure swallowed by an empty except/catch"),
+        (DEAD_BRANCH_RE, "assertions behind an `if False` branch"),
+        (SKIP_NO_REASON_RE, "test skipped with no reason given"),
+    ):
+        for match in pattern.finditer(text):
+            suppressed.append(
+                {
+                    "file": str(rel),
+                    "line": line_of(text, match.start()),
+                    "kind": "suppressed-failure",
+                    "message": message,
+                }
+            )
+    return suppressed
+
+
 def analyse_test_file(rel: Path, text: str, lang: str) -> FileInfo:
     case_re = CASE_RE.get(lang)
     assert_re = ASSERT_RE.get(lang, GENERIC_ASSERT)
@@ -1088,17 +1138,8 @@ def analyse_test_file(rel: Path, text: str, lang: str) -> FileInfo:
     # Doubles wired up in setUp/beforeEach, outside any single case.
     doubles += len(DOUBLE_RE.findall(text[: blocks[0]] if blocks else text))
 
-    placeholder = descriptive = conditional = words = 0
-    bad_names = []
     names = extract_names(text, lang)
-    for name in names:
-        is_placeholder, is_descriptive, has_condition = classify_name(name)
-        words += len(name_words(name))
-        placeholder += is_placeholder
-        descriptive += is_descriptive
-        conditional += has_condition
-        if not is_descriptive:
-            bad_names.append(name)
+    placeholder, descriptive, conditional, words, bad_names = _name_tally(names)
 
     uninformative = len(UNINFORMATIVE_ASSERT_RE[lang].findall(text)) if lang in UNINFORMATIVE_ASSERT_RE else 0
     chatter = len(CHATTER_RE.findall(text))
@@ -1110,32 +1151,10 @@ def analyse_test_file(rel: Path, text: str, lang: str) -> FileInfo:
     env_coupling = len(ENV_COUPLING_RE.findall(text))
     order_dependent = len(ORDER_DEPENDENT_RE.findall(text))
 
-    setup_lines = 0
-    setup_match = SETUP_BLOCK_RE.search(text)
-    if setup_match:
-        rest = text[setup_match.end() :].splitlines()
-        for line in rest:
-            if line.strip() and not line[:1].isspace():
-                break
-            setup_lines += 1 if line.strip() else 0
+    setup_lines = _setup_lines(text)
 
     brittle, suppressed = _brittle_and_private(rel, text)
-    for pattern, message in (
-        (COMMENTED_ASSERT_RE, "assertion commented out"),
-        (GREEDY_CATCH_RE, "failure logged and swallowed — the test still passes"),
-        (SWALLOW_RE, "failure swallowed by an empty except/catch"),
-        (DEAD_BRANCH_RE, "assertions behind an `if False` branch"),
-        (SKIP_NO_REASON_RE, "test skipped with no reason given"),
-    ):
-        for match in pattern.finditer(text):
-            suppressed.append(
-                {
-                    "file": str(rel),
-                    "line": line_of(text, match.start()),
-                    "kind": "suppressed-failure",
-                    "message": message,
-                }
-            )
+    suppressed.extend(_suppressed_failures(rel, text))
 
     kind, flags = classify_kind(rel, text)
     return {
