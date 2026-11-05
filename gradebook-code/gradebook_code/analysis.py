@@ -30,18 +30,71 @@ from .scanning import strip_noise
 
 def _imports_in(text: str, lang: str) -> list[str]:
     """Every module name this file imports, in the spelling it used."""
-    out: list[str] = []
     import_re = IMPORT_RE.get(lang)
-    if import_re:
-        for match in import_re.finditer(text):
-            for group in match.groups():
-                if not group:
-                    continue
-                for part in group.split(","):
-                    target = part.strip().strip("()").split(" as ")[0].strip()
-                    if target:
-                        out.append(target)
-    return out
+    if not import_re:
+        return []
+    groups = [group for match in import_re.finditer(text) for group in match.groups() if group]
+    targets = (part.strip().strip("()").split(" as ")[0].strip() for group in groups for part in group.split(","))
+    return [target for target in targets if target]
+
+
+def _classes_in(code: str, lang: str) -> list[dict]:
+    """Every class this file declares, with its base list as written."""
+    class_re = CLASS_RE.get(lang)
+    if not class_re:
+        return []
+    classes = []
+    for match in class_re.finditer(code):
+        bases = (match.group(2) or "").strip() if match.lastindex and match.lastindex > 1 else ""
+        classes.append({"name": match.group(1), "bases": bases, "line": line_of(code, match.start())})
+    return classes
+
+
+def _measure_function(code: str, match: re.Match[str], lang: str) -> dict | None:
+    """One function's size and shape, or None when the match is a keyword."""
+    groups = [g for g in match.groups() if g is not None]
+    name = groups[-1] if groups else "?"
+    if name in {"if", "for", "while", "switch", "catch", "return"}:
+        return None
+    body = body_of(code, match.start(), lang)
+    body_lines = [ln for ln in body.splitlines() if ln.strip()]
+    return {
+        "name": name,
+        "line": line_of(code, match.start()),
+        "lines": len(body_lines),
+        "complexity": 1 + len(DECISION_RE.findall(body)),
+        "nesting": nesting_depth(body, lang),
+        "params": count_params(signature_window(body, name), implicit_self=lang in IMPLICIT_FIRST_PARAM),
+        "flag_params": len(re.findall(r"=\s*(?:True|False|true|false)\b", body.split("\n", 1)[0])),
+        "body": body,
+    }
+
+
+def _functions_in(code: str, lang: str) -> list[dict]:
+    func_re = FUNC_RE.get(lang)
+    if not func_re:
+        return []
+    measured = (_measure_function(code, match, lang) for match in func_re.finditer(code))
+    return [function for function in measured if function is not None]
+
+
+def _limit_findings(rel: Path, function: dict, profile: Profile) -> list[Finding]:
+    """A finding for every profile limit this function goes past."""
+    return [
+        {
+            "file": str(rel),
+            "line": function["line"],
+            "kind": kind,
+            "message": f"`{function['name']}` has {value} {label} (limit {limit:g})",
+        }
+        for label, value, limit, kind in (
+            ("lines", function["lines"], profile["max_lines"], "long-function"),
+            ("complexity", function["complexity"], profile["max_complexity"], "complex-function"),
+            ("nesting", function["nesting"], profile["max_nesting"], "deep-nesting"),
+            ("params", function["params"], profile["max_params"], "many-parameters"),
+        )
+        if value > limit
+    ]
 
 
 def analyse_file(rel: Path, text: str, lang: str, profile: Profile) -> FileInfo:
@@ -52,8 +105,6 @@ def analyse_file(rel: Path, text: str, lang: str, profile: Profile) -> FileInfo:
     code) and the import and infrastructure markers are read from the original,
     where the strings they live in still exist.
     """
-    func_re = FUNC_RE.get(lang)
-    class_re = CLASS_RE.get(lang)
     code = strip_noise(text, lang)
     lines = [ln for ln in text.splitlines() if ln.strip()]
     info: FileInfo = {
@@ -61,8 +112,8 @@ def analyse_file(rel: Path, text: str, lang: str, profile: Profile) -> FileInfo:
         "lang": lang,
         "lines": len(lines),
         "code": code,
-        "functions": [],
-        "classes": [],
+        "functions": _functions_in(code, lang),
+        "classes": _classes_in(code, lang),
         "findings": [],
         "demeter": len(DEMETER_RE.findall(code)),
         "todos": len(TODO_RE.findall(text)),
@@ -71,56 +122,10 @@ def analyse_file(rel: Path, text: str, lang: str, profile: Profile) -> FileInfo:
         "globals": len(GLOBAL_STATE_RE[lang].findall(code)) if lang in GLOBAL_STATE_RE else 0,
         "infra": len(INFRA_RE.findall(text)),
         "concerns": {name for name, pattern in CONCERN_RE.items() if pattern.search(text)},
-        "imports": [],
+        "imports": _imports_in(text, lang),
     }
-
-    info["imports"] = _imports_in(text, lang)
-
-    if class_re:
-        for match in class_re.finditer(code):
-            name = match.group(1)
-            bases = (match.group(2) or "").strip() if match.lastindex and match.lastindex > 1 else ""
-            info["classes"].append({"name": name, "bases": bases, "line": line_of(code, match.start())})
-
-    if func_re:
-        for match in func_re.finditer(code):
-            groups = [g for g in match.groups() if g is not None]
-            name = groups[-1] if groups else "?"
-            if name in {"if", "for", "while", "switch", "catch", "return"}:
-                continue
-            body = body_of(code, match.start(), lang)
-            body_lines = [ln for ln in body.splitlines() if ln.strip()]
-            function = {
-                "name": name,
-                "line": line_of(code, match.start()),
-                "lines": len(body_lines),
-                "complexity": 1 + len(DECISION_RE.findall(body)),
-                "nesting": nesting_depth(body, lang),
-                "params": count_params(signature_window(body, name), implicit_self=lang in IMPLICIT_FIRST_PARAM),
-                "flag_params": len(re.findall(r"=\s*(?:True|False|true|false)\b", body.split("\n", 1)[0])),
-                "body": body,
-            }
-            info["functions"].append(function)
-            for label, value, limit, kind in (
-                ("lines", function["lines"], profile["max_lines"], "long-function"),
-                (
-                    "complexity",
-                    function["complexity"],
-                    profile["max_complexity"],
-                    "complex-function",
-                ),
-                ("nesting", function["nesting"], profile["max_nesting"], "deep-nesting"),
-                ("params", function["params"], profile["max_params"], "many-parameters"),
-            ):
-                if value > limit:
-                    info["findings"].append(
-                        {
-                            "file": str(rel),
-                            "line": function["line"],
-                            "kind": kind,
-                            "message": f"`{name}` has {value} {label} (limit {limit:g})",
-                        }
-                    )
+    for function in info["functions"]:
+        info["findings"].extend(_limit_findings(rel, function, profile))
     return info
 
 

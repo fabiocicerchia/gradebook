@@ -41,6 +41,38 @@ DEFAULT_BLOCK_COMMENTS = (("/*", "*/"),)
 DEFAULT_QUOTES = ('"', "'")
 
 
+def _blank(out: list[str], start: int, end: int) -> None:
+    for index in range(max(start, 0), min(end, len(out))):
+        if out[index] != "\n":
+            out[index] = " "
+
+
+def _comment_end(text: str, position: int, line_tokens: tuple, block_pairs: tuple) -> int | None:
+    """Where the comment opening at `position` ends, or None if none opens there."""
+    if any(text.startswith(token, position) for token in line_tokens):
+        end = text.find("\n", position)
+        return len(text) if end == -1 else end
+    pair = next((p for p in block_pairs if text.startswith(p[0], position)), None)
+    if pair:
+        end = text.find(pair[1], position + len(pair[0]))
+        return len(text) if end == -1 else end + len(pair[1])
+    return None
+
+
+def _string_span(text: str, position: int, triple: bool) -> tuple[int, int, int]:
+    """The contents to blank, and where to resume, for the string opening at `position`."""
+    char = text[position]
+    size = len(text)
+    if triple and text.startswith(char * 3, position):
+        end = text.find(char * 3, position + 3)
+        end = size if end == -1 else end + 3
+        return position + 3, end - 3, end
+    cursor = position + 1
+    while cursor < size and text[cursor] not in (char, "\n"):
+        cursor += 2 if text[cursor] == "\\" else 1
+    return position + 1, cursor, min(cursor + 1, size)
+
+
 def strip_noise(text: str, lang: str) -> str:
     """Blank comments and string contents, preserving length and line numbers.
 
@@ -52,47 +84,15 @@ def strip_noise(text: str, lang: str) -> str:
     quotes = STRING_QUOTES.get(lang, DEFAULT_QUOTES)
     triple = lang in TRIPLE_QUOTE_LANGS
     out = list(text)
-    size = len(text)
-
-    def blank(start: int, end: int) -> None:
-        for index in range(max(start, 0), min(end, size)):
-            if out[index] != "\n":
-                out[index] = " "
-
     position = 0
-    while position < size:
-        char = text[position]
-        token = next((t for t in line_tokens if text.startswith(t, position)), None)
-        if token:
-            end = text.find("\n", position)
-            end = size if end == -1 else end
-            blank(position, end)
+    while position < len(text):
+        end = _comment_end(text, position, line_tokens, block_pairs)
+        if end is not None:
+            _blank(out, position, end)
             position = end
-            continue
-        pair = next((p for p in block_pairs if text.startswith(p[0], position)), None)
-        if pair:
-            end = text.find(pair[1], position + len(pair[0]))
-            end = size if end == -1 else end + len(pair[1])
-            blank(position, end)
-            position = end
-            continue
-        if char in quotes:
-            if triple and text.startswith(char * 3, position):
-                end = text.find(char * 3, position + 3)
-                end = size if end == -1 else end + 3
-                blank(position + 3, end - 3)
-                position = end
-                continue
-            cursor = position + 1
-            while cursor < size:
-                if text[cursor] == "\\":
-                    cursor += 2
-                    continue
-                if text[cursor] == char or text[cursor] == "\n":
-                    break
-                cursor += 1
-            blank(position + 1, cursor)
-            position = min(cursor + 1, size)
-            continue
-        position += 1
+        elif text[position] in quotes:
+            start, stop, position = _string_span(text, position, triple)
+            _blank(out, start, stop)
+        else:
+            position += 1
     return "".join(out)
