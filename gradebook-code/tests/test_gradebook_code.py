@@ -1,7 +1,9 @@
 import ast
 import json
+import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -922,6 +924,38 @@ def test_cli_rejects_bad_input(tmp_path):
 def test_cli_lists_dimensions(capsys):
     assert main(["--list-dimensions"]) == 0
     assert "Simplicity (KISS)" in capsys.readouterr().out
+
+
+def run_module(*args):
+    """`python3 -m gradebook_code`, the way the editor plugins and CI call it."""
+    root = Path(__file__).resolve().parents[1]
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join(filter(None, [str(root), os.environ.get("PYTHONPATH")]))}
+    return subprocess.run(  # nosec B603 — fixed argv
+        [sys.executable, "-m", "gradebook_code", *args], capture_output=True, text=True, env=env, check=False
+    )
+
+
+def test_end_to_end_a_git_repo_through_the_module(tmp_path):
+    repo = churned_repo(tmp_path)
+
+    result = run_module(str(repo), "--format", "json")
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert dim(payload, "hotspots")["score"] is not None
+    assert {f["file"] for f in payload["findings"] if f["kind"] == "hotspot"} >= {"src/billing.py"}
+    assert all(f["file"] and "line" in f for f in payload["findings"])
+    assert payload["recommendations"]
+
+    baseline = tmp_path / "baseline.json"
+    baseline.write_text(result.stdout)
+    result = run_module(str(repo), "--baseline", str(baseline), "--fail-under", "100")
+    assert result.returncode == 1
+    assert "+0.0 vs baseline" in result.stdout
+    assert "below --fail-under 100" in result.stderr
+
+    result = run_module(str(repo), "--format", "markdown", "--by-dir")
+    assert result.returncode == 0, result.stderr
+    assert "| Principle |" in result.stdout
 
 
 def test_version_matches_the_packaging_metadata():
