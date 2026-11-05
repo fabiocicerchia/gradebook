@@ -79,6 +79,7 @@ SKIP_DIRS = {
     ".terraform",
     "vendor",
     "third_party",
+    ".deps",
     "site-packages",
     ".cache",
     ".yarn",
