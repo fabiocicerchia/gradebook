@@ -37,6 +37,7 @@ jobs:
             ./
 
       - name: trivy filesystem
+        if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
         with:
           scan-type: fs
@@ -53,7 +54,7 @@ jobs:
       # script rather than in `if:` so a repo with no FOSSA project skips the
       # scan and still goes green.
       - name: fossa license scan
-        if: hashFiles('.fossa.yml') != ''
+        if: ${{ !cancelled() && hashFiles('.fossa.yml') != '' }}
         env:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
         run: |
