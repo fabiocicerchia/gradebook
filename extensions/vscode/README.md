@@ -14,7 +14,7 @@ panel.
 
 ## Requirements
 
-Python 3.10+, plus the tools themselves. The scan server *imports* them, so
+Python 3.11+, plus the tools themselves. The scan server *imports* them, so
 they have to be installed into an interpreter it can use — a `pipx` install is
 sealed in its own virtualenv and will not do on its own:
 

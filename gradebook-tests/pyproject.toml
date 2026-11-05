@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Fabio Cicerchia" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
@@ -31,7 +31,7 @@ pythonpath = ["."]
 line-length = 120           # FC-GEN-045
 # The floor `requires-python` names, so UP cannot rewrite the tree into syntax
 # the oldest supported interpreter would reject.
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [

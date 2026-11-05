@@ -4,7 +4,7 @@
 line-length = 120           # FC-GEN-045
 # The floor both tools support, so nothing here is written in syntax the older
 # of the two interpreters could not run.
-target-version = "py310"
+target-version = "py311"
 
 [lint]
 select = [

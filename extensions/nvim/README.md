@@ -53,8 +53,8 @@ Not `python3 -m gradebook_code`: `-m` puts the working directory first on
 `sys.path`, and the plugin sets no working directory, so the graded repository
 would land there and a stray `types.py` in it would shadow the standard library.
 A console script resolves `sys.path[0]` to its own directory instead. (`-P` and
-`PYTHONSAFEPATH` would also fix that, but both are Python 3.11+, and these tools
-support 3.10.)
+`PYTHONSAFEPATH` would also fix that, but a console script needs no flag at
+all.)
 
 ## Commands
 
