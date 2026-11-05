@@ -93,6 +93,7 @@ ARTIFACT_DIRS = {
     "dist",
     "target",
     "out",
+    "out-tsc",
     "obj",
     "reports",
     ".nyc_output",
