@@ -19,23 +19,17 @@ from .coverage import (
     measure_mutation,
 )
 from .detection import (
-    FILLER_WORDS,
-    MUTATION_RE,
-    PHANTOM_LANGS,
-    SERIAL_ONLY_RE,
-    SYMBOL_RE,
     analyse_test_file,
     blend_profile,
     imported_project_names,
     is_test_file,
-    language_of,
     name_words,
-    read_text,
-    walk,
 )
 from .git import find_hotspots, git_history
+from .patterns import FILLER_WORDS, MUTATION_RE, PHANTOM_LANGS, SERIAL_ONLY_RE, SYMBOL_RE
 from .severity import FLAG_ORDER, severity_for
 from .substance import find_decorative, find_duplicates, find_phantoms, find_stale, source_stem
+from .walking import language_of, read_text, walk
 
 # ------------------------------------------------------------------ collect
 

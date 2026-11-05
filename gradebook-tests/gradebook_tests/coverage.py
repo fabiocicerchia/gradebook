@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 from .base import FRACTION_AS_PERCENT, PERCENT_MAX
-from .detection import read_text
+from .walking import read_text
 
 # ----------------------------------------------------------------- coverage
 
