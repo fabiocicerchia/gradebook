@@ -31,13 +31,13 @@ jobs:
 
       - name: osv-scanner
         uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36  # v2.7.0
-        continue-on-error: true
         with:
           scan-args: |-
             --recursive
             ./
 
       - name: trivy filesystem
+        if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
         with:
           scan-type: fs
@@ -54,7 +54,7 @@ jobs:
       # script rather than in `if:` so a repo with no FOSSA project skips the
       # scan and still goes green.
       - name: fossa license scan
-        if: hashFiles('.fossa.yml') != ''
+        if: ${{ !cancelled() && hashFiles('.fossa.yml') != '' }}
         env:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
         run: |

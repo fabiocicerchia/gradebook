@@ -62,9 +62,9 @@ def _emit(report: Report, args: argparse.Namespace) -> None:
     """The report, in whichever format was asked for."""
     if args.format == "json":
         json.dump(report, sys.stdout, indent=2, default=str)
-        print()  # noqa: T201 — the tool's output
+        sys.stdout.write("\n")
     elif args.format == "markdown":
-        print(render_markdown(report, args.top, args.max_flags))  # noqa: T201 — the tool's output
+        sys.stdout.write(render_markdown(report, args.top, args.max_flags) + "\n")
     else:
         text = render_text(report, args.top, args.max_flags)
         if "baseline" in report:
@@ -74,7 +74,7 @@ def _emit(report: Report, args: argparse.Namespace) -> None:
                 f"({report['baseline']['score']:.1f})",
                 1,
             )
-        print(text)  # noqa: T201 — the tool's output
+        sys.stdout.write(text + "\n")
 
 
 def _gate_failed(report: Report, args: argparse.Namespace) -> bool:
@@ -82,15 +82,12 @@ def _gate_failed(report: Report, args: argparse.Namespace) -> bool:
     crossed. Says which on stderr, since that is the whole point of a gate."""
     failed = False
     if args.fail_under is not None and report["score"] < args.fail_under:
-        print(  # noqa: T201 — the tool's output
-            f"gradebook-code: {report['score']:.1f} is below --fail-under {args.fail_under}",
-            file=sys.stderr,
-        )
+        sys.stderr.write(f"gradebook-code: {report['score']:.1f} is below --fail-under {args.fail_under}\n")
         failed = True
     if args.fail_on_drop is not None:
         drop = -report["baseline"]["delta"]
         if drop > args.fail_on_drop:
-            print(f"gradebook-code: dropped {drop:.1f} points against the baseline", file=sys.stderr)  # noqa: T201 — the tool's output
+            sys.stderr.write(f"gradebook-code: dropped {drop:.1f} points against the baseline\n")
             failed = True
     return failed
 
@@ -101,19 +98,19 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.list_dimensions:
         for key, title, weight in DIMENSIONS:
-            print(f"{key:<10} {weight:>3} pts  {title}")  # noqa: T201 — the tool's output
-        print(  # noqa: T201 — the tool's output
+            sys.stdout.write(f"{key:<10} {weight:>3} pts  {title}\n")
+        sys.stdout.write(
             "\nAny dimension without evidence (no interfaces, no inheritance, too few "
-            "modules)\nis left unscored and the remaining weights renormalise."
+            "modules)\nis left unscored and the remaining weights renormalise.\n"
         )
         return 0
     if args.fail_on_drop is not None and not args.baseline:
-        print("gradebook-code: --fail-on-drop needs --baseline", file=sys.stderr)  # noqa: T201 — the tool's output
+        sys.stderr.write("gradebook-code: --fail-on-drop needs --baseline\n")
         return 2
 
     root = Path(args.path)
     if not root.is_dir():
-        print(f"gradebook-code: not a directory: {root}", file=sys.stderr)  # noqa: T201 — the tool's output
+        sys.stderr.write(f"gradebook-code: not a directory: {root}\n")
         return 2
 
     report = evaluate(collect(root))
@@ -130,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
                 "delta": round(report["score"] - baseline["score"], 1),
             }
         except (OSError, ValueError, KeyError) as error:
-            print(f"gradebook-code: cannot read baseline {args.baseline}: {error}", file=sys.stderr)  # noqa: T201 — the tool's output
+            sys.stderr.write(f"gradebook-code: cannot read baseline {args.baseline}: {error}\n")
             return 2
 
     _emit(report, args)

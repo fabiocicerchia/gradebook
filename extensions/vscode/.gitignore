@@ -1,6 +1,7 @@
 node_modules/
 out/
 out-tsc/
+lcov.info
 *.vsix
 # The root .gitignore drops every `.vscode/` as editor cruft. Here it is the
 # F5 launch config, which is part of the extension's source and is tracked in
