@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Python 3.10+**. Nothing else — both tools are standard library only.
+- **Python 3.11+**. Nothing else — both tools are standard library only.
 - `git` on `$PATH` if you want the history-based dimensions (TDD discipline in
   `gradebook-tests`, churn-weighted hotspots in `gradebook-code`). Without a
   repository those dimensions are dropped as unscored and the remaining weights

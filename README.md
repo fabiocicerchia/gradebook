@@ -78,7 +78,7 @@ already have — a virtualenv, a CI job, a Docker layer — and a checkout is
 installable as a directory: `pipx install ./gradebook-code`. Pin a release in
 CI with `@<tag>` before the `#`.
 
-Python 3.10+, no dependencies, not on PyPI yet — so a bare `gradebook-code`
+Python 3.11+, no dependencies, not on PyPI yet — so a bare `gradebook-code`
 package name finds nothing. Developing on it? `make setup`. The venv, PEP 668
 and CI variants are in
 [`docs/getting-started.md`](docs/getting-started.md#install).
