@@ -43,33 +43,39 @@ from .severity import severity_for
 # ----------------------------------------------------------------- collect
 
 
+def _count_dead_code(stats: Stats, info: FileInfo, corpus: str) -> None:
+    """Private helpers nobody calls."""
+    for function in info["functions"]:
+        name = function["name"]
+        private = name.startswith("_") or (info["lang"] == "go" and name[:1].islower())
+        if not (private and len(name) > DEAD_NAME_CHARS and corpus.count(name) <= 1):
+            continue
+        stats["dead_symbols"] += 1
+        if len([f for f in stats["findings"] if f["kind"] == "dead-code"]) < MAX_DEAD_CODE_FINDINGS:
+            stats["findings"].append(
+                {
+                    "file": info["file"],
+                    "line": function["line"],
+                    "kind": "dead-code",
+                    "message": f"`{name}` is private and never referenced",
+                }
+            )
+
+
+def _count_single_implementers(stats: Stats, info: FileInfo, corpus: str) -> None:
+    """Abstractions with one implementer: only each class's first real base counts."""
+    ignored = {"extends", "implements", "object", "Exception", "Enum", "ABC"}
+    for klass in info["classes"]:
+        base = next((b for b in re.findall(r"\w+", klass["bases"]) if b not in ignored), None)
+        if base and len(re.findall(rf"(?:extends|implements|:|\()\s*{base}\b", corpus)) == 1:
+            stats["single_impl_interfaces"] += 1
+
+
 def _yagni_pass(stats: Stats, infos: list[FileInfo], corpus: str) -> None:
     """Private helpers nobody calls, and abstractions with one implementer."""
     for info in infos:
-        for function in info["functions"]:
-            name = function["name"]
-            private = name.startswith("_") or (info["lang"] == "go" and name[:1].islower())
-            if private and len(name) > DEAD_NAME_CHARS and corpus.count(name) <= 1:
-                stats["dead_symbols"] += 1
-                if len([f for f in stats["findings"] if f["kind"] == "dead-code"]) < MAX_DEAD_CODE_FINDINGS:
-                    stats["findings"].append(
-                        {
-                            "file": info["file"],
-                            "line": function["line"],
-                            "kind": "dead-code",
-                            "message": f"`{name}` is private and never referenced",
-                        }
-                    )
-        for klass in info["classes"]:
-            if not klass["bases"].strip():
-                continue
-            for base in re.findall(r"\w+", klass["bases"]):
-                if base in {"extends", "implements", "object", "Exception", "Enum", "ABC"}:
-                    continue
-                implementers = len(re.findall(rf"(?:extends|implements|:|\()\s*{base}\b", corpus))
-                if implementers == 1:
-                    stats["single_impl_interfaces"] += 1
-                break
+        _count_dead_code(stats, info, corpus)
+        _count_single_implementers(stats, info, corpus)
         stats["stub_overrides"] += info["stubs"]
 
 

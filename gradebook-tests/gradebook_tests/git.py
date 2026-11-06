@@ -16,31 +16,31 @@ from .detection import is_test_file
 FIX_COMMIT_RE = re.compile(r"\b(?:fix|fixes|fixed|bug|bugfix|hotfix|regression|patch|repair)\b", re.IGNORECASE)
 
 
+def _run_git(root: Path, *args: str) -> str | None:
+    try:
+        result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own  # nosec B603
+            [_GIT, "-C", str(root), *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return result.stdout if result.returncode == 0 else None
+
+
 def git_history(root: Path, limit: int = HISTORY_LIMIT) -> Stats | None:
     """Commit-level TDD signal: do source changes arrive with test changes?"""
-
-    def run(*args: str) -> str | None:
-        try:
-            result = subprocess.run(  # noqa: S603 — a fixed argv; `args` is this module's own  # nosec B603
-                [_GIT, "-C", str(root), *args],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                check=False,
-            )
-        except (OSError, subprocess.SubprocessError):
-            return None
-        return result.stdout if result.returncode == 0 else None
-
     # git reports paths from the repository root while the scan uses paths
     # relative to wherever it started. Without stripping the prefix, nothing
     # matches on a subdirectory scan and the stale-test and pairing checks
     # silently find nothing.
-    prefix = run("rev-parse", "--show-prefix")
+    prefix = _run_git(root, "rev-parse", "--show-prefix")
     if prefix is None:
         return None
-    prefix = prefix.strip()
-    log = run(
+    log = _run_git(
+        root,
         "log",
         "-n",
         str(limit),
@@ -52,16 +52,33 @@ def git_history(root: Path, limit: int = HISTORY_LIMIT) -> Stats | None:
     )
     if not log or not log.strip():
         return None
+    return _tally_log(log, prefix.strip())
 
+
+def _commit_files(chunk: str, prefix: str) -> tuple[str, list[str]]:
+    """One log chunk as its subject and the files it touched, prefix stripped."""
+    rows = chunk.splitlines()
+    subject = rows[0] if rows else ""
+    lines = [ln for ln in rows[1:] if ln.strip()]
+    if prefix:
+        lines = [ln[len(prefix) :] for ln in lines if ln.startswith(prefix)]
+    return subject, lines
+
+
+def _touches(lines: list[str]) -> tuple[bool, bool]:
+    """Whether a commit touched source files, and whether it touched tests."""
+    paths = [Path(ln) for ln in lines]
+    tests = [p for p in paths if is_test_file(p)]
+    sources = [p for p in paths if not is_test_file(p) and p.suffix in LANG_BY_EXT]
+    return bool(sources), bool(tests)
+
+
+def _tally_log(log: str, prefix: str) -> Stats:
     commits = source_commits = cochanged = test_only = 0
     fix_commits = fix_commits_with_tests = 0
     file_commits: dict[str, list[int]] = {}
     for position, chunk in enumerate(log.split("\x00")):
-        rows = chunk.splitlines()
-        subject = rows[0] if rows else ""
-        lines = [ln for ln in rows[1:] if ln.strip()]
-        if prefix:
-            lines = [ln[len(prefix) :] for ln in lines if ln.startswith(prefix)]
+        subject, lines = _commit_files(chunk, prefix)
         if not lines:
             continue
         commits += 1
@@ -70,9 +87,7 @@ def git_history(root: Path, limit: int = HISTORY_LIMIT) -> Stats | None:
         # collapse when several commits land in the same second.
         for line in lines:
             file_commits.setdefault(line, []).append(position)
-        paths = [Path(ln) for ln in lines]
-        tests = [p for p in paths if is_test_file(p)]
-        sources = [p for p in paths if not is_test_file(p) and p.suffix in LANG_BY_EXT]
+        sources, tests = _touches(lines)
         if sources:
             source_commits += 1
             if tests:

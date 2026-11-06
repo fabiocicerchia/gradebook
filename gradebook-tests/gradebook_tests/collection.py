@@ -19,23 +19,17 @@ from .coverage import (
     measure_mutation,
 )
 from .detection import (
-    FILLER_WORDS,
-    MUTATION_RE,
-    PHANTOM_LANGS,
-    SERIAL_ONLY_RE,
-    SYMBOL_RE,
     analyse_test_file,
     blend_profile,
     imported_project_names,
     is_test_file,
-    language_of,
     name_words,
-    read_text,
-    walk,
 )
 from .git import find_hotspots, git_history
+from .patterns import FILLER_WORDS, MUTATION_RE, PHANTOM_LANGS, SERIAL_ONLY_RE, SYMBOL_RE
 from .severity import FLAG_ORDER, severity_for
 from .substance import find_decorative, find_duplicates, find_phantoms, find_stale, source_stem
+from .walking import language_of, read_text, walk
 
 # ------------------------------------------------------------------ collect
 
@@ -324,58 +318,67 @@ def _pairing_passes(stats: Stats, walk_state: _WalkState) -> None:
             stats["findings"].extend(hotspots["findings"])
 
 
+def _fold_source_file(stats: Stats, rel: Path, abs_path: Path, lang: str, walk_state: _WalkState) -> None:
+    stats["source_files"] += 1
+    stats["languages"][lang] += 1
+    walk_state.source_by_stem.setdefault(rel.stem, rel)
+    walk_state.source_paths.append(str(rel))
+    walk_state.modules.add(rel.stem)
+    text = read_text(abs_path)
+    if text:
+        lines = sum(1 for line in text.splitlines() if line.strip())
+        stats["source_lines"] += lines
+        stats["language_lines"][lang] += lines
+        found = _symbols_in(text, lang)
+        walk_state.symbols |= found
+        walk_state.source_symbols |= {name.lower() for name in found}
+
+
+def _fold_file(stats: Stats, rel: Path, abs_path: Path, walk_state: _WalkState) -> None:
+    lang = language_of(rel)
+    if lang is None:
+        return
+    if not is_test_file(rel):
+        _fold_source_file(stats, rel, abs_path, lang, walk_state)
+        return
+    text = read_text(abs_path)
+    if text is not None:
+        _fold_test_file(stats, rel, text, lang, walk_state)
+
+
+def _count_mirror_names(test_names: list[str], source_symbols: set[str]) -> int:
+    count = 0
+    for name in test_names:
+        words = [w for w in name_words(name) if w not in FILLER_WORDS]
+        if 1 <= len(words) <= MAX_NAME_WORDS_FOR_MIRROR and "_".join(words) in source_symbols:
+            count += 1
+    return count
+
+
 def collect(root: Path, *, use_git: bool = True) -> Stats:
     stats = _empty_stats(root)
     texts = _ConfigTexts()
     walk_state = _WalkState(modules={p.name for p in root.iterdir() if p.is_dir()} if root.is_dir() else set())
-    bodies_by_file, imports_by_file = walk_state.bodies_by_file, walk_state.imports_by_file
-    symbols, source_symbols = walk_state.symbols, walk_state.source_symbols
-    test_names, source_by_stem, modules = walk_state.test_names, walk_state.source_by_stem, walk_state.modules
 
     for abs_path, rel, in_artifact in walk(root):
         _scrape_config(stats, rel, abs_path, texts, in_artifact=in_artifact)
-
-        if in_artifact:
-            continue
-        lang = language_of(rel)
-        if lang is None:
-            continue
-        if is_test_file(rel):
-            text = read_text(abs_path)
-            if text is None:
-                continue
-            _fold_test_file(stats, rel, text, lang, walk_state)
-        else:
-            stats["source_files"] += 1
-            stats["languages"][lang] += 1
-            source_by_stem.setdefault(rel.stem, rel)
-            walk_state.source_paths.append(str(rel))
-            modules.add(rel.stem)
-            text = read_text(abs_path)
-            if text:
-                lines = sum(1 for line in text.splitlines() if line.strip())
-                stats["source_lines"] += lines
-                stats["language_lines"][lang] += lines
-                found = _symbols_in(text, lang)
-                symbols |= found
-                source_symbols |= {name.lower() for name in found}
+        if not in_artifact:
+            _fold_file(stats, rel, abs_path, walk_state)
 
     stats["profile"] = blend_profile(stats["language_lines"])
     stats["coverage_threshold"] = find_threshold(texts.config + texts.ci)
     if use_git:
         stats["git"] = git_history(root)
 
-    for name in test_names:
-        words = [w for w in name_words(name) if w not in FILLER_WORDS]
-        if 1 <= len(words) <= MAX_NAME_WORDS_FOR_MIRROR and "_".join(words) in source_symbols:
-            stats["method_mirror_names"] += 1
+    stats["method_mirror_names"] += _count_mirror_names(walk_state.test_names, walk_state.source_symbols)
 
-    symbols |= modules | set(source_by_stem)
+    symbols = walk_state.symbols
+    symbols |= walk_state.modules | set(walk_state.source_by_stem)
 
-    stats["duplicate_cases"], duplicate_findings = find_duplicates(bodies_by_file)
+    stats["duplicate_cases"], duplicate_findings = find_duplicates(walk_state.bodies_by_file)
     stats["findings"].extend(duplicate_findings)
     if symbols:
-        stats["phantom_symbols"], phantom_findings = find_phantoms(imports_by_file, symbols)
+        stats["phantom_symbols"], phantom_findings = find_phantoms(walk_state.imports_by_file, symbols)
         stats["findings"].extend(phantom_findings)
 
     _pairing_passes(stats, walk_state)

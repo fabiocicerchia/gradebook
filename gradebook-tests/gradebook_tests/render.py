@@ -15,7 +15,7 @@ def bar(score: float | None, width: int = BAR_WIDTH) -> str:
     return "█" * filled + "░" * (width - filled)
 
 
-def render_text(report: Report, top: int = TOP_RECOMMENDATIONS, max_flags: int | None = None) -> str:
+def _text_header(report: Report) -> list[str]:
     stats = report["stats"]
     out = [f"gradebook-tests {VERSION} — {report['root']}"]
     langs = ", ".join(f"{k} ({v})" for k, v in list(stats["languages"].items())[:5]) or "none"
@@ -37,15 +37,23 @@ def render_text(report: Report, top: int = TOP_RECOMMENDATIONS, max_flags: int |
         f"{stats['source_files']} source files · {stats['test_files']} test files · "
         f"{stats['test_cases']} test cases · {stats['assertions']} assertions{volume}"
     )
+    return out
+
+
+def _text_dimension(dim: Stats, show_delta: bool) -> str:
+    points = "  n/a" if dim["score"] is None else f"{dim['points']:5.1f}"
+    delta = ""
+    if show_delta:
+        value = dim.get("delta")
+        delta = f"{value:+5.1f} " if value else ("      " if value is None else "    · ")
+    return f"  {dim['title']:<22} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} {delta}{dim['detail']}"
+
+
+def render_text(report: Report, top: int = TOP_RECOMMENDATIONS, max_flags: int | None = None) -> str:
+    out = _text_header(report)
     out.append("")
     show_delta = "baseline" in report
-    for dim in report["dimensions"]:
-        points = "  n/a" if dim["score"] is None else f"{dim['points']:5.1f}"
-        delta = ""
-        if show_delta:
-            value = dim.get("delta")
-            delta = f"{value:+5.1f} " if value else ("      " if value is None else "    · ")
-        out.append(f"  {dim['title']:<22} {bar(dim['score'])} {points}/{dim['weight']:<3.0f} {delta}{dim['detail']}")
+    out.extend(_text_dimension(dim, show_delta) for dim in report["dimensions"])
     out.append("")
     headline = f"SCORE  {report['score']:.1f}/100   grade {report['grade']}"
     if show_delta:
