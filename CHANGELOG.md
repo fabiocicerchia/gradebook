@@ -9,6 +9,18 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.4.3](https://github.com/fabiocicerchia/gradebook/compare/v0.4.2...v0.4.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* 2 issues found by code-atlas (end-of-life runtimes) ([#86](https://github.com/fabiocicerchia/gradebook/issues/86)) ([06a1214](https://github.com/fabiocicerchia/gradebook/commit/06a1214ff0cfa9aea03e3547ea21a4e07dad24c0))
+* 2 issues found by code-atlas (silenced checks) ([#87](https://github.com/fabiocicerchia/gradebook/issues/87)) ([d3a1e64](https://github.com/fabiocicerchia/gradebook/commit/d3a1e6438bfc9df030244b6e9a2d0cada17d35b3))
+* 3 issues found by code-atlas (ci that cannot fail) ([#85](https://github.com/fabiocicerchia/gradebook/issues/85)) ([ffc0165](https://github.com/fabiocicerchia/gradebook/commit/ffc01656032f6529cd45db8314b9a4e310ee4c14))
+* 7 issues found by code-atlas (quality gates) ([#84](https://github.com/fabiocicerchia/gradebook/issues/84)) ([ab36710](https://github.com/fabiocicerchia/gradebook/commit/ab36710754ebf29a138c90281b7192958a4b7223))
+* 8 issues found by code-atlas (code design) ([#88](https://github.com/fabiocicerchia/gradebook/issues/88)) ([716df63](https://github.com/fabiocicerchia/gradebook/commit/716df6394582f746f05b9019bfd2b972d3bf01fa))
+* 9 issues found by code-atlas (test suites) ([#89](https://github.com/fabiocicerchia/gradebook/issues/89)) ([b3edf90](https://github.com/fabiocicerchia/gradebook/commit/b3edf90e86579986f431f14f96a3804fe086b9e0))
+
 ## [0.4.2](https://github.com/fabiocicerchia/gradebook/compare/v0.4.1...v0.4.2) (2026-09-20)
 
 
