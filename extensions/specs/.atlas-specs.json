@@ -1,0 +1,1122 @@
+{
+ "excluded": {
+  "nvim/lua": [
+   {
+    "candidate": ":Gradebook and :GradebookReport user commands",
+    "covered_by": "scanning.project-scan.whole-repository-per-selected-tool",
+    "reason": "DUPLICATE_OF",
+    "source": "extensions/nvim/plugin/gradebook.lua"
+   },
+   {
+    "candidate": "JSON null decoded as Lua nil (luanil)",
+    "covered_by": "score-reporting.score-report.unscored-dimension-shown-as-na",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/nvim/lua/gradebook/init.lua#M.decode"
+   },
+   {
+    "candidate": "on_done callback reports whole-scan success",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/nvim/lua/gradebook/init.lua#M.scan"
+   },
+   {
+    "candidate": "Debounce timer stopped and recreated on each trigger",
+    "covered_by": "scanning.scan-triggers.run-mode",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/nvim/lua/gradebook/init.lua#schedule"
+   },
+   {
+    "candidate": "Per-tool diagnostic namespaces created lazily",
+    "covered_by": "findings.inline-diagnostics.finding-on-its-line",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/nvim/lua/gradebook/init.lua#namespace"
+   },
+   {
+    "candidate": "Report window sizing and centring",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "extensions/nvim/lua/gradebook/ui.lua#M.show"
+   },
+   {
+    "candidate": "Missing tool/version in a report defaulted to gradebook-<tool> and ''",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "extensions/nvim/lua/gradebook/init.lua#run"
+   },
+   {
+    "candidate": "Lists in options replace defaults; resolve does not leak between calls",
+    "covered_by": "setup-and-diagnostics.settings.safe-defaults",
+    "reason": "DUPLICATE_OF",
+    "source": "extensions/nvim/lua/gradebook/config.lua#merge"
+   },
+   {
+    "candidate": "Severity buckets match the tools' FLAG_ORDER buckets (drift guard)",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "extensions/nvim/tests/severity_order_spec.lua"
+   },
+   {
+    "candidate": "VS Code config test listed as existing test",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/test/config.test.ts"
+   }
+  ],
+  "nvim/makefile": [
+   {
+    "candidate": "`make help` lists the Makefile targets with their descriptions",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "extensions/nvim/Makefile#help"
+   },
+   {
+    "candidate": "`make deps` shallow-clones plenary.nvim into .deps/ only when it is not already there",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "extensions/nvim/Makefile#deps"
+   },
+   {
+    "candidate": "`make test` runs the plugin specs headless, one after another, with plenary and tests/minimal_init.lua",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "extensions/nvim/Makefile#test"
+   },
+   {
+    "candidate": "`make smoke` runs the plugin headless with --clean against the real gradebook CLIs",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "extensions/nvim/Makefile#smoke"
+   },
+   {
+    "candidate": "`make lint` loads every Lua file under lua/, plugin/ and tests/ and prints FAIL for each one that writes output. It always ends by printing \"ok\" and exits 0 even when files failed, so it cannot fail a build (questionable: a gate that cannot fail)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "extensions/nvim/Makefile#lint"
+   },
+   {
+    "candidate": "`make clean` removes the fetched .deps directory",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "extensions/nvim/Makefile#clean"
+   },
+   {
+    "candidate": "The NVIM and PLENARY variables can be overridden to pick the editor binary and where plenary is kept",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "extensions/nvim/Makefile#NVIM"
+   }
+  ],
+  "nvim/plugin": [
+   {
+    "candidate": "The plugin loads once per session (vim.g.loaded_gradebook guard prevents double registration)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/nvim/plugin/gradebook.lua#loaded_gradebook"
+   },
+   {
+    "candidate": "Command descriptions shown in :command listing ('Scan the project with gradebook', 'Show the gradebook score report')",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "extensions/nvim/plugin/gradebook.lua#GradebookReport"
+   },
+   {
+    "candidate": "Scan does nothing when the plugin is disabled or no tools are selected",
+    "covered_by": "owned by the nvim/gradebook core module (settings / tool-selection), not this plugin entry file",
+    "reason": "DUPLICATE_OF",
+    "source": "extensions/nvim/lua/gradebook/init.lua#M.scan"
+   }
+  ],
+  "vscode/esbuild": [
+   {
+    "candidate": "The extension sources are bundled from src/extension.ts into a single out/extension.js (CommonJS, node platform)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "extensions/vscode/esbuild.mjs#options"
+   },
+   {
+    "candidate": "The 'vscode' module is left external so the editor supplies it at runtime",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "extensions/vscode/esbuild.mjs#options"
+   },
+   {
+    "candidate": "The bundle targets node18 so it parses on the VS Code 1.85 floor",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "extensions/vscode/esbuild.mjs#options"
+   },
+   {
+    "candidate": "Release builds are minified with no sourcemap; --watch builds are unminified with inline sourcemaps",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "extensions/vscode/esbuild.mjs#options"
+   },
+   {
+    "candidate": "--watch keeps rebuilding on source changes instead of building once",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "extensions/vscode/esbuild.mjs#watch"
+   }
+  ],
+  "vscode/server": [
+   {
+    "candidate": "Last report kept per project and tool; invalidate clears it and replies cached: 0",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.handle"
+   },
+   {
+    "candidate": "Cancel request with no target replies cancelling: false",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.handle"
+   },
+   {
+    "candidate": "scanProject without a root fails with the bare error \"'root'\"",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.scan_project"
+   },
+   {
+    "candidate": "Fatal startup line {id:0, ok:false, fatal:true} when the server cannot be built",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#main"
+   },
+   {
+    "candidate": "--code/--tests/--root flags and GRADEBOOK_*_MODULE / GRADEBOOK_ROOT environment variables",
+    "covered_by": "scan-engine.tool-discovery.source-precedence",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/server/gradebook_server.py#main"
+   },
+   {
+    "candidate": "Repository root guard for a shallow install path",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/server/gradebook_server.py#REPO_ROOT"
+   },
+   {
+    "candidate": "stdin read on a background thread for Windows pipes",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.read_stdin"
+   },
+   {
+    "candidate": "Replies carry the request id and ok: true",
+    "covered_by": "scan-engine.request-protocol.bad-request-fails-alone",
+    "reason": "DUPLICATE_OF",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.dispatch"
+   },
+   {
+    "candidate": "Server shuts down when stdin closes",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.serve"
+   },
+   {
+    "candidate": "The scan server says it is ready before anything is asked of it",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.serve"
+   },
+   {
+    "candidate": "A ping reports the protocol, the Python version, each tool's version and location, and the severity of every kind of finding",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.handle"
+   },
+   {
+    "candidate": "A ping still answers when tools are missing, and names the ones it cannot run",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.available"
+   },
+   {
+    "candidate": "A bad request fails on its own and the session carries on",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.dispatch"
+   },
+   {
+    "candidate": "Cancelling a running scan does not stop its report from arriving",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.handle"
+   },
+   {
+    "candidate": "A project scan returns the tool's full report with its top recommendations",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.scan_project"
+   },
+   {
+    "candidate": "Scanning something that is not a directory is refused",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.scan_project"
+   },
+   {
+    "candidate": "A scan with a tool that cannot be loaded explains how to install it",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.module_for"
+   },
+   {
+    "candidate": "One missing tool does not stop the other from scanning",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.module_for"
+   },
+   {
+    "candidate": "A tool that failed to load stays unavailable until the server restarts",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/server/gradebook_server.py#Server.module_for"
+   }
+  ],
+  "vscode/src": [
+   {
+    "candidate": "Splitting the server's stdout stream into whole JSON lines across chunks",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/src/engine.ts#frame"
+   },
+   {
+    "candidate": "Unparseable server lines are logged and ignored",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/src/engine.ts#Engine"
+   },
+   {
+    "candidate": "Trace setting logs every request (->) and reply (<-) truncated to 400 chars",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/src/engine.ts#Engine"
+   },
+   {
+    "candidate": "Server stderr is copied to the output log prefixed \"server:\"",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/src/engine.ts#Engine"
+   },
+   {
+    "candidate": "Store keeps one report per tool and notifies listeners",
+    "covered_by": "",
+    "reason": "TECH_PERSISTENCE",
+    "source": "extensions/vscode/src/store.ts#Store"
+   },
+   {
+    "candidate": "Findings grouped by absolute path for one update per file",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/src/diagnostics.ts#byFile"
+   },
+   {
+    "candidate": "Group ids carry a generation counter so expand state is re-read",
+    "covered_by": "findings.panel.expand-all",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/src/findingsView.ts#FindingsProvider.idFor"
+   },
+   {
+    "candidate": "Grouping by severity or kind",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/findingsView.ts#group"
+   },
+   {
+    "candidate": "Per-setting defaults (python3, empty tool paths, exclude [], failUnder 0)",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "extensions/vscode/src/config.ts#readConfig"
+   },
+   {
+    "candidate": "Show Output command opens the gradebook log",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "extensions/vscode/src/extension.ts#activate"
+   },
+   {
+    "candidate": "Report view opens beside the editor and updates while open",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "extensions/vscode/src/report.ts#ReportView"
+   },
+   {
+    "candidate": "ping and invalidate requests",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/engine.ts#Engine.ping"
+   },
+   {
+    "candidate": "Filter quick pick shows a count per severity and tool",
+    "covered_by": "findings.panel.filter-by-severity-and-tool",
+    "reason": "TRIVIAL",
+    "source": "extensions/vscode/src/extension.ts#activate"
+   },
+   {
+    "candidate": "The panel can be narrowed by severity and tool, and an empty pick shows everything",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/findingsView.ts#FindingsProvider.setFilter"
+   },
+   {
+    "candidate": "Clearing the filter brings every finding back",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/findingsView.ts#FindingsProvider.clearFilter"
+   },
+   {
+    "candidate": "Choosing a finding on a real file opens that file at its line",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/findingsView.ts#FindingsProvider.getTreeItem"
+   },
+   {
+    "candidate": "Expand all opens every group, even after the developer collapsed them",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/findingsView.ts#FindingsProvider.setExpanded"
+   },
+   {
+    "candidate": "Cancelling a scan drops its answers and is reported as \"cancelled\"",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/engine.ts#Engine.cancelAll"
+   },
+   {
+    "candidate": "Restarting the server, or changing the interpreter or tool paths, starts a fresh server",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "extensions/vscode/src/engine.ts#Engine.setConfig"
+   }
+  ]
+ },
+ "lifted": {
+  "nvim/lua": [],
+  "nvim/makefile": [],
+  "nvim/plugin": [],
+  "vscode/esbuild": [],
+  "vscode/server": [],
+  "vscode/src": [
+   {
+    "from_source": "extensions/vscode/src/report.ts#escape",
+    "rule": "Text from a scanned repository is shown as text in the report, never run as markup"
+   }
+  ]
+ },
+ "retired": [],
+ "scenarios": {
+  "extensions.findings.findings-panel.001": {
+   "file": "extensions/specs/findings/findings-panel/findings-panel.feature",
+   "fingerprint": "20b6b2170cd3",
+   "human": false,
+   "rule": "findings.panel.grouped-by-file-worst-first",
+   "source": "extensions/vscode/src/findingsView.ts#FindingsProvider",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/findingsView.test.ts#groups come back worst-first, not alphabetically",
+   "tests": [
+    "extensions/vscode/src/test/findingsView.test.ts#groups come back worst-first, not alphabetically",
+    "extensions/vscode/src/test/findingsView.test.ts#findings order worst first, then by file, then by line",
+    "extensions/vscode/src/test/findingsView.test.ts#nothing is dropped on the way into a group",
+    "extensions/vscode/src/test/findingsView.test.ts#group ids are unique even when two files share a basename"
+   ]
+  },
+  "extensions.findings.findings-panel.002": {
+   "file": "extensions/specs/findings/findings-panel/findings-panel.feature",
+   "fingerprint": "5ddce5a1c582",
+   "human": false,
+   "rule": "findings.panel.empty-states",
+   "source": "extensions/vscode/src/extension.ts#activate",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.findings.inline-diagnostics.001": {
+   "file": "extensions/specs/findings/inline-diagnostics/nvim-inline-diagnostics.feature",
+   "fingerprint": "0d60d022da49",
+   "human": false,
+   "rule": "findings.inline-diagnostics.finding-on-its-line",
+   "source": "extensions/nvim/lua/gradebook/init.lua#publish",
+   "status": "verified",
+   "test": "extensions/nvim/tests/core_spec.lua#groups by file and makes the line 0-based",
+   "tests": [
+    "extensions/nvim/tests/core_spec.lua#groups by file and makes the line 0-based",
+    "extensions/nvim/tests/integration/scan_spec.lua#publishes the report even when --fail-under exits 1"
+   ]
+  },
+  "extensions.findings.inline-diagnostics.002": {
+   "file": "extensions/specs/findings/inline-diagnostics/nvim-inline-diagnostics.feature",
+   "fingerprint": "0d60d022da49",
+   "human": false,
+   "rule": "findings.inline-diagnostics.only-open-files",
+   "source": "extensions/nvim/lua/gradebook/init.lua#publish",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.findings.inline-diagnostics.003": {
+   "file": "extensions/specs/findings/inline-diagnostics/nvim-inline-diagnostics.feature",
+   "fingerprint": "0d60d022da49",
+   "human": false,
+   "rule": "findings.inline-diagnostics.can-be-turned-off",
+   "source": "extensions/nvim/lua/gradebook/init.lua#publish",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.findings.inline-diagnostics.004": {
+   "file": "extensions/specs/findings/inline-diagnostics/editor-findings.feature",
+   "fingerprint": "3706a3f6a11a",
+   "human": false,
+   "rule": "findings.inline.severity-per-tool",
+   "source": "extensions/vscode/src/diagnostics.ts#Diagnostics",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/diagnostics.test.ts#severity maps high/medium/low onto the editor scale",
+   "tests": [
+    "extensions/vscode/src/test/diagnostics.test.ts#severity maps high/medium/low onto the editor scale",
+    "extensions/vscode/src/test/diagnostics.test.ts#a finding on a real file at a real line anchors"
+   ]
+  },
+  "extensions.findings.inline-diagnostics.005": {
+   "file": "extensions/specs/findings/inline-diagnostics/editor-findings.feature",
+   "fingerprint": "cf9495ead576",
+   "human": false,
+   "rule": "findings.project-wide.never-on-a-guessed-file",
+   "source": "extensions/vscode/src/diagnostics.ts#partition",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/diagnostics.test.ts#a dependency cycle never squiggles a guessed path",
+   "tests": [
+    "extensions/vscode/src/test/diagnostics.test.ts#a dependency cycle never squiggles a guessed path",
+    "extensions/vscode/src/test/diagnostics.test.ts#line 0 is workspace-level even when the file exists",
+    "extensions/vscode/src/test/diagnostics.test.ts#a finding on a file that is not on disk goes to the report view",
+    "extensions/vscode/src/test/report.test.ts#workspace findings land in the view, not on a file"
+   ]
+  },
+  "extensions.findings.inline-diagnostics.006": {
+   "file": "extensions/specs/findings/inline-diagnostics/editor-findings.feature",
+   "fingerprint": "71155f318ad4",
+   "human": false,
+   "rule": "findings.exclusions.prefix-drops-everywhere",
+   "source": "extensions/vscode/src/diagnostics.ts#excluded",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/diagnostics.test.ts#excluded prefixes are dropped entirely",
+   "tests": [
+    "extensions/vscode/src/test/diagnostics.test.ts#excluded prefixes are dropped entirely"
+   ]
+  },
+  "extensions.findings.project-wide-findings.001": {
+   "file": "extensions/specs/findings/project-wide-findings/nvim-findings-routing.feature",
+   "fingerprint": "6d04b5b4e8cb",
+   "human": false,
+   "rule": "findings.project-wide-findings.listed-in-report",
+   "source": "extensions/nvim/lua/gradebook/core.lua#M.split",
+   "status": "verified",
+   "test": "extensions/nvim/tests/core_spec.lua#sends a dependency cycle to the report, not to a guessed path",
+   "tests": [
+    "extensions/nvim/tests/core_spec.lua#sends a dependency cycle to the report, not to a guessed path",
+    "extensions/nvim/tests/core_spec.lua#sends a finding on a missing file to the report",
+    "extensions/nvim/tests/core_spec.lua#lists workspace findings under their own heading",
+    "extensions/nvim/tests/decode_spec.lua#routes a line-0 finding away from a file"
+   ]
+  },
+  "extensions.findings.project-wide-findings.002": {
+   "file": "extensions/specs/findings/project-wide-findings/nvim-findings-routing.feature",
+   "fingerprint": "11407f768073",
+   "human": false,
+   "rule": "findings.exclusions.excluded-prefix-dropped",
+   "source": "extensions/nvim/lua/gradebook/core.lua#M.excluded",
+   "status": "verified",
+   "test": "extensions/nvim/tests/core_spec.lua#drops excluded prefixes entirely",
+   "tests": [
+    "extensions/nvim/tests/core_spec.lua#drops excluded prefixes entirely"
+   ]
+  },
+  "extensions.findings.severity.001": {
+   "file": "extensions/specs/findings/severity/nvim-finding-severity.feature",
+   "fingerprint": "2eb69ad03f34",
+   "human": false,
+   "rule": "findings.severity.bucket-to-editor-level",
+   "source": "extensions/nvim/lua/gradebook/core.lua#M.diagnostics",
+   "status": "verified",
+   "test": "extensions/nvim/tests/config_spec.lua#maps every severity bucket onto a diagnostic level",
+   "tests": [
+    "extensions/nvim/tests/config_spec.lua#maps every severity bucket onto a diagnostic level",
+    "extensions/nvim/tests/core_spec.lua#falls back to low for a severity it does not know",
+    "extensions/nvim/tests/core_spec.lua#drops a bucket mapped to false, and only that bucket",
+    "extensions/nvim/tests/config_spec.lua#accepts false for a severity, meaning \"do not report these\""
+   ]
+  },
+  "extensions.scan-engine.request-protocol.001": {
+   "file": "extensions/specs/scan-engine/request-protocol/scan-server-requests.feature",
+   "fingerprint": "ff36c5179ad2",
+   "human": false,
+   "rule": "scan-engine.request-protocol.stdout-carries-only-replies",
+   "source": "extensions/vscode/server/gradebook_server.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.scan-engine.tool-discovery.001": {
+   "file": "extensions/specs/scan-engine/tool-discovery/tool-discovery.feature",
+   "fingerprint": "8f3f1121910d",
+   "human": false,
+   "rule": "scan-engine.tool-discovery.source-precedence",
+   "source": "extensions/vscode/server/gradebook_server.py#load_tool",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/server.test.ts#an explicit module path is honoured",
+   "tests": [
+    "extensions/vscode/src/test/server.test.ts#an explicit module path is honoured"
+   ]
+  },
+  "extensions.scan-engine.tool-discovery.002": {
+   "file": "extensions/specs/scan-engine/tool-discovery/tool-discovery.feature",
+   "fingerprint": "8f3f1121910d",
+   "human": false,
+   "rule": "scan-engine.tool-discovery.stale-module-file-setting",
+   "source": "extensions/vscode/server/gradebook_server.py#load_tool",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.scan-engine.tool-discovery.003": {
+   "file": "extensions/specs/scan-engine/tool-discovery/tool-discovery.feature",
+   "fingerprint": "e8189fd43006",
+   "human": false,
+   "rule": "scan-engine.tool-discovery.too-old-tool-refused",
+   "source": "extensions/vscode/server/gradebook_server.py#_load_checked",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.scanning.project-scan.001": {
+   "file": "extensions/specs/scanning/project-scan/nvim-project-scan.feature",
+   "fingerprint": "d9050f877e4d",
+   "human": false,
+   "rule": "scanning.project-scan.whole-repository-per-selected-tool",
+   "source": "extensions/nvim/lua/gradebook/init.lua#M.scan",
+   "status": "verified",
+   "test": "extensions/nvim/tests/core_spec.lua#appends the root and asks for json",
+   "tests": [
+    "extensions/nvim/tests/core_spec.lua#appends the root and asks for json",
+    "extensions/nvim/tests/integration/scan_spec.lua#publishes the report even when --fail-under exits 1"
+   ]
+  },
+  "extensions.scanning.project-scan.002": {
+   "file": "extensions/specs/scanning/project-scan/nvim-project-scan.feature",
+   "fingerprint": "d9050f877e4d",
+   "human": false,
+   "rule": "scanning.project-scan.disabled-plugin-does-not-scan",
+   "source": "extensions/nvim/lua/gradebook/init.lua#M.scan",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.scanning.project-scan.003": {
+   "file": "extensions/specs/scanning/project-scan/nvim-project-scan.feature",
+   "fingerprint": "935b8c6e4b4d",
+   "human": false,
+   "rule": "scanning.scan-failures.gate-exit-still-publishes",
+   "source": "extensions/nvim/lua/gradebook/init.lua#run",
+   "status": "verified",
+   "test": "extensions/nvim/tests/integration/scan_spec.lua#publishes the report even when --fail-under exits 1",
+   "tests": [
+    "extensions/nvim/tests/integration/scan_spec.lua#publishes the report even when --fail-under exits 1"
+   ]
+  },
+  "extensions.scanning.project-scan.004": {
+   "file": "extensions/specs/scanning/project-scan/nvim-project-scan.feature",
+   "fingerprint": "935b8c6e4b4d",
+   "human": false,
+   "rule": "scanning.scan-failures.failed-tool-warns-and-publishes-nothing",
+   "source": "extensions/nvim/lua/gradebook/init.lua#run",
+   "status": "verified",
+   "test": "extensions/nvim/tests/integration/scan_spec.lua#reports a tool that produced no report as a failure",
+   "tests": [
+    "extensions/nvim/tests/integration/scan_spec.lua#reports a tool that produced no report as a failure"
+   ]
+  },
+  "extensions.scanning.scan-failures.001": {
+   "file": "extensions/specs/scanning/scan-failures/scan-failures.feature",
+   "fingerprint": "5ddce5a1c582",
+   "human": false,
+   "rule": "scanning.failures.error-shown-once-report-kept",
+   "source": "extensions/vscode/src/extension.ts#activate",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.scanning.scan-failures.002": {
+   "file": "extensions/specs/scanning/scan-failures/scan-failures.feature",
+   "fingerprint": "805beee9ea0b",
+   "human": false,
+   "rule": "scanning.failures.server-exit-reported-and-recovered",
+   "source": "extensions/vscode/src/engine.ts#Engine",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.scanning.scan-triggers.001": {
+   "file": "extensions/specs/scanning/scan-triggers/nvim-scan-triggers.feature",
+   "fingerprint": "bf33b4e223ac",
+   "human": false,
+   "rule": "scanning.scan-triggers.run-mode",
+   "source": "extensions/nvim/lua/gradebook/init.lua#M.setup",
+   "status": "verified",
+   "test": "extensions/nvim/tests/config_spec.lua#runs both tools on save by default",
+   "tests": [
+    "extensions/nvim/tests/config_spec.lua#runs both tools on save by default"
+   ]
+  },
+  "extensions.scanning.scan-triggers.002": {
+   "file": "extensions/specs/scanning/scan-triggers/nvim-scan-triggers.feature",
+   "fingerprint": "bf33b4e223ac",
+   "human": false,
+   "rule": "scanning.scan-triggers.scan-on-startup",
+   "source": "extensions/nvim/lua/gradebook/init.lua#M.setup",
+   "status": "verified",
+   "test": "extensions/nvim/tests/config_spec.lua#runs both tools on save by default",
+   "tests": [
+    "extensions/nvim/tests/config_spec.lua#runs both tools on save by default"
+   ]
+  },
+  "extensions.scanning.scan-triggers.003": {
+   "file": "extensions/specs/scanning/scan-triggers/scanning-the-workspace.feature",
+   "fingerprint": "5ddce5a1c582",
+   "human": false,
+   "rule": "scanning.triggers.by-run-mode",
+   "source": "extensions/vscode/src/extension.ts#activate",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/config.test.ts#defaults run both tools on save",
+   "tests": [
+    "extensions/vscode/src/test/config.test.ts#defaults run both tools on save"
+   ]
+  },
+  "extensions.scanning.scan-triggers.004": {
+   "file": "extensions/specs/scanning/scan-triggers/scanning-the-workspace.feature",
+   "fingerprint": "5ddce5a1c582",
+   "human": false,
+   "rule": "scanning.triggers.startup-scan",
+   "source": "extensions/vscode/src/extension.ts#activate",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.scanning.scan-triggers.005": {
+   "file": "extensions/specs/scanning/scan-triggers/scanning-the-workspace.feature",
+   "fingerprint": "5ddce5a1c582",
+   "human": false,
+   "rule": "scanning.tool-selection.only-chosen-tools-run",
+   "source": "extensions/vscode/src/extension.ts#activate",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/config.test.ts#defaults run both tools on save",
+   "tests": [
+    "extensions/vscode/src/test/config.test.ts#defaults run both tools on save"
+   ]
+  },
+  "extensions.scanning.scan-triggers.006": {
+   "file": "extensions/specs/scanning/scan-triggers/scanning-the-workspace.feature",
+   "fingerprint": "188a13822b1b",
+   "human": false,
+   "rule": "scanning.tool-selection.open-folder-is-last-resort",
+   "source": "extensions/vscode/src/config.ts#withWorkspaceRoot",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/config.test.ts#the open folder travels as a root, not as a module path",
+   "tests": [
+    "extensions/vscode/src/test/config.test.ts#the open folder travels as a root, not as a module path",
+    "extensions/vscode/src/test/config.test.ts#an explicit setting is left untouched",
+    "extensions/vscode/src/test/config.test.ts#the root reaches the server after the module paths"
+   ]
+  },
+  "extensions.scanning.scan-triggers.007": {
+   "file": "extensions/specs/scanning/scan-triggers/scanning-the-workspace.feature",
+   "fingerprint": "5ddce5a1c582",
+   "human": false,
+   "rule": "scanning.triggers.disabled-clears-results",
+   "source": "extensions/vscode/src/extension.ts#activate",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.score-reporting.score-report.001": {
+   "file": "extensions/specs/score-reporting/score-report/nvim-score-report.feature",
+   "fingerprint": "0ccbe89e6611",
+   "human": false,
+   "rule": "score-reporting.score-report.score-grade-dimensions-wins",
+   "source": "extensions/nvim/lua/gradebook/core.lua#M.summary",
+   "status": "verified",
+   "test": "extensions/nvim/tests/core_spec.lua#carries the grade and both rows",
+   "tests": [
+    "extensions/nvim/tests/core_spec.lua#carries the grade and both rows",
+    "extensions/nvim/tests/decode_spec.lua#survives a real report from each tool"
+   ]
+  },
+  "extensions.score-reporting.score-report.002": {
+   "file": "extensions/specs/score-reporting/score-report/nvim-score-report.feature",
+   "fingerprint": "0ccbe89e6611",
+   "human": false,
+   "rule": "score-reporting.score-report.unscored-dimension-shown-as-na",
+   "source": "extensions/nvim/lua/gradebook/core.lua#M.summary",
+   "status": "verified",
+   "test": "extensions/nvim/tests/core_spec.lua#lines the n/a row up with the scored one",
+   "tests": [
+    "extensions/nvim/tests/core_spec.lua#lines the n/a row up with the scored one",
+    "extensions/nvim/tests/core_spec.lua#draws dots for an unscored dimension",
+    "extensions/nvim/tests/decode_spec.lua#renders an unscored dimension instead of raising",
+    "extensions/nvim/tests/decode_spec.lua#turns a null into nil, not into vim.NIL"
+   ]
+  },
+  "extensions.score-reporting.score-report.003": {
+   "file": "extensions/specs/score-reporting/score-report/nvim-score-report.feature",
+   "fingerprint": "6b786d28943e",
+   "human": false,
+   "rule": "score-reporting.score-report.no-scan-yet",
+   "source": "extensions/nvim/lua/gradebook/ui.lua#M.lines",
+   "status": "verified",
+   "test": "extensions/nvim/tests/integration/scan_spec.lua#reports a tool that produced no report as a failure",
+   "tests": [
+    "extensions/nvim/tests/integration/scan_spec.lua#reports a tool that produced no report as a failure"
+   ]
+  },
+  "extensions.score-reporting.score-report.004": {
+   "file": "extensions/specs/score-reporting/score-report/score-report.feature",
+   "fingerprint": "dfc05a3e0394",
+   "human": false,
+   "rule": "score-reporting.report.score-dimensions-and-wins",
+   "source": "extensions/vscode/src/report.ts#renderHtml",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/report.test.ts#the view shows the grade, the table and the wins",
+   "tests": [
+    "extensions/vscode/src/test/report.test.ts#the view shows the grade, the table and the wins",
+    "extensions/vscode/src/test/report.test.ts#an unscored dimension draws a dotted bar"
+   ]
+  },
+  "extensions.score-reporting.score-report.005": {
+   "file": "extensions/specs/score-reporting/score-report/score-report.feature",
+   "fingerprint": "dfc05a3e0394",
+   "human": false,
+   "rule": "score-reporting.report.no-scan-yet",
+   "source": "extensions/vscode/src/report.ts#renderHtml",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/report.test.ts#with nothing scanned the view says so",
+   "tests": [
+    "extensions/vscode/src/test/report.test.ts#with nothing scanned the view says so"
+   ]
+  },
+  "extensions.score-reporting.score-report.006": {
+   "file": "extensions/specs/score-reporting/score-report/score-report.feature",
+   "fingerprint": "1197d2fed6a7",
+   "human": false,
+   "rule": "score-reporting.report.markup-shown-as-text",
+   "source": "extensions/vscode/src/report.ts#escape",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/report.test.ts#markup in a message is escaped, not rendered",
+   "tests": [
+    "extensions/vscode/src/test/report.test.ts#markup in a message is escaped, not rendered"
+   ]
+  },
+  "extensions.score-reporting.status-bar.001": {
+   "file": "extensions/specs/score-reporting/status-bar/status-bar-scores.feature",
+   "fingerprint": "6b29578f1902",
+   "human": false,
+   "rule": "score-reporting.status-bar.both-scores-fixed-order",
+   "source": "extensions/vscode/src/status.ts#summaryFor",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/status.test.ts#both scores sit next to each other in one entry",
+   "tests": [
+    "extensions/vscode/src/test/status.test.ts#both scores sit next to each other in one entry",
+    "extensions/vscode/src/test/status.test.ts#code comes first whichever scan finished first",
+    "extensions/vscode/src/test/status.test.ts#one tool alone still reads correctly",
+    "extensions/vscode/src/test/status.test.ts#the two are distinguishable when the scores match"
+   ]
+  },
+  "extensions.score-reporting.status-bar.002": {
+   "file": "extensions/specs/score-reporting/status-bar/status-bar-scores.feature",
+   "fingerprint": "6b29578f1902",
+   "human": false,
+   "rule": "score-reporting.status-bar.tooltip-detail",
+   "source": "extensions/vscode/src/status.ts#summaryFor",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/status.test.ts#the tooltip covers both tools, with the biggest win for each",
+   "tests": [
+    "extensions/vscode/src/test/status.test.ts#the tooltip covers both tools, with the biggest win for each"
+   ]
+  },
+  "extensions.score-reporting.status-bar.003": {
+   "file": "extensions/specs/score-reporting/status-bar/status-bar-scores.feature",
+   "fingerprint": "6b29578f1902",
+   "human": false,
+   "rule": "score-reporting.threshold.warn-below-fail-under",
+   "source": "extensions/vscode/src/status.ts#summaryFor",
+   "status": "verified",
+   "test": "extensions/vscode/src/test/status.test.ts#either score below failUnder colours the entry",
+   "tests": [
+    "extensions/vscode/src/test/status.test.ts#either score below failUnder colours the entry"
+   ]
+  },
+  "extensions.setup-and-diagnostics.editor-commands.001": {
+   "file": "extensions/specs/setup-and-diagnostics/editor-commands/nvim-editor-commands.feature",
+   "fingerprint": "cc4403def008",
+   "human": false,
+   "rule": "editor.commands.nvim-scan-and-report",
+   "source": "extensions/nvim/plugin/gradebook.lua#Gradebook",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "extensions.setup-and-diagnostics.health-check.001": {
+   "file": "extensions/specs/setup-and-diagnostics/health-check/nvim-health-check.feature",
+   "fingerprint": "0b92e738c0e5",
+   "human": false,
+   "rule": "setup-and-diagnostics.health-check.tool-status",
+   "source": "extensions/nvim/lua/gradebook/health.lua#M.check",
+   "status": "verified",
+   "test": "extensions/nvim/tests/health_spec.lua#reports the version of a tool that runs",
+   "tests": [
+    "extensions/nvim/tests/health_spec.lua#reports the version of a tool that runs",
+    "extensions/nvim/tests/health_spec.lua#says how to install a tool that is not on the PATH",
+    "extensions/nvim/tests/health_spec.lua#passes on the stderr of a --version that fails"
+   ]
+  },
+  "extensions.setup-and-diagnostics.health-check.002": {
+   "file": "extensions/specs/setup-and-diagnostics/health-check/nvim-health-check.feature",
+   "fingerprint": "0b92e738c0e5",
+   "human": false,
+   "rule": "setup-and-diagnostics.health-check.disabled-warning",
+   "source": "extensions/nvim/lua/gradebook/health.lua#M.check",
+   "status": "verified",
+   "test": "extensions/nvim/tests/health_spec.lua#warns when the plugin is disabled",
+   "tests": [
+    "extensions/nvim/tests/health_spec.lua#warns when the plugin is disabled"
+   ]
+  },
+  "extensions.setup-and-diagnostics.health-check.003": {
+   "file": "extensions/specs/setup-and-diagnostics/health-check/nvim-health-check.feature",
+   "fingerprint": "0b92e738c0e5",
+   "human": false,
+   "rule": "setup-and-diagnostics.health-check.unmapped-severity-bucket",
+   "source": "extensions/nvim/lua/gradebook/health.lua#M.check",
+   "status": "verified",
+   "test": "extensions/nvim/tests/health_spec.lua#flags a severity bucket with no diagnostic level",
+   "tests": [
+    "extensions/nvim/tests/health_spec.lua#flags a severity bucket with no diagnostic level"
+   ]
+  },
+  "extensions.setup-and-diagnostics.settings.001": {
+   "file": "extensions/specs/setup-and-diagnostics/settings/nvim-settings.feature",
+   "fingerprint": "1d3b59b7e415",
+   "human": false,
+   "rule": "setup-and-diagnostics.settings.safe-defaults",
+   "source": "extensions/nvim/lua/gradebook/config.lua#M.defaults",
+   "status": "verified",
+   "test": "extensions/nvim/tests/config_spec.lua#runs both tools on save by default",
+   "tests": [
+    "extensions/nvim/tests/config_spec.lua#runs both tools on save by default",
+    "extensions/nvim/tests/config_spec.lua#does not leak one resolve into the next"
+   ]
+  },
+  "extensions.setup-and-diagnostics.settings.002": {
+   "file": "extensions/specs/setup-and-diagnostics/settings/nvim-settings.feature",
+   "fingerprint": "f10b6600c498",
+   "human": false,
+   "rule": "setup-and-diagnostics.settings.tool-command-override",
+   "source": "extensions/nvim/lua/gradebook/config.lua#M.resolve",
+   "status": "verified",
+   "test": "extensions/nvim/tests/config_spec.lua#takes a cmd list, so a checkout needs no install",
+   "tests": [
+    "extensions/nvim/tests/config_spec.lua#takes a cmd list, so a checkout needs no install",
+    "extensions/nvim/tests/core_spec.lua#works with a multi-part cmd from a checkout"
+   ]
+  },
+  "extensions.setup-and-diagnostics.settings.003": {
+   "file": "extensions/specs/setup-and-diagnostics/settings/nvim-settings.feature",
+   "fingerprint": "2d746908454a",
+   "human": false,
+   "rule": "setup-and-diagnostics.settings.invalid-option-refused",
+   "source": "extensions/nvim/lua/gradebook/config.lua#M.validate",
+   "status": "verified",
+   "test": "extensions/nvim/tests/config_spec.lua#rejects an unknown run mode",
+   "tests": [
+    "extensions/nvim/tests/config_spec.lua#rejects an unknown run mode",
+    "extensions/nvim/tests/config_spec.lua#rejects an unknown tool",
+    "extensions/nvim/tests/config_spec.lua#rejects a cmd that is a bare string",
+    "extensions/nvim/tests/config_spec.lua#rejects a debounce too short to be a debounce"
+   ]
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "Running a whole-repository scan from the project root with the selected tools and gathering their reports.",
+      "slug": "project-scan",
+      "title": "Project scan"
+     },
+     {
+      "description": "Starting scans automatically on startup, on save or while typing (with a debounce), or only when asked.",
+      "slug": "scan-triggers",
+      "title": "Scan triggers"
+     },
+     {
+      "description": "Choosing whether the code tool, the tests tool or both run, and where each one is found.",
+      "slug": "tool-selection",
+      "title": "Tool selection"
+     },
+     {
+      "description": "Cancelling a scan that is running and throwing away answers that are no longer wanted.",
+      "slug": "scan-cancellation",
+      "title": "Scan cancellation"
+     },
+     {
+      "description": "Telling the user when a tool crashes, returns an unreadable report or fails a quality gate, without losing the report.",
+      "slug": "scan-failures",
+      "title": "Scan failures"
+     }
+    ],
+    "description": "Grading the whole project with one or both gradebook tools, and deciding when that happens.",
+    "slug": "scanning",
+    "title": "Scanning"
+   },
+   {
+    "areas": [
+     {
+      "description": "Placing findings as editor diagnostics on the file and line they point at, separately for each tool.",
+      "slug": "inline-diagnostics",
+      "title": "Inline diagnostics"
+     },
+     {
+      "description": "Ranking each kind of finding as error, warning, info or hint from the order gradebook publishes.",
+      "slug": "severity",
+      "title": "Severity"
+     },
+     {
+      "description": "Dropping findings under path prefixes the user has excluded.",
+      "slug": "exclusions",
+      "title": "Exclusions"
+     },
+     {
+      "description": "Sending findings with no file to point at, such as dependency cycles, to the report and panel so none are lost.",
+      "slug": "project-wide-findings",
+      "title": "Project-wide findings"
+     },
+     {
+      "description": "A browsable panel of every finding, grouped, with filtering, clearing the filter, expand-all and jumping to the source.",
+      "slug": "findings-panel",
+      "title": "Findings panel"
+     }
+    ],
+    "description": "Showing each red flag where the developer works, with a file and line wherever there is one.",
+    "slug": "findings",
+    "title": "Findings"
+   },
+   {
+    "areas": [
+     {
+      "description": "A report view per tool with the overall score and grade, each dimension's points, and dimensions left unscored.",
+      "slug": "score-report",
+      "title": "Score report"
+     },
+     {
+      "description": "The top fixes ranked by points lost, each with advice on what to change.",
+      "slug": "recommendations",
+      "title": "Recommendations"
+     },
+     {
+      "description": "An always-visible summary of the latest scores and whether a scan is running.",
+      "slug": "status-bar",
+      "title": "Status bar"
+     },
+     {
+      "description": "Warning when a score drops below a fail-under level the user has set.",
+      "slug": "score-threshold",
+      "title": "Score threshold"
+     }
+    ],
+    "description": "Showing the grade, how it breaks down, and which fix gains the most points.",
+    "slug": "score-reporting",
+    "title": "Score reporting"
+   },
+   {
+    "areas": [
+     {
+      "description": "Finding and loading each gradebook tool from a configured path, the installed package or a folder in a checkout, and checking it offers what the server needs.",
+      "slug": "tool-discovery",
+      "title": "Tool discovery"
+     },
+     {
+      "description": "Explaining when a tool is missing or broken and how to install it or point the server at it.",
+      "slug": "installation-guidance",
+      "title": "Installation guidance"
+     },
+     {
+      "description": "The ready event and ping reply that report the protocol, Python and tool versions, which tools are unavailable, and the severity order.",
+      "slug": "handshake",
+      "title": "Handshake"
+     },
+     {
+      "description": "Newline-delimited JSON requests and replies over stdio, kept apart from stray output, where a malformed request fails on its own without ending the session.",
+      "slug": "request-protocol",
+      "title": "Request protocol"
+     },
+     {
+      "description": "Keeping the last report for each project and tool, and clearing it when asked.",
+      "slug": "report-cache",
+      "title": "Report cache"
+     },
+     {
+      "description": "Starting the server with the chosen interpreter, restarting it when asked, and recovering when it exits.",
+      "slug": "server-lifecycle",
+      "title": "Server lifecycle"
+     }
+    ],
+    "description": "The background scan server the VS Code extension talks to, which loads the gradebook tools and answers scan requests.",
+    "slug": "scan-engine",
+    "title": "Scan engine"
+   },
+   {
+    "areas": [
+     {
+      "description": "User options covering enablement, run mode, debounce, interpreter, tool paths, tools, startup scan, fail-under, exclusions and tracing, each with a safe default.",
+      "slug": "settings",
+      "title": "Settings"
+     },
+     {
+      "description": "The commands that scan, show the report, show the output log, restart the server or cancel a scan, plus their menu entries.",
+      "slug": "editor-commands",
+      "title": "Editor commands"
+     },
+     {
+      "description": "The Neovim health check, which confirms the tools, the editor version and the configuration are usable.",
+      "slug": "health-check",
+      "title": "Health check"
+     },
+     {
+      "description": "An output channel that records server activity and, with tracing on, every request and reply.",
+      "slug": "output-log",
+      "title": "Output log"
+     }
+    ],
+    "description": "Setting up the editor plugins and finding out why they are not working.",
+    "slug": "setup-and-diagnostics",
+    "title": "Setup and diagnostics"
+   },
+   {
+    "areas": [
+     {
+      "description": "Bundling the VS Code extension's sources into one distributable script.",
+      "slug": "extension-build",
+      "title": "Extension build"
+     },
+     {
+      "description": "Fetching test dependencies, running the Neovim specs headless, smoke-testing against the real tools, checking that the Lua parses, and cleaning up.",
+      "slug": "plugin-test-harness",
+      "title": "Plugin test harness"
+     }
+    ],
+    "description": "Building, testing and packaging the editor extensions.",
+    "slug": "developer-tooling",
+    "title": "Developer tooling"
+   }
+  ]
+ }
+}
