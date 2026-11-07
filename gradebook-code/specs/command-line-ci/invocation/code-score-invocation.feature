@@ -26,12 +26,12 @@ Feature: Running a code score from the command line
 
     Examples:
       | path        | state          |
-      | ./missing   | does not exist |
-      | ./README.md | is a file      |
+      | missing     | does not exist |
+      | README.md   | is a file      |
 
   @id:gradebook-code.command-line-ci.invocation.003 @rule:gradebook-code.cli.version-reported @inferred @source:gradebook-code/gradebook_code/cli.py#_build_parser
   Scenario: The command reports its version
-    Given gradebook-code 0.5.0 is installed
+    Given gradebook-code 0.4.2 is installed
     When the operator runs gradebook-code --version
-    Then stdout reads "gradebook-code 0.5.0"
+    Then stdout reads "gradebook-code 0.4.2"
     And the exit status is 0

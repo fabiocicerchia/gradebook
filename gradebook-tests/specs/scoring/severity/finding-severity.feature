@@ -3,7 +3,7 @@ Feature: Ranking red flags by severity
   Gives developers and the editor integrations one fixed severity for every kind of test-suite red flag, so the findings that matter most are seen first and filtered the same way everywhere.
 
   Background:
-    Given Given gradebook-tests has scanned a repository that has red flags in its test suite
+    Given gradebook-tests has scanned a repository that has red flags in its test suite
 
   @id:gradebook-tests.scoring.severity.001 @rule:tests.severity.kind-maps-to-fixed-bucket @verified @source:gradebook-tests/gradebook_tests/severity.py#severity_for @test:gradebook-tests/tests/test_gradebook_tests.py#test_every_finding_carries_a_known_severity
   Scenario Outline: Each kind of red flag always gets the same severity

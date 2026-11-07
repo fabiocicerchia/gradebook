@@ -6,6 +6,7 @@ Feature: Detecting import cycles between the repository's own modules
   Scenario: Modules that import each other in a loop are reported as a cycle
     Given src/alpha.py imports beta
     And src/beta.py imports alpha
+    And src/gamma.py imports nothing, so there are enough modules to judge coupling
     When the operator grades the repository
     Then the red flags include a dependency-cycle finding for "alpha -> beta -> alpha" with no line number
     And its message reads "modules import each other in a loop — neither can be understood alone"

@@ -50,7 +50,7 @@ Feature: Spotting tests that pad the count without checking anything
   @id:gradebook-tests.test-quality-analysis.test-substance.009 @rule:tests.substance.stale-needs-history-for-both @verified @source:gradebook-tests/gradebook_tests/substance.py#find_stale @test:gradebook-tests/tests/test_substance.py#test_stale_is_not_scored_without_history_for_both_files
   Scenario: Staleness is not judged when either the test or its source has no history
     Given tests/test_a.py is paired with src/a.py
-    And src/a.py has 4 commits and tests/test_a.py has none
+    And src/a.py has 6 commits and tests/test_a.py has none
     When the operator scores the repository with git history
     Then the stale-test count is 0
     And no stale-test flag is listed for tests/test_a.py

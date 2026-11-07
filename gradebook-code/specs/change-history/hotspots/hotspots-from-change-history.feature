@@ -41,14 +41,14 @@ Feature: Finding hotspots in change history
   Scenario: A frequently changed file that is more complex than average is flagged as a hotspot
     Given a git repository with 9 source files
     And "src/billing.py" and "src/orders.py" are complex and changed in 8 commits each
-    And the other files are simple and rarely changed
+    And the other files are simple, with at least one of them also changed more than once
     When the operator scans the repository with gradebook-code
     Then a hotspot red flag is reported at "src/billing.py:1" and at "src/orders.py:1"
     And each message reads "changed <n> times and carries <complexity> complexity (codebase average <average>) — the expensive kind"
 
   @id:gradebook-code.change-history.hotspots.005 @rule:change-history.hotspots.simple-churn-not-flagged @verified @source:gradebook-code/gradebook_code/churn.py#find_hotspots @test:gradebook-code/tests/test_gradebook_code.py#test_complexity_away_from_the_changes_scores_well
   Scenario: Frequently changed files that are no more complex than average are not flagged
-    Given a git repository where "src/billing.py" and "src/orders.py" are simple but changed in 8 commits each
+    Given a git repository where "src/billing.py" and "src/orders.py" are simple but changed in 8 commits each, along with a third simple file
     And the most complex file, "src/tangle.py", has not changed since it was added
     When the operator scans the repository with gradebook-code
     Then no hotspot red flags are reported

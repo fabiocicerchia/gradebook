@@ -15,9 +15,9 @@ Feature: Failing a pipeline on the test-suite score
 
     Examples:
       | score | floor | exit |
-      | 30.0  | 50    | 1    |
-      | 30.0  | 0     | 0    |
-      | 50.0  | 50    | 0    |
+      | 30.0  | 50.0  | 1    |
+      | 30.0  | 0.0   | 0    |
+      | 50.0  | 50.0  | 0    |
 
   @id:gradebook-tests.command-line.quality-gate.002 @rule:tests.gate.fail-on-drop-against-baseline @verified @source:gradebook-tests/gradebook_tests/cli.py#_gate_failed @test:gradebook-tests/tests/test_gradebook_tests.py#test_cli_fail_on_drop_gate @test:gradebook-tests/tests/integration/test_scan_a_git_repo.py#test_a_git_repo_is_scored_from_its_history_coverage_and_ci
   Scenario Outline: A score drop beyond the tolerance against a baseline fails the run

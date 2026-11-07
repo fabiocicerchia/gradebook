@@ -3,7 +3,7 @@ Feature: Leaving test files out of the code score
   Keeps the code grade about production code, so a team is not marked down for long fixtures or assertion-heavy test functions.
 
   Background:
-    Given Given the operator runs gradebook-code over a repository
+    Given the operator runs gradebook-code over a repository
 
   @id:gradebook-code.repository-scanning.skipped-files.008 @rule:gradebook-code.skipped-files.test-files-not-scored @verified @source:gradebook-code/gradebook_code/metrics.py#is_test_file @test:gradebook-code/tests/test_gradebook_code.py#test_test_files_are_excluded @test:gradebook-code/tests/test_gradebook_code.py#test_source_files_are_kept @test:gradebook-code/tests/test_gradebook_code.py#test_only_source_files_are_counted @questionable
   Scenario Outline: Test files are not scored as source code

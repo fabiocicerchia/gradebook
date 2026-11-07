@@ -17,9 +17,9 @@ Feature: Branding the documentation site
   Scenario: The splash page and the rendered docs show the same accent colours
     Given the site accent pair is cyan #22d3ee and indigo #6366f1
     When a reader moves from the splash page to the rendered documentation
-    Then the project title on both pages is painted in a cyan-to-indigo gradient
-    And primary buttons on both pages use the same cyan-to-indigo gradient
-    And the documentation header and navigation chrome use indigo
+    Then the hero title on the splash page and on the docs home page is painted in a cyan-to-indigo gradient
+    And primary buttons on both pages use a cyan-to-indigo gradient
+    And the documentation's primary colour is indigo while its header and tabs sit on the page background
 
   @id:documentation-site.docs-theme.003 @rule:docs.theme.legible-links-per-scheme @inferred @source:docs/stylesheets/extra.css#[data-md-color-scheme="slate"]
   Scenario Outline: Links stay legible in both light and dark mode

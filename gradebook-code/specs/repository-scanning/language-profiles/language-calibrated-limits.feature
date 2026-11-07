@@ -3,7 +3,7 @@ Feature: Calibrating function limits to the languages in the repository
   Lets a team trust the size and complexity limits it is graded against, because Go is held to Go norms and Ruby to Ruby norms instead of one number for everyone.
 
   Background:
-    Given Given the operator runs gradebook-code over a repository
+    Given the operator runs gradebook-code over a repository
 
   @id:gradebook-code.repository-scanning.language-profiles.001 @rule:gradebook-code.language-profiles.limits-follow-the-language @verified @source:gradebook-code/gradebook_code/metrics.py#blend_profile @test:gradebook-code/tests/test_gradebook_code.py#test_thresholds_follow_the_language
   Scenario Outline: A single-language repository is held to that language's limits

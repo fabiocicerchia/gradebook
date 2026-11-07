@@ -28,7 +28,7 @@ Feature: Scoring design principles: SOLID, coupling, cohesion and Law of Demeter
   @id:gradebook-code.scoring.principle-dimensions.002 @rule:code.lsp.unimplemented-overrides @verified @source:gradebook-code/gradebook_code/scorers.py#score_lsp @test:gradebook-code/tests/test_gradebook_code.py#test_unimplemented_overrides_lower_lsp @questionable
   Scenario Outline: Subclasses that leave overrides unimplemented lower the Liskov score
     Given the repository declares <subclasses> subclasses
-    And <stubs> of them override a method without implementing it
+    And the whole codebase has <stubs> unimplemented stubs, such as a method that raises NotImplementedError
     And the whole codebase has <checks> runtime type checks
     When the developer runs gradebook-code over the repository
     Then the Liskov substitution score is <score>

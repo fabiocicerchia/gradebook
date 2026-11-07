@@ -8,13 +8,13 @@ Feature: Reading the test-suite score in the terminal
   @id:gradebook-tests.reporting.text-report.001 @rule:reporting.text-report.headline-and-dimension-rows @verified @source:gradebook-tests/gradebook_tests/render.py#render_text @test:gradebook-tests/tests/test_gradebook_tests.py#test_unscored_rows_line_up_with_scored_ones
   Scenario: The terminal report shows the scan summary, one bar per dimension and the overall score and grade
     Given the scan found 12 source files, 8 test files, 40 test cases and 95 assertions
-    And the suite scored 72.4 out of 100, grade C
+    And the suite scored 72.4 out of 100, grade B
     When the developer runs gradebook-tests with the default text format
     Then the first line names gradebook-tests, its version and the scanned path
     And a line lists the detected languages with their file counts, or "none"
-    And a line reads "12 source files · 8 test files · 40 test cases · 95 assertions"
+    And a line begins "12 source files · 8 test files · 40 test cases · 95 assertions"
     And every dimension has one row with its title, a 20-character bar, its points out of its weight and its detail
-    And a line reads "SCORE  72.4/100   grade C"
+    And a line reads "SCORE  72.4/100   grade B"
 
   @id:gradebook-tests.reporting.text-report.002 @rule:reporting.report.unscored-dimension-shown-as-not-applicable @verified @source:gradebook-tests/gradebook_tests/render.py#render_text @test:gradebook-tests/tests/test_gradebook_tests.py#test_unscored_rows_line_up_with_scored_ones
   Scenario Outline: A dimension with no evidence is shown as not applicable and listed as not scored, never as zero
@@ -40,8 +40,8 @@ Feature: Reading the test-suite score in the terminal
 
     Examples:
       | baseline_score | score | same_dims     | headline                                            | note                                                                                                   |
-      | 70.0           | 72.4  | scored        | SCORE  72.4/100   grade C   +2.4 vs baseline (70.0) | no comparability note is printed                                                                       |
-      | 75.0           | 72.4  | did not score | SCORE  72.4/100   grade C   -2.6 vs baseline (75.0) | a note says the baseline scored a different set of dimensions and the total is not directly comparable |
+      | 70.0           | 72.4  | scored        | SCORE  72.4/100   grade B   +2.4 vs baseline (70.0) | no comparability note is printed                                                                       |
+      | 75.0           | 72.4  | did not score | SCORE  72.4/100   grade B   -2.6 vs baseline (75.0) | a note says the baseline scored a different set of dimensions and the total is not directly comparable |
 
   @id:gradebook-tests.reporting.text-report.004 @rule:reporting.report.biggest-wins-listed @inferred @source:gradebook-tests/gradebook_tests/render.py#render_text
   Scenario: The report lists the fixes worth the most points, each with its advice

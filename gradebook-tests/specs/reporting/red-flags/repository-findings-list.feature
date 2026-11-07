@@ -22,7 +22,7 @@ Feature: Listing the suite's findings
     And it points at line 0 of the file
 
   @id:gradebook-tests.reporting.red-flags.003 @rule:tests.findings.per-file-caps @inferred @source:gradebook-tests/gradebook_tests/collection.py#_fold_test_file @questionable
-  Scenario: Each test file contributes at most five mirror-assertion findings, five brittle-selector findings and three badly named tests
+  Scenario: Each test file contributes at most five mirror-assertion findings and five brittle-selector findings
     Given one test file has 8 assertions that mirror the code and 8 brittle selectors
     When the maintainer grades the test suite
     Then 5 mirror-assertion findings and 5 brittle-selector findings are listed for that file

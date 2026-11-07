@@ -32,7 +32,7 @@ Feature: Reading measured coverage reports
   Scenario Outline: A coverage report that yields no percentage leaves coverage unmeasured
     Given the repository's only coverage report is <report> containing <content>
     When the operator grades the repository
-    Then the measured coverage is empty
+    Then no measured coverage is recorded
     And no per-file coverage is reported
 
     Examples:

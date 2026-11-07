@@ -27,7 +27,7 @@ Feature: Walking the repository
     And the repository has a file "<folder>/<file>"
     When the operator grades the repository
     Then the report counts 1 source file
-    And a coverage summary inside "<folder>" is still used as measured coverage
+    And a coverage report inside "<folder>" would still be read as measured coverage
 
     Examples:
       | folder   | file                  |

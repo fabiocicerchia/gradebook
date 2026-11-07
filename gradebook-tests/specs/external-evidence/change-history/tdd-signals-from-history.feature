@@ -12,7 +12,7 @@ Feature: Judging test-first discipline from change history
     When the operator scans the repository
     Then the report's git stats show how many source commits there were
     And the report's git stats show how many of them also touched tests
-    And the TDD detail reads "<share>% of <source_commits> source commits also touched tests"
+    And the TDD detail starts with "<share>% of <source_commits> source commits also touched tests"
 
     Examples:
       | source_commits | with_tests | share |

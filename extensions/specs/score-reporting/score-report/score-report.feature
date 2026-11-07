@@ -25,7 +25,7 @@ Feature: Reading the score report
 
   @id:extensions.score-reporting.score-report.006 @rule:score-reporting.report.markup-shown-as-text @verified @source:extensions/vscode/src/report.ts#escape @test:extensions/vscode/src/test/report.test.ts#markup in a message is escaped, not rendered
   Scenario: Text from the scanned repository is shown as text, never run as markup
-    Given a finding in the scanned repository carries the message "<script>alert(1)</script>"
+    Given a workspace finding (one with no line to point at) carries the message "<script>alert(1)</script>"
     When the developer shows the report
     Then the report shows the message literally as "<script>alert(1)</script>"
     And no script from the repository runs in the report

@@ -28,9 +28,9 @@ Feature: Running a test-suite scan from the command line
 
   @id:gradebook-tests.command-line.cli-options.003 @rule:tests.cli.rejects-missing-directory @verified @source:gradebook-tests/gradebook_tests/cli.py#main @test:gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_missing_path
   Scenario: A path that is not a directory is refused
-    Given the path "./no-such-repo" does not exist or is a file
+    Given the path "no-such-repo" does not exist or is a file
     When the operator runs gradebook-tests on that path
-    Then stderr says "gradebook-tests: not a directory: ./no-such-repo"
+    Then stderr says "gradebook-tests: not a directory: no-such-repo"
     And the exit code is 2
 
   @id:gradebook-tests.command-line.cli-options.004 @rule:tests.cli.rejects-unusable-baseline @verified @source:gradebook-tests/gradebook_tests/cli.py#main @test:gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_an_unreadable_baseline

@@ -7,12 +7,12 @@ Feature: Reading the code score report
 
   @id:gradebook-code.reporting.output-formats.001 @rule:reporting.output-formats.text-shows-score-and-dimensions @verified @source:gradebook-code/gradebook_code/render.py#render_text @test:gradebook-code/tests/test_gradebook_code.py#test_renderers_contain_the_essentials
   Scenario: The text report shows the overall score, grade and every dimension with a score bar
-    Given the repository scores 72.4 with grade C
+    Given the repository scores 72.4 with grade B
     When the developer runs gradebook-code with the default text format
     Then the first line reads "gradebook-code <version> — <path>"
     And a languages line and a line counting files, lines, functions, classes and modules are shown
     And each dimension appears on its own row with a 20-character bar, points earned and its weight
-    And the summary line reads "SCORE  72.4/100   grade C"
+    And the summary line reads "SCORE  72.4/100   grade B"
 
   @id:gradebook-code.reporting.output-formats.002 @rule:reporting.output-formats.unscored-dimension-shown-as-na @verified @source:gradebook-code/gradebook_code/render.py#render_text @test:gradebook-code/tests/test_gradebook_code.py#test_unscored_rows_line_up_with_scored_ones
   Scenario: A dimension with no evidence is shown as n/a and named as not scored
@@ -33,12 +33,12 @@ Feature: Reading the code score report
     Given the KISS dimension lost the most points, followed by DRY
     When the developer runs gradebook-code with --top 2
     Then a "Biggest wins" section lists at most 2 dimensions, the largest loss first
-    And each entry shows the points to gain, the dimension title and its advice, such as "+12.0 Simplicity (KISS) — <advice>"
+    And each entry shows the points to gain, the dimension title and its advice, such as "+12.0  Simplicity (KISS) — <advice>"
 
   @id:gradebook-code.reporting.output-formats.005 @rule:reporting.output-formats.markdown-summary @verified @source:gradebook-code/gradebook_code/render.py#render_markdown @test:gradebook-code/tests/test_gradebook_code.py#test_renderers_contain_the_essentials @test:gradebook-code/tests/test_gradebook_code.py#test_end_to_end_a_git_repo_through_the_module @questionable
   Scenario: The Markdown report gives a score heading and a principle table ready to paste
-    Given the repository scores 72.4 with grade C
+    Given the repository scores 72.4 with grade B
     When the developer runs gradebook-code with --format markdown
-    Then the report opens with "## Code score: **72.4/100** (grade C)"
+    Then the report opens with "## Code score: **72.4/100** (grade B)"
     And a table with columns Principle, Score, Weight and Detail has one row per dimension, unscored ones showing "n/a"
     And the language calibration, the generated-file skip count and any baseline delta are not shown

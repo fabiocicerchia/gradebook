@@ -3,7 +3,7 @@ Feature: Finding the gradebook tools
   Lets the scan server find each gradebook tool where the user put it, and explain how to fix things when a tool is missing or too old, without one missing tool disabling the other.
 
   Background:
-    Given Given the scan server is running
+    Given the scan server is running
 
   @id:extensions.scan-engine.tool-discovery.001 @rule:scan-engine.tool-discovery.source-precedence @verified @source:extensions/vscode/server/gradebook_server.py#load_tool @test:extensions/vscode/src/test/server.test.ts#an explicit module path is honoured
   Scenario Outline: A configured tool location wins over an installed tool, which wins over a checkout

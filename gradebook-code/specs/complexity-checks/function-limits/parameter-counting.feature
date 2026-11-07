@@ -3,7 +3,7 @@ Feature: Counting the parameters a caller must pass
   Keeps the many-parameters flag fair, so methods are not penalised for self and annotated or defaulted parameters count once each.
 
   Background:
-    Given Given the operator runs gradebook-code over a Python repository
+    Given the operator runs gradebook-code over a Python repository
 
   @id:gradebook-code.complexity-checks.function-limits.005 @rule:gradebook-code.function-limits.parameters-counted-as-callers-see-them @verified @source:gradebook-code/gradebook_code/metrics.py#count_params @test:gradebook-code/tests/test_gradebook_code.py#test_count_params @test:gradebook-code/tests/test_gradebook_code.py#test_parameter_count_matches_a_real_parser
   Scenario Outline: A function's parameters are counted the way a caller passes them

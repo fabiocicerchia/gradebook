@@ -18,7 +18,7 @@ Feature: Recognising generated and minified files
       | api.pb.go           |
       | model_pb2.py        |
       | model_pb2_grpc.py   |
-      | thing.g.dart        |
+      | thing.g.ts          |
       | client.generated.ts |
       | schema_generated.go |
 

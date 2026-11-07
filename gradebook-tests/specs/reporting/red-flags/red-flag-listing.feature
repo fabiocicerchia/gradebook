@@ -14,9 +14,9 @@ Feature: Listing red flags with their location
 
   @id:gradebook-tests.reporting.red-flags.005 @rule:reporting.red-flags.no-line-shows-file-only @inferred @source:gradebook-tests/gradebook_tests/render.py#location
   Scenario: A red flag with no line number is located by its file alone
-    Given a finding in pytest.ini has no line number
+    Given an "untested-hotspot" finding for src/hot.py has no line number
     When the developer runs gradebook-tests
-    Then its entry is located as "pytest.ini", with no ":0" suffix
+    Then its entry is located as "src/hot.py", with no ":0" suffix
 
   @id:gradebook-tests.reporting.red-flags.006 @rule:reporting.red-flags.max-flags-caps-the-list @verified @source:gradebook-tests/gradebook_tests/render.py#capped @test:gradebook-tests/tests/test_gradebook_tests.py#test_flags_can_be_hidden_and_truncated @questionable
   Scenario Outline: The number of red flags shown can be capped or hidden, and the heading still counts them all

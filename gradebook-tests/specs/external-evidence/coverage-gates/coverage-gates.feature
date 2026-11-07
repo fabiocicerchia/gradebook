@@ -21,7 +21,7 @@ Feature: Detecting coverage thresholds and CI test runs
     Given the repository has a CI file <ci_file> whose steps run <command>
     When the operator grades the repository
     Then CI is reported as running tests: <runs_tests>
-    And CI is reported as measuring coverage: <measures_coverage>
+    And CI is reported as collecting coverage: <measures_coverage>
 
     Examples:
       | ci_file                  | command                               | runs_tests | measures_coverage |
