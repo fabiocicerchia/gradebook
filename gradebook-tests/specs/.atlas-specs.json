@@ -690,7 +690,16 @@
   "gradebook-tests/substance": [],
   "gradebook-tests/walking": []
  },
- "retired": [],
+ "retired": [
+  "gradebook-tests.external-evidence.coverage-reports.004",
+  "gradebook-tests.reporting.red-flags.001",
+  "gradebook-tests.reporting.red-flags.002",
+  "gradebook-tests.reporting.text-report.004",
+  "gradebook-tests.reporting.text-report.005",
+  "gradebook-tests.repository-scan.config-and-ci-discovery.001",
+  "gradebook-tests.repository-scan.config-and-ci-discovery.004",
+  "gradebook-tests.scoring.baseline-comparison.003"
+ ],
  "scenarios": {
   "gradebook-tests.command-line.cli-options.001": {
    "file": "gradebook-tests/specs/command-line/cli-options/tests-cli-run.feature",
@@ -920,16 +929,6 @@
     "gradebook-tests/tests/test_gradebook_tests.py#test_parses_json_coverage_reports"
    ]
   },
-  "gradebook-tests.external-evidence.coverage-reports.004": {
-   "file": "gradebook-tests/specs/external-evidence/coverage-reports/coverage-reports.feature",
-   "fingerprint": "9d8494e4e5c4",
-   "human": false,
-   "rule": "gradebook-tests.coverage.first-report-wins",
-   "source": "gradebook-tests/gradebook_tests/collection.py#_scrape_config",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
   "gradebook-tests.external-evidence.coverage-reports.005": {
    "file": "gradebook-tests/specs/external-evidence/coverage-reports/coverage-reports.feature",
    "fingerprint": "b0d5678d0823",
@@ -1010,30 +1009,6 @@
    "test": "gradebook-tests/tests/test_gradebook_tests.py#test_markdown_render_contains_table_and_score",
    "tests": [
     "gradebook-tests/tests/test_gradebook_tests.py#test_markdown_render_contains_table_and_score"
-   ]
-  },
-  "gradebook-tests.reporting.red-flags.001": {
-   "file": "gradebook-tests/specs/reporting/red-flags/repository-findings-list.feature",
-   "fingerprint": "6adc4e0e0c91",
-   "human": false,
-   "rule": "tests.findings.ranked-and-severity-tagged",
-   "source": "gradebook-tests/gradebook_tests/collection.py#collect",
-   "status": "verified",
-   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_every_finding_carries_a_known_severity",
-   "tests": [
-    "gradebook-tests/tests/test_gradebook_tests.py#test_every_finding_carries_a_known_severity"
-   ]
-  },
-  "gradebook-tests.reporting.red-flags.002": {
-   "file": "gradebook-tests/specs/reporting/red-flags/repository-findings-list.feature",
-   "fingerprint": "227eb1229fd2",
-   "human": false,
-   "rule": "tests.findings.unit-test-doing-real-io-flagged",
-   "source": "gradebook-tests/gradebook_tests/collection.py#_fold_test_file",
-   "status": "verified",
-   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_unit_tests_doing_real_io_are_flagged",
-   "tests": [
-    "gradebook-tests/tests/test_gradebook_tests.py#test_unit_tests_doing_real_io_are_flagged"
    ]
   },
   "gradebook-tests.reporting.red-flags.003": {
@@ -1126,38 +1101,6 @@
    "test": "",
    "tests": []
   },
-  "gradebook-tests.reporting.text-report.004": {
-   "file": "gradebook-tests/specs/reporting/text-report/terminal-report.feature",
-   "fingerprint": "593c4d501812",
-   "human": false,
-   "rule": "reporting.report.biggest-wins-listed",
-   "source": "gradebook-tests/gradebook_tests/render.py#render_text",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
-  "gradebook-tests.reporting.text-report.005": {
-   "file": "gradebook-tests/specs/reporting/text-report/terminal-report.feature",
-   "fingerprint": "77c5611afffb",
-   "human": false,
-   "rule": "reporting.report.directory-breakdown-listed",
-   "source": "gradebook-tests/gradebook_tests/render.py#render_directories",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
-  "gradebook-tests.repository-scan.config-and-ci-discovery.001": {
-   "file": "gradebook-tests/specs/repository-scan/config-and-ci-discovery/gathering-suite-evidence.feature",
-   "fingerprint": "6adc4e0e0c91",
-   "human": false,
-   "rule": "tests.evidence.coverage-report-in-artifact-folder-is-measured",
-   "source": "gradebook-tests/gradebook_tests/collection.py#collect",
-   "status": "verified",
-   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_coverage_report_found_inside_artifact_dir",
-   "tests": [
-    "gradebook-tests/tests/test_gradebook_tests.py#test_coverage_report_found_inside_artifact_dir"
-   ]
-  },
   "gradebook-tests.repository-scan.config-and-ci-discovery.002": {
    "file": "gradebook-tests/specs/repository-scan/config-and-ci-discovery/gathering-suite-evidence.feature",
    "fingerprint": "9d8494e4e5c4",
@@ -1177,18 +1120,6 @@
    "status": "inferred",
    "test": "",
    "tests": []
-  },
-  "gradebook-tests.repository-scan.config-and-ci-discovery.004": {
-   "file": "gradebook-tests/specs/repository-scan/config-and-ci-discovery/gathering-suite-evidence.feature",
-   "fingerprint": "6adc4e0e0c91",
-   "human": false,
-   "rule": "tests.evidence.threshold-from-config-or-ci",
-   "source": "gradebook-tests/gradebook_tests/collection.py#collect",
-   "status": "verified",
-   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_measured_coverage_beats_declared_only",
-   "tests": [
-    "gradebook-tests/tests/test_gradebook_tests.py#test_measured_coverage_beats_declared_only"
-   ]
   },
   "gradebook-tests.repository-scan.file-discovery.001": {
    "file": "gradebook-tests/specs/repository-scan/file-discovery/walking-the-repository.feature",
@@ -1339,18 +1270,6 @@
    "tests": [
     "gradebook-tests/tests/test_gradebook_tests.py#test_compare_reports_deltas_per_dimension",
     "gradebook-tests/tests/test_gradebook_tests.py#test_compare_flags_a_baseline_that_scored_other_dimensions"
-   ]
-  },
-  "gradebook-tests.scoring.baseline-comparison.003": {
-   "file": "gradebook-tests/specs/scoring/baseline-comparison/baseline-comparison.feature",
-   "fingerprint": "ccb479b5b335",
-   "human": false,
-   "rule": "scoring.baseline-comparison.rejects-non-report",
-   "source": "gradebook-tests/gradebook_tests/score.py#compare",
-   "status": "verified",
-   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_compare_rejects_a_file_that_is_not_a_report",
-   "tests": [
-    "gradebook-tests/tests/test_gradebook_tests.py#test_compare_rejects_a_file_that_is_not_a_report"
    ]
   },
   "gradebook-tests.scoring.directory-breakdown.001": {

@@ -27,20 +27,7 @@ Feature: Flagging functions past the size and complexity limits
     Then no long-function finding is reported for it
     And no many-parameters finding is reported for it
 
-  @id:gradebook-code.complexity-checks.function-limits.003 @rule:code.function-limits.prose-is-not-branching @verified @source:gradebook-code/gradebook_code/analysis.py#analyse_file @test:gradebook-code/tests/test_gradebook_code.py#test_prose_does_not_add_branches
-  Scenario Outline: Words in comments and strings do not count as branches
-    Given a <language> function whose only statement returns a value
-    And its comments and strings contain the words if, for, while, and, or
-    When the operator grades the repository
-    Then the function's complexity is 1
-
-    Examples:
-      | language   |
-      | python     |
-      | javascript |
-      | go         |
-
-  @id:gradebook-code.complexity-checks.function-limits.004 @rule:code.function-limits.parameters-the-caller-passes @verified @source:gradebook-code/gradebook_code/analysis.py#_measure_function @test:gradebook-code/tests/test_gradebook_code.py#test_parameter_counting @test:gradebook-code/tests/test_gradebook_code.py#test_parameter_count_matches_a_real_parser
+  @id:gradebook-code.complexity-checks.function-limits.004 @rule:code.function-limits.parameters-the-caller-passes @verified @source:gradebook-code/gradebook_code/analysis.py#_measure_function @test:gradebook-code/tests/test_gradebook_code.py#test_parameter_counting @test:gradebook-code/tests/test_gradebook_code.py#test_parameter_count_matches_a_real_parser @test:gradebook-code/tests/test_gradebook_code.py#test_count_params
   Scenario Outline: Only the parameters a caller passes count toward the parameter limit
     Given a <language> function declared as <signature>
     When the operator grades the repository
@@ -53,3 +40,7 @@ Feature: Flagging functions past the size and complexity limits
       | go         | func (r *Repo) Save(ctx context.Context, o Order) error                      | 2     |
       | typescript | function pick(items: Map<string, number>, key: string)                       | 2     |
       | python     | def none()                                                                   | 0     |
+      | python     | def total(a, b, c):                                                          | 3     |
+      | python     | def load(a: dict[str, int], b=(1, 2)):                                       | 2     |
+      | python     | def method(self, alpha, beta=1, *rest, **options):                           | 4     |
+      | python     | def build(cls, name):                                                        | 1     |

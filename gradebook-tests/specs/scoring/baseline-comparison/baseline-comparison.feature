@@ -25,9 +25,3 @@ Feature: Comparing a run against an earlier report
       | baseline unscored              | current unscored               | comparable |
       | Mutation score, TDD discipline | Mutation score, TDD discipline | true       |
       | nothing                        | Mutation score, TDD discipline | false      |
-
-  @id:gradebook-tests.scoring.baseline-comparison.003 @rule:scoring.baseline-comparison.rejects-non-report @verified @source:gradebook-tests/gradebook_tests/score.py#compare @test:gradebook-tests/tests/test_gradebook_tests.py#test_compare_rejects_a_file_that_is_not_a_report
-  Scenario: A file that is not a gradebook-tests report is refused as a baseline
-    Given the baseline file holds JSON with no score field
-    When the maintainer scores the repository against the baseline
-    Then the comparison is refused with "baseline is not a gradebook-tests JSON report"

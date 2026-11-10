@@ -25,13 +25,6 @@ Feature: Running the repository's verbs from one entry point
       | gradebook-tests          | --list-dimensions | gradebook_tests |
       | gradebook-code           | --list-dimensions | gradebook_code  |
 
-  @id:developer-tooling.task-runner.003 @rule:tooling.make.build-is-declared-no-op @inferred @source:Makefile#build
-  Scenario: The build verb explains that there is nothing to build
-    When the contributor runs the build verb
-    Then it prints that there is nothing to build because both tools are pure-Python packages installed by make install
-    And it points to make ext-build for the VS Code extension and to the README's Not applicable section
-    And nothing is compiled or installed
-
   @id:developer-tooling.task-runner.004 @rule:tooling.make.missing-prerequisite-refused-with-guidance @inferred @source:Makefile#analyze
   Scenario Outline: A verb whose required tool is missing stops with guidance and a failing status
     Given <prerequisite> is not on the PATH

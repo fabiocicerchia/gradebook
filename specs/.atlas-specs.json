@@ -129,7 +129,12 @@
   "docs/stylesheets": [],
   "gradebook/makefile": []
  },
- "retired": [],
+ "retired": [
+  "developer-tooling.task-runner.003",
+  "documentation-site.docs-theme.002",
+  "documentation-site.docs-theme.003",
+  "documentation-site.docs-theme.004"
+ ],
  "scenarios": {
   "developer-tooling.task-runner.001": {
    "file": "specs/developer-tooling/task-runner/make-task-runner.feature",
@@ -147,16 +152,6 @@
    "human": false,
    "rule": "tooling.make.run-tool-from-checkout",
    "source": "Makefile#run",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
-  "developer-tooling.task-runner.003": {
-   "file": "specs/developer-tooling/task-runner/make-task-runner.feature",
-   "fingerprint": "6674690c6dcf",
-   "human": false,
-   "rule": "tooling.make.build-is-declared-no-op",
-   "source": "Makefile#build",
    "status": "inferred",
    "test": "",
    "tests": []
@@ -187,36 +182,6 @@
    "human": false,
    "rule": "docs.theme.no-external-requests",
    "source": "docs/stylesheets/extra.css#:root",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
-  "documentation-site.docs-theme.002": {
-   "file": "specs/documentation-site/docs-theme/docs-theme.feature",
-   "fingerprint": "d1e8fee7d3b2",
-   "human": false,
-   "rule": "docs.theme.shared-accent-palette",
-   "source": "docs/stylesheets/extra.css#:root",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
-  "documentation-site.docs-theme.003": {
-   "file": "specs/documentation-site/docs-theme/docs-theme.feature",
-   "fingerprint": "433084a194b6",
-   "human": false,
-   "rule": "docs.theme.legible-links-per-scheme",
-   "source": "docs/stylesheets/extra.css#[data-md-color-scheme=\"slate\"]",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
-  "documentation-site.docs-theme.004": {
-   "file": "specs/documentation-site/docs-theme/docs-theme.feature",
-   "fingerprint": "c702704e5aae",
-   "human": false,
-   "rule": "docs.theme.no-borrowed-logo",
-   "source": "docs/stylesheets/extra.css#.md-header__button.md-logo",
    "status": "inferred",
    "test": "",
    "tests": []

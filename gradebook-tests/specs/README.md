@@ -15,7 +15,7 @@ Reads the results that test tools have already produced, plus the git history, w
 
 - **Change history and TDD signals**: [Judging test-first discipline from change history](external-evidence/change-history/tdd-signals-from-history.feature) (4)
 - **Coverage thresholds in CI**: [Detecting coverage thresholds and CI test runs](external-evidence/coverage-gates/coverage-gates.feature) (2)
-- **Coverage reports**: [Reading measured coverage reports](external-evidence/coverage-reports/coverage-reports.feature) (5)
+- **Coverage reports**: [Reading measured coverage reports](external-evidence/coverage-reports/coverage-reports.feature) (4)
 - **Mutation testing reports**: [Reading mutation testing reports](external-evidence/mutation-reports/mutation-reports.feature) (3)
 - **Risk hotspots**: [Finding often-changed code that has no tests](external-evidence/risk-hotspots/untested-hotspots.feature) (2)
 
@@ -23,13 +23,13 @@ Reads the results that test tools have already produced, plus the git history, w
 Shows the score, dimensions and red flags in a form people and tools can act on.
 
 - **Markdown report**: [Posting the test-suite score as Markdown](reporting/markdown-report/markdown-report.feature) (1)
-- **Red flag listing**: [Listing red flags with their location](reporting/red-flags/red-flag-listing.feature) (4), [Listing the suite's findings](reporting/red-flags/repository-findings-list.feature) (3)
-- **Terminal report**: [Reading the test-suite score in the terminal](reporting/text-report/terminal-report.feature) (5)
+- **Red flag listing**: [Listing red flags with their location](reporting/red-flags/red-flag-listing.feature) (4), [Listing the suite's findings](reporting/red-flags/repository-findings-list.feature) (1)
+- **Terminal report**: [Reading the test-suite score in the terminal](reporting/text-report/terminal-report.feature) (3)
 
 ## Repository scan
 How gradebook-tests walks a working tree and decides what each file is before anything gets scored.
 
-- **Config and CI discovery**: [Gathering the evidence a test-suite score is built from](repository-scan/config-and-ci-discovery/gathering-suite-evidence.feature) (4)
+- **Config and CI discovery**: [Gathering the evidence a test-suite score is built from](repository-scan/config-and-ci-discovery/gathering-suite-evidence.feature) (2)
 - **File discovery**: [Walking the repository](repository-scan/file-discovery/walking-the-repository.feature) (5)
 - **Test file recognition**: [Recognising test files](repository-scan/test-file-recognition/recognising-test-files.feature) (3)
 - **Test kind classification**: [Sorting tests into unit, integration and end-to-end](repository-scan/test-kind-classification/classifying-test-kinds.feature) (3)
@@ -37,7 +37,7 @@ How gradebook-tests walks a working tree and decides what each file is before an
 ## Scoring and grading
 Turns the evidence into a weighted score and a letter grade, and says which fix is worth the most points.
 
-- **Baseline comparison**: [Comparing a run against an earlier report](scoring/baseline-comparison/baseline-comparison.feature) (3)
+- **Baseline comparison**: [Comparing a run against an earlier report](scoring/baseline-comparison/baseline-comparison.feature) (2)
 - **Per-directory breakdown**: [Scoring each top-level directory](scoring/directory-breakdown/directory-breakdown.feature) (2)
 - **Overall score and grade**: [Scoring a test suite against the rubric](scoring/grades/scoring-a-test-suite.feature) (4)
 - **Recommendations**: [Recommending the fixes worth the most points](scoring/recommendations/recommendations.feature) (2)

@@ -605,7 +605,15 @@
   "gradebook-code/scorers": [],
   "gradebook-code/severity": []
  },
- "retired": [],
+ "retired": [
+  "gradebook-code.complexity-checks.function-limits.003",
+  "gradebook-code.complexity-checks.function-limits.005",
+  "gradebook-code.design-checks.dependency-cycles.001",
+  "gradebook-code.reporting.output-formats.002",
+  "gradebook-code.reporting.output-formats.004",
+  "gradebook-code.repository-scanning.skipped-files.006",
+  "gradebook-code.repository-scanning.skipped-files.007"
+ ],
  "scenarios": {
   "gradebook-code.change-history.hotspots.001": {
    "file": "gradebook-code/specs/change-history/hotspots/hotspots-from-change-history.feature",
@@ -847,18 +855,6 @@
    "test": "",
    "tests": []
   },
-  "gradebook-code.complexity-checks.function-limits.003": {
-   "file": "gradebook-code/specs/complexity-checks/function-limits/function-limits.feature",
-   "fingerprint": "32b862d41e0e",
-   "human": false,
-   "rule": "code.function-limits.prose-is-not-branching",
-   "source": "gradebook-code/gradebook_code/analysis.py#analyse_file",
-   "status": "verified",
-   "test": "gradebook-code/tests/test_gradebook_code.py#test_prose_does_not_add_branches",
-   "tests": [
-    "gradebook-code/tests/test_gradebook_code.py#test_prose_does_not_add_branches"
-   ]
-  },
   "gradebook-code.complexity-checks.function-limits.004": {
    "file": "gradebook-code/specs/complexity-checks/function-limits/function-limits.feature",
    "fingerprint": "324be5a71d0a",
@@ -869,20 +865,8 @@
    "test": "gradebook-code/tests/test_gradebook_code.py#test_parameter_counting",
    "tests": [
     "gradebook-code/tests/test_gradebook_code.py#test_parameter_counting",
-    "gradebook-code/tests/test_gradebook_code.py#test_parameter_count_matches_a_real_parser"
-   ]
-  },
-  "gradebook-code.complexity-checks.function-limits.005": {
-   "file": "gradebook-code/specs/complexity-checks/function-limits/parameter-counting.feature",
-   "fingerprint": "a02aa400bd26",
-   "human": false,
-   "rule": "gradebook-code.function-limits.parameters-counted-as-callers-see-them",
-   "source": "gradebook-code/gradebook_code/metrics.py#count_params",
-   "status": "verified",
-   "test": "gradebook-code/tests/test_gradebook_code.py#test_count_params",
-   "tests": [
-    "gradebook-code/tests/test_gradebook_code.py#test_count_params",
-    "gradebook-code/tests/test_gradebook_code.py#test_parameter_count_matches_a_real_parser"
+    "gradebook-code/tests/test_gradebook_code.py#test_parameter_count_matches_a_real_parser",
+    "gradebook-code/tests/test_gradebook_code.py#test_count_params"
    ]
   },
   "gradebook-code.design-checks.dead-code.001": {
@@ -907,19 +891,6 @@
    "status": "inferred",
    "test": "",
    "tests": []
-  },
-  "gradebook-code.design-checks.dependency-cycles.001": {
-   "file": "gradebook-code/specs/design-checks/dependency-cycles/dependency-cycles.feature",
-   "fingerprint": "079d5ba16069",
-   "human": false,
-   "rule": "code.dependency-cycles.loop-flagged",
-   "source": "gradebook-code/gradebook_code/analysis.py#find_cycles",
-   "status": "verified",
-   "test": "gradebook-code/tests/test_gradebook_code.py#test_find_cycles_detects_a_loop",
-   "tests": [
-    "gradebook-code/tests/test_gradebook_code.py#test_find_cycles_detects_a_loop",
-    "gradebook-code/tests/test_gradebook_code.py#test_import_cycles_are_flagged"
-   ]
   },
   "gradebook-code.design-checks.dependency-cycles.002": {
    "file": "gradebook-code/specs/design-checks/dependency-cycles/dependency-cycles.feature",
@@ -1035,18 +1006,6 @@
     "gradebook-code/tests/test_gradebook_code.py#test_renderers_contain_the_essentials"
    ]
   },
-  "gradebook-code.reporting.output-formats.002": {
-   "file": "gradebook-code/specs/reporting/output-formats/report-formats.feature",
-   "fingerprint": "34c62d439a3b",
-   "human": false,
-   "rule": "reporting.output-formats.unscored-dimension-shown-as-na",
-   "source": "gradebook-code/gradebook_code/render.py#render_text",
-   "status": "verified",
-   "test": "gradebook-code/tests/test_gradebook_code.py#test_unscored_rows_line_up_with_scored_ones",
-   "tests": [
-    "gradebook-code/tests/test_gradebook_code.py#test_unscored_rows_line_up_with_scored_ones"
-   ]
-  },
   "gradebook-code.reporting.output-formats.003": {
    "file": "gradebook-code/specs/reporting/output-formats/report-formats.feature",
    "fingerprint": "34c62d439a3b",
@@ -1058,16 +1017,6 @@
    "tests": [
     "gradebook-code/tests/test_gradebook_code.py#test_generated_files_are_excluded_from_the_score"
    ]
-  },
-  "gradebook-code.reporting.output-formats.004": {
-   "file": "gradebook-code/specs/reporting/output-formats/report-formats.feature",
-   "fingerprint": "34c62d439a3b",
-   "human": false,
-   "rule": "reporting.output-formats.biggest-wins-listed",
-   "source": "gradebook-code/gradebook_code/render.py#render_text",
-   "status": "inferred",
-   "test": "",
-   "tests": []
   },
   "gradebook-code.reporting.output-formats.005": {
    "file": "gradebook-code/specs/reporting/output-formats/report-formats.feature",
@@ -1302,32 +1251,6 @@
    "test": "gradebook-code/tests/test_gradebook_code.py#test_handwritten_files_are_not_skipped",
    "tests": [
     "gradebook-code/tests/test_gradebook_code.py#test_handwritten_files_are_not_skipped"
-   ]
-  },
-  "gradebook-code.repository-scanning.skipped-files.006": {
-   "file": "gradebook-code/specs/repository-scanning/skipped-files/generated-and-test-file-skipping.feature",
-   "fingerprint": "a27eedbff9be",
-   "human": false,
-   "rule": "code.scanning.generated-files-skipped-and-counted",
-   "source": "gradebook-code/gradebook_code/collection.py#_sources",
-   "status": "verified",
-   "test": "gradebook-code/tests/test_gradebook_code.py#test_generated_files_are_excluded_from_the_score",
-   "tests": [
-    "gradebook-code/tests/test_gradebook_code.py#test_generated_files_are_excluded_from_the_score",
-    "gradebook-code/tests/test_gradebook_code.py#test_generated_files_are_recognised"
-   ]
-  },
-  "gradebook-code.repository-scanning.skipped-files.007": {
-   "file": "gradebook-code/specs/repository-scanning/skipped-files/generated-and-test-file-skipping.feature",
-   "fingerprint": "a27eedbff9be",
-   "human": false,
-   "rule": "code.scanning.test-files-not-scored",
-   "source": "gradebook-code/gradebook_code/collection.py#_sources",
-   "status": "verified",
-   "test": "gradebook-code/tests/test_gradebook_code.py#test_only_source_files_are_counted",
-   "tests": [
-    "gradebook-code/tests/test_gradebook_code.py#test_only_source_files_are_counted",
-    "gradebook-code/tests/test_gradebook_code.py#test_test_files_are_excluded"
    ]
   },
   "gradebook-code.repository-scanning.skipped-files.008": {

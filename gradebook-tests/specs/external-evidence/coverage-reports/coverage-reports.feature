@@ -41,13 +41,6 @@ Feature: Reading measured coverage reports
       | lcov.info     | records with zero lines found       |
       | coverage.xml  | no line-rate and no JaCoCo counters |
 
-  @id:gradebook-tests.external-evidence.coverage-reports.004 @rule:gradebook-tests.coverage.first-report-wins @inferred @source:gradebook-tests/gradebook_tests/collection.py#_scrape_config @questionable
-  Scenario: Only the first usable coverage report found in the tree is counted
-    Given the repository contains two usable coverage reports with different percentages
-    When the operator grades the repository
-    Then the measured coverage comes from the first report reached in the walk
-    And the second report is ignored, not combined
-
   @id:gradebook-tests.external-evidence.coverage-reports.005 @rule:gradebook-tests.coverage.per-file-by-base-name @verified @source:gradebook-tests/gradebook_tests/coverage.py#lcov_files @test:gradebook-tests/tests/test_gradebook_tests.py#test_per_file_coverage_parsers @questionable
   Scenario: Per-file coverage is reported by file name, without its folder
     Given the coverage report lists src/a.py at 50% and pkg/a.py at 90%

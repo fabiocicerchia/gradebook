@@ -42,17 +42,3 @@ Feature: Reading the test-suite score in the terminal
       | baseline_score | score | same_dims     | headline                                            | note                                                                                                   |
       | 70.0           | 72.4  | scored        | SCORE  72.4/100   grade B   +2.4 vs baseline (70.0) | no comparability note is printed                                                                       |
       | 75.0           | 72.4  | did not score | SCORE  72.4/100   grade B   -2.6 vs baseline (75.0) | a note says the baseline scored a different set of dimensions and the total is not directly comparable |
-
-  @id:gradebook-tests.reporting.text-report.004 @rule:reporting.report.biggest-wins-listed @inferred @source:gradebook-tests/gradebook_tests/render.py#render_text
-  Scenario: The report lists the fixes worth the most points, each with its advice
-    Given the developer asks for the top 3 recommendations
-    When the developer runs gradebook-tests with --top 3
-    Then a "Biggest wins" section lists at most 3 dimensions
-    And each entry shows the points it would recover, the dimension title and its advice
-
-  @id:gradebook-tests.reporting.text-report.005 @rule:reporting.report.directory-breakdown-listed @inferred @source:gradebook-tests/gradebook_tests/render.py#render_directories
-  Scenario: With the per-directory breakdown each directory shows its grade, score, file counts and biggest win
-    Given the repository has the directories api and web, each holding code
-    When the developer runs gradebook-tests with --by-dir
-    Then a "By directory" section lists api and web
-    And each directory shows its grade, its score, its source and test file counts and its biggest win

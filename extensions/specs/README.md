@@ -33,6 +33,5 @@ Showing the grade, how it breaks down, and which fix gains the most points.
 ## Setup and diagnostics
 Setting up the editor plugins and finding out why they are not working.
 
-- **Editor commands**: [Running gradebook from Neovim commands](setup-and-diagnostics/editor-commands/nvim-editor-commands.feature) (1)
 - **Health check**: [Checking the Neovim setup](setup-and-diagnostics/health-check/nvim-health-check.feature) (3)
 - **Settings**: [Configuring the Neovim plugin](setup-and-diagnostics/settings/nvim-settings.feature) (3)

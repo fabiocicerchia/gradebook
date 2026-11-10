@@ -404,7 +404,9 @@
    }
   ]
  },
- "retired": [],
+ "retired": [
+  "extensions.setup-and-diagnostics.editor-commands.001"
+ ],
  "scenarios": {
   "extensions.findings.findings-panel.001": {
    "file": "extensions/specs/findings/findings-panel/findings-panel.feature",
@@ -852,16 +854,6 @@
    "tests": [
     "extensions/vscode/src/test/status.test.ts#either score below failUnder colours the entry"
    ]
-  },
-  "extensions.setup-and-diagnostics.editor-commands.001": {
-   "file": "extensions/specs/setup-and-diagnostics/editor-commands/nvim-editor-commands.feature",
-   "fingerprint": "cc4403def008",
-   "human": false,
-   "rule": "editor.commands.nvim-scan-and-report",
-   "source": "extensions/nvim/plugin/gradebook.lua#Gradebook",
-   "status": "inferred",
-   "test": "",
-   "tests": []
   },
   "extensions.setup-and-diagnostics.health-check.001": {
    "file": "extensions/specs/setup-and-diagnostics/health-check/nvim-health-check.feature",

@@ -19,13 +19,13 @@ Running the grader from a terminal or pipeline and gating builds on the result.
 Detecting code that is too big, too deep or too convoluted to read.
 
 - **File and class size**: [Flagging files that do too many jobs](complexity-checks/file-size/god-files-and-mixed-concerns.feature) (2)
-- **Function limits**: [Flagging functions past the size and complexity limits](complexity-checks/function-limits/function-limits.feature) (4), [Counting the parameters a caller must pass](complexity-checks/function-limits/parameter-counting.feature) (1)
+- **Function limits**: [Flagging functions past the size and complexity limits](complexity-checks/function-limits/function-limits.feature) (3)
 
 ## Design and Structure Checks
 Detecting structural design problems across files and modules.
 
 - **Dead and speculative code**: [Spotting private helpers nobody calls](design-checks/dead-code/unused-private-helpers.feature) (2)
-- **Dependency cycles and coupling**: [Reporting import cycles](design-checks/dependency-cycles/dependency-cycle-flags.feature) (1), [Detecting import cycles between the repository's own modules](design-checks/dependency-cycles/dependency-cycles.feature) (2)
+- **Dependency cycles and coupling**: [Reporting import cycles](design-checks/dependency-cycles/dependency-cycle-flags.feature) (1), [Detecting import cycles between the repository's own modules](design-checks/dependency-cycles/dependency-cycles.feature) (1)
 - **Duplicate code**: [Finding code repeated across files](design-checks/duplication/duplicate-code.feature) (3)
 - **Inheritance and interfaces**: [Flagging interfaces that are too wide](design-checks/inheritance-interfaces/fat-interface-flags.feature) (1)
 
@@ -33,7 +33,7 @@ Detecting structural design problems across files and modules.
 Presenting the grade, red flags and recommendations to people and machines.
 
 - **Per-directory breakdown**: [Scoring each directory](reporting/directory-breakdown/directory-breakdown.feature) (3)
-- **Output formats**: [Reading the code score report](reporting/output-formats/report-formats.feature) (5)
+- **Output formats**: [Reading the code score report](reporting/output-formats/report-formats.feature) (3)
 - **Red flags**: [Listing red flags](reporting/red-flags/red-flag-listing.feature) (4)
 - **Severity levels**: [Grading the severity of each finding](reporting/severity/finding-severity.feature) (2)
 
@@ -42,7 +42,7 @@ Finding the source files worth grading in a working tree and preparing them for 
 
 - **Language profiles**: [Calibrating function limits to the languages in the repository](repository-scanning/language-profiles/language-calibrated-limits.feature) (3)
 - **Comment and string stripping**: [Ignoring comments and string literals when measuring code](repository-scanning/noise-stripping/comment-and-string-stripping.feature) (4)
-- **Generated and test file skipping**: [Leaving generated and test files out of the code score](repository-scanning/skipped-files/generated-and-test-file-skipping.feature) (2), [Recognising generated and minified files](repository-scanning/skipped-files/generated-file-recognition.feature) (5), [Leaving test files out of the code score](repository-scanning/skipped-files/test-files-left-out.feature) (1)
+- **Generated and test file skipping**: [Recognising generated and minified files](repository-scanning/skipped-files/generated-file-recognition.feature) (5), [Leaving test files out of the code score](repository-scanning/skipped-files/test-files-left-out.feature) (1)
 - **Source discovery**: [Choosing which files the scan reads](repository-scanning/source-discovery/source-walk-exclusions.feature) (2)
 
 ## Scoring and Grading
