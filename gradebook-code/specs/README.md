@@ -4,11 +4,13 @@ What this code does, one atomic Gherkin scenario per behaviour, read from the co
 Tags: `@verified` a test asserts it · `@inferred` read from the code only · `@gap` an entry point no test covers · `@human` written or amended by a person, never rewritten.
 
 ## Change History
+
 Using git history to find where risk concentrates.
 
 - **Hotspots**: [Finding hotspots in change history](change-history/hotspots/hotspots-from-change-history.feature) (6)
 
 ## Command Line and CI
+
 Running the grader from a terminal or pipeline and gating builds on the result.
 
 - **Invocation and options**: [Running a code score from the command line](command-line-ci/invocation/code-score-invocation.feature) (3), [Running gradebook-code as a Python module](command-line-ci/invocation/module-entry-point.feature) (1)
@@ -16,12 +18,14 @@ Running the grader from a terminal or pipeline and gating builds on the result.
 - **Scoring model listing**: [Listing the code scoring model](command-line-ci/scoring-model-listing/code-score-model-listing.feature) (1)
 
 ## Size and Complexity Checks
+
 Detecting code that is too big, too deep or too convoluted to read.
 
 - **File and class size**: [Flagging files that do too many jobs](complexity-checks/file-size/god-files-and-mixed-concerns.feature) (2)
 - **Function limits**: [Flagging functions past the size and complexity limits](complexity-checks/function-limits/function-limits.feature) (3)
 
 ## Design and Structure Checks
+
 Detecting structural design problems across files and modules.
 
 - **Dead and speculative code**: [Spotting private helpers nobody calls](design-checks/dead-code/unused-private-helpers.feature) (2)
@@ -30,6 +34,7 @@ Detecting structural design problems across files and modules.
 - **Inheritance and interfaces**: [Flagging interfaces that are too wide](design-checks/inheritance-interfaces/fat-interface-flags.feature) (1)
 
 ## Reporting
+
 Presenting the grade, red flags and recommendations to people and machines.
 
 - **Per-directory breakdown**: [Scoring each directory](reporting/directory-breakdown/directory-breakdown.feature) (3)
@@ -38,6 +43,7 @@ Presenting the grade, red flags and recommendations to people and machines.
 - **Severity levels**: [Grading the severity of each finding](reporting/severity/finding-severity.feature) (2)
 
 ## Repository Scanning
+
 Finding the source files worth grading in a working tree and preparing them for measurement.
 
 - **Language profiles**: [Calibrating function limits to the languages in the repository](repository-scanning/language-profiles/language-calibrated-limits.feature) (3)
@@ -46,6 +52,7 @@ Finding the source files worth grading in a working tree and preparing them for 
 - **Source discovery**: [Choosing which files the scan reads](repository-scanning/source-discovery/source-walk-exclusions.feature) (2)
 
 ## Scoring and Grading
+
 Turning measurements into weighted dimension scores, an overall grade and prioritised advice.
 
 - **Overall score and letter grade**: [Turning the code score into a letter grade](scoring/letter-grade/code-letter-grade.feature) (1)

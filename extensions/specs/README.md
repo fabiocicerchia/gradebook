@@ -4,6 +4,7 @@ What this code does, one atomic Gherkin scenario per behaviour, read from the co
 Tags: `@verified` a test asserts it · `@inferred` read from the code only · `@gap` an entry point no test covers · `@human` written or amended by a person, never rewritten.
 
 ## Findings
+
 Showing each red flag where the developer works, with a file and line wherever there is one.
 
 - **Findings panel**: [Browsing findings in the Findings panel](findings/findings-panel/findings-panel.feature) (2)
@@ -12,12 +13,14 @@ Showing each red flag where the developer works, with a file and line wherever t
 - **Severity**: [Ranking findings by severity in Neovim](findings/severity/nvim-finding-severity.feature) (1)
 
 ## Scan engine
+
 The background scan server the VS Code extension talks to, which loads the gradebook tools and answers scan requests.
 
 - **Request protocol**: [Exchanging requests with the scan server](scan-engine/request-protocol/scan-server-requests.feature) (1)
 - **Tool discovery**: [Finding the gradebook tools](scan-engine/tool-discovery/tool-discovery.feature) (3)
 
 ## Scanning
+
 Grading the whole project with one or both gradebook tools, and deciding when that happens.
 
 - **Project scan**: [Scanning a project from Neovim](scanning/project-scan/nvim-project-scan.feature) (4)
@@ -25,12 +28,14 @@ Grading the whole project with one or both gradebook tools, and deciding when th
 - **Scan triggers**: [Choosing when Neovim rescans](scanning/scan-triggers/nvim-scan-triggers.feature) (2), [Scanning the workspace](scanning/scan-triggers/scanning-the-workspace.feature) (5)
 
 ## Score reporting
+
 Showing the grade, how it breaks down, and which fix gains the most points.
 
 - **Score report**: [Reading the score report in Neovim](score-reporting/score-report/nvim-score-report.feature) (3), [Reading the score report](score-reporting/score-report/score-report.feature) (3)
 - **Status bar**: [Watching scores in the status bar](score-reporting/status-bar/status-bar-scores.feature) (3)
 
 ## Setup and diagnostics
+
 Setting up the editor plugins and finding out why they are not working.
 
 - **Health check**: [Checking the Neovim setup](setup-and-diagnostics/health-check/nvim-health-check.feature) (3)
