@@ -1,0 +1,1807 @@
+{
+ "excluded": {
+  "gradebook-tests/base": [
+   {
+    "candidate": "Report, Stats, Finding, FileInfo and Profile are JSON-shaped dictionaries that survive being written out and read back by the extension and --baseline",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/base.py#Report"
+   },
+   {
+    "candidate": "Package version string 0.4.2 stamped by release-please",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "gradebook-tests/gradebook_tests/base.py#VERSION"
+   },
+   {
+    "candidate": "Dependency, VCS, virtualenv and cache folders (node_modules, vendor, .venv, .git, third_party, ...) are never walked",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#SKIP_DIRS"
+   },
+   {
+    "candidate": "Build and report folders (coverage, build, dist, target, test-results, ...) are walked for coverage artifacts but not counted as source or tests",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#ARTIFACT_DIRS"
+   },
+   {
+    "candidate": "A file's language is decided by its extension (.py python, .ts/.tsx typescript, .h c, ...)",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#LANG_BY_EXT"
+   },
+   {
+    "candidate": "Folders named test, tests, spec, specs, __tests__, testing, e2e or features mark their files as tests",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#TEST_DIR_NAMES"
+   },
+   {
+    "candidate": "Files larger than 512 KiB are not read",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#MAX_FILE_BYTES"
+   },
+   {
+    "candidate": "At most 400 commits of git history are read for churn and TDD signals",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#HISTORY_LIMIT"
+   },
+   {
+    "candidate": "Default of 5 top recommendations and 20 findings listed per kind",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#TOP_RECOMMENDATIONS"
+   },
+   {
+    "candidate": "Rubric thresholds (pyramid targets, long/giant case lines, mock density, mirrored-name share, duplicate cluster size, decorative coverage, severity rank cut-offs)",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/base.py#MIN_CLUSTER"
+   },
+   {
+    "candidate": "git binary resolved once from PATH, falling back to the bare name",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/base.py#_GIT"
+   },
+   {
+    "candidate": "Report bar width of 20 characters",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/base.py#BAR_WIDTH"
+   }
+  ],
+  "gradebook-tests/cli": [
+   {
+    "candidate": "--by-dir adds a per-directory score breakdown to the report",
+    "covered_by": "scoring/directory-breakdown (score_directories)",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/cli.py#main"
+   },
+   {
+    "candidate": "--max-flags caps how many red flags are listed",
+    "covered_by": "reporting/red-flags (render_text/render_markdown)",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/cli.py#_emit"
+   },
+   {
+    "candidate": "--no-git skips the git-history TDD analysis",
+    "covered_by": "external-evidence/change-history (collect use_git)",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/cli.py#main"
+   },
+   {
+    "candidate": "--version prints 'gradebook-tests <VERSION>'",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/cli.py#_build_parser"
+   },
+   {
+    "candidate": "path defaults to the current directory",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/cli.py#_build_parser"
+   },
+   {
+    "candidate": "Per-dimension deltas and comparable flag attached to the report from a baseline",
+    "covered_by": "scoring/baseline-comparison",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/score.py#compare"
+   },
+   {
+    "candidate": "Running cli.py as __main__ calls sys.exit(main())",
+    "covered_by": "command-line/packaging-entry",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/cli.py"
+   }
+  ],
+  "gradebook-tests/collection": [
+   {
+    "candidate": "Per-file counters summed into totals (cases, assertions, skips, sleeps, doubles, names...)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_fold_test_file"
+   },
+   {
+    "candidate": "Empty stats skeleton with every counter at zero",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_empty_stats"
+   },
+   {
+    "candidate": "Symbol extraction for phantom detection",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_symbols_in"
+   },
+   {
+    "candidate": "Test-to-source pairing by stem and stale/decorative/hotspot passes",
+    "covered_by": "repository-scan/test-source-pairing and external-evidence/risk-hotspots modules (substance, git)",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_pairing_passes"
+   },
+   {
+    "candidate": "Without git, staleness and hotspots are not computed and risk is left unscored",
+    "covered_by": "command-line/cli-options git opt-out and scoring/rubric-dimensions unscored rule",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#collect"
+   },
+   {
+    "candidate": "CI workflow signals (runs tests, coverage, strict, mutation, serial-only)",
+    "covered_by": "external-evidence/coverage-gates (coverage module regexes)",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_scrape_ci"
+   },
+   {
+    "candidate": "Method-mirror test name counting",
+    "covered_by": "test-quality-analysis/test-naming",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_count_mirror_names"
+   },
+   {
+    "candidate": "Language profile blend from source line counts",
+    "covered_by": "repository-scan/language-detection",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#collect"
+   },
+   {
+    "candidate": "Files with unknown language skipped; unreadable test files skipped",
+    "covered_by": "repository-scan/file-discovery",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_fold_file"
+   },
+   {
+    "candidate": "First mutation report found wins",
+    "covered_by": "tests.evidence.first-coverage-report-wins",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#_scrape_config"
+   }
+  ],
+  "gradebook-tests/coverage": [
+   {
+    "candidate": "Exact list of config file names searched for coverage settings (COVERAGE_CONFIG_FILES) and the coverage-tool regex",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/coverage.py#COVERAGE_CONFIG_FILES"
+   },
+   {
+    "candidate": "CI strictness detection (matrix, -race, fail-fast) via CI_STRICT_RE",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/coverage.py#CI_STRICT_RE"
+   },
+   {
+    "candidate": "JaCoCo overall picks the LINE counter with the largest total",
+    "covered_by": "gradebook-tests.coverage.report-formats-yield-overall-percent",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/coverage.py#parse_jacoco"
+   },
+   {
+    "candidate": "Per-file JSON parsing of Python and Istanbul shapes, Go profile per-file aggregation",
+    "covered_by": "gradebook-tests.coverage.per-file-by-base-name",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/coverage.py#json_report_files"
+   },
+   {
+    "candidate": "Unreadable report file returns no measurement",
+    "covered_by": "gradebook-tests.coverage.unparseable-report-leaves-coverage-unmeasured",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/coverage.py#measure_coverage"
+   },
+   {
+    "candidate": "Percent rounding to one decimal",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/coverage.py#parse_cobertura"
+   },
+   {
+    "candidate": "PER_FILE_COVERAGE mapping from overall parser to per-file parser",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/coverage.py#PER_FILE_COVERAGE"
+   }
+  ],
+  "gradebook-tests/detection": [
+   {
+    "candidate": "blend_profile weights language thresholds by share of source",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#blend_profile"
+   },
+   {
+    "candidate": "Counting assertions, weak-only and assertion-less cases per file",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#_tally_assertions"
+   },
+   {
+    "candidate": "Mock density, mock-only cases, spies and stubs counts",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#_tally_assertions"
+   },
+   {
+    "candidate": "Conditional logic in tests ignoring assertion guards",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#conditional_logic"
+   },
+   {
+    "candidate": "Giant and assertion-roulette case counts",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#_tally_cases"
+   },
+   {
+    "candidate": "Error-path and boundary case counts",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#_tally_cases"
+   },
+   {
+    "candidate": "Unfrozen time, unseeded randomness, sleeps, env coupling, order dependence counts",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#analyse_test_file"
+   },
+   {
+    "candidate": "Normalised case bodies for duplicate detection",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#normalise_body"
+   },
+   {
+    "candidate": "Project names imported by a test for pairing",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#imported_project_names"
+   },
+   {
+    "candidate": "Case starts extended over decorators",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#with_decorators"
+   },
+   {
+    "candidate": "setUp/beforeEach line count",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#_setup_lines"
+   },
+   {
+    "candidate": "Condition words detected in test names",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#classify_name"
+   },
+   {
+    "candidate": "Style flags (bdd, spec style) on a test file",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/detection.py#classify_kind"
+   }
+  ],
+  "gradebook-tests/git": [
+   {
+    "candidate": "git subprocess invocation with 60s timeout and fixed argv",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/git.py#_run_git"
+   },
+   {
+    "candidate": "Only the newest 400 non-merge commits are read",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/git.py#git_history"
+   },
+   {
+    "candidate": "Per-file commit positions recorded newest-first (used by stale-test detection)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/git.py#_tally_log"
+   },
+   {
+    "candidate": "Test-only commits counted",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/git.py#_tally_log"
+   },
+   {
+    "candidate": "Commits touching only non-language files counted as analysed but neither source nor test",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/git.py#_touches"
+   },
+   {
+    "candidate": "Untested-hotspot flags capped at 20 per scan",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/git.py#find_hotspots"
+   },
+   {
+    "candidate": "Average coverage of hot files folded into risk score",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/git.py#find_hotspots"
+   },
+   {
+    "candidate": "Individual fix keywords (fixes, hotfix, patch, repair...) as separate cases",
+    "covered_by": "history.tdd.bugfixes-need-regression-tests",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/git.py#FIX_COMMIT_RE"
+   }
+  ],
+  "gradebook-tests/gradebook-tests": [
+   {
+    "candidate": "Package re-exports ~200 constants, regexes, parsers and scorers as its public Python API (__all__)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/__init__.py"
+   },
+   {
+    "candidate": "Language pattern regexes re-exported from patterns",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/__init__.py"
+   },
+   {
+    "candidate": "Shared data model types (Stats, Finding, FileInfo, Profile, Report) re-exported",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/__init__.py"
+   },
+   {
+    "candidate": "VERSION constant exposed at package level",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "gradebook-tests/gradebook_tests/__init__.py"
+   },
+   {
+    "candidate": "Module docstring usage examples (--format markdown, --fail-under 60)",
+    "covered_by": "behaviour lives in cli.py, outside this module",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/__init__.py"
+   }
+  ],
+  "gradebook-tests/patterns": [
+   {
+    "candidate": "Test kind is guessed from directory names (e2e, contract, integration, performance, unit) and from content such as Playwright, Pact, Testcontainers or k6",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#KIND_DIR_HINTS"
+   },
+   {
+    "candidate": "Gherkin BDD, spec-style BDD, property-based, mutation and snapshot testing are recognised by keyword",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#GHERKIN_RE"
+   },
+   {
+    "candidate": "Per-language patterns for test cases and assertions (Python, JS/TS, Go, Java/Kotlin, Ruby, PHP, Rust, C#, Elixir, Scala, shell, .feature)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#CASE_RE"
+   },
+   {
+    "candidate": "Weak, bare, tautological and uninformative assertions are recognised by pattern",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#WEAK_ASSERT_RE"
+   },
+   {
+    "candidate": "Failure-path assertions and error-describing name words",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#ERROR_ASSERT_RE"
+   },
+   {
+    "candidate": "Skip, focus, sleep, parametrisation and mock markers",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#SKIP_RE"
+   },
+   {
+    "candidate": "Test-name extraction per language plus filler, behaviour and condition word lists used to judge names",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#NAME_RE"
+   },
+   {
+    "candidate": "Test-double creation, spy, stub, interaction-assertion and cleanup patterns; private-member access",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#DOUBLE_RE"
+   },
+   {
+    "candidate": "Low-effort tells: commented-out asserts, swallowed exceptions, dead branches, skips without a reason, greedy catches, mirrored expected values, console chatter",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#COMMENTED_ASSERT_RE"
+   },
+   {
+    "candidate": "Flakiness signals: unfrozen time, unseeded randomness, environment coupling, order dependence, platform branching, serial-only suites, brittle UI selectors",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#UNFROZEN_TIME_RE"
+   },
+   {
+    "candidate": "Conditional test logic, guard clauses and setup blocks",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#BRANCH_RE"
+   },
+   {
+    "candidate": "Per-ecosystem thresholds (test:code ratio, bare assert tolerated for pytest/jest but not JUnit) with a default profile",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#LANGUAGE_PROFILES"
+   },
+   {
+    "candidate": "Boundary-value literals and name words",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#BOUNDARY_RE"
+   },
+   {
+    "candidate": "Symbol definitions and imports used to find phantom references, limited to Python, JavaScript and TypeScript",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#PHANTOM_LANGS"
+   },
+   {
+    "candidate": "Recognising the idioms a test file is written in",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/patterns.py#STYLE_FLAGS"
+   }
+  ],
+  "gradebook-tests/render": [
+   {
+    "candidate": "Score bar is 20 characters of filled and empty blocks, dots when unscored",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/render.py#bar"
+   },
+   {
+    "candidate": "Dimension rows align column-wise regardless of n/a",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/render.py#_text_dimension"
+   },
+   {
+    "candidate": "Language calibration profile shown in the header",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/render.py#_text_header"
+   },
+   {
+    "candidate": "Test/source line volume ratio shown in the header when known",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/render.py#_text_header"
+   },
+   {
+    "candidate": "Markdown baseline line and \u0394 column",
+    "covered_by": "reporting.report.baseline-delta-shown",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/render.py#render_markdown"
+   },
+   {
+    "candidate": "Markdown n/a and not-scored note",
+    "covered_by": "reporting.report.unscored-dimension-shown-as-not-applicable",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/render.py#render_markdown"
+   },
+   {
+    "candidate": "Markdown Biggest wins section",
+    "covered_by": "reporting.report.biggest-wins-listed",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/render.py#render_markdown"
+   },
+   {
+    "candidate": "Markdown By directory table",
+    "covered_by": "reporting.report.directory-breakdown-listed",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/render.py#render_markdown"
+   },
+   {
+    "candidate": "Red-flag location column padded to the widest location",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/render.py#render_flags"
+   },
+   {
+    "candidate": "Renderers re-exported from the package public API",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/__init__.py"
+   }
+  ],
+  "gradebook-tests/score": [
+   {
+    "candidate": "Per-dimension scoring formulas (coverage 0.25/0.20/0.55 split, unit file/case/volume blend, pyramid shape terms, determinism/focus/substance/hygiene penalty weights, naming and doubles formulas)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/score.py#SCORERS"
+   },
+   {
+    "candidate": "Per-dimension detail and advice wording (e.g. pyramid shape labels, worst bad names appended to naming advice, doubles advice ordering)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/score.py#_doubles_advice"
+   },
+   {
+    "candidate": "Report 'stats' block field list in the JSON output",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/score.py#evaluate"
+   },
+   {
+    "candidate": "Points and points-lost rounded to one decimal per dimension",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/score.py#evaluate"
+   },
+   {
+    "candidate": "Total of 0.0 when no dimension is scored",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "gradebook-tests/gradebook_tests/score.py#evaluate"
+   },
+   {
+    "candidate": "grade_for fallback to F below every floor",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/score.py#grade_for"
+   },
+   {
+    "candidate": "Other dimensions left unscored without evidence (naming, pyramid, risk, failure paths, determinism, focus, substance, doubles, unit)",
+    "covered_by": "scoring.grades.unscored-dimensions-renormalise",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/score.py#score_naming"
+   },
+   {
+    "candidate": "Clamp helper bounding every dimension to 0..1",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/score.py#clamp"
+   }
+  ],
+  "gradebook-tests/severity": [
+   {
+    "candidate": "HIGH_SEVERITY_RANK / MEDIUM_SEVERITY_RANK threshold constants live in base.py and are re-exported",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/base.py#HIGH_SEVERITY_RANK"
+   },
+   {
+    "candidate": "FLAG_ORDER and severity_for exported as public API for the editor server and nvim drift spec",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/__init__.py#FLAG_ORDER"
+   },
+   {
+    "candidate": "Every collected finding kind must be listed in FLAG_ORDER (drift guard)",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "gradebook-tests/tests/test_gradebook_tests.py#test_every_finding_carries_a_known_severity"
+   }
+  ],
+  "gradebook-tests/substance": [
+   {
+    "candidate": "Duplicate clusters are walked largest first, so the biggest copy-paste runs fill the 20-flag cap before smaller ones",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/substance.py#find_duplicates"
+   },
+   {
+    "candidate": "Stale positions are newest-first commit indexes from git log",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/substance.py#find_stale"
+   },
+   {
+    "candidate": "Each finding returns as a (count, findings) tuple",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/substance.py#find_phantoms"
+   },
+   {
+    "candidate": "Phantom check does not run when the scan finds no source symbols",
+    "covered_by": "tests.substance.phantom-import-flagged",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/collection.py#collect"
+   },
+   {
+    "candidate": "Java/Kotlin 'Tests'/'Spec' and C# 'Test'/'Spec' suffix variants for pairing",
+    "covered_by": "tests.substance.test-named-after-source",
+    "reason": "TRIVIAL",
+    "source": "gradebook-tests/gradebook_tests/substance.py#source_stem"
+   },
+   {
+    "candidate": "Re-exports of the substance functions from the package public API",
+    "covered_by": "command-line/packaging-entry",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/__init__.py"
+   }
+  ],
+  "gradebook-tests/walking": [
+   {
+    "candidate": "Directories and files are walked in sorted order",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/walking.py#walk"
+   },
+   {
+    "candidate": "Undecodable bytes are replaced instead of failing the read",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/walking.py#read_text"
+   },
+   {
+    "candidate": "Unreadable files (permission errors) yield no text",
+    "covered_by": "repository-scan.file-discovery.oversized-test-file-ignored",
+    "reason": "DUPLICATE_OF",
+    "source": "gradebook-tests/gradebook_tests/walking.py#read_text"
+   },
+   {
+    "candidate": ".feature files are recognised as Gherkin",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "gradebook-tests/gradebook_tests/walking.py#language_of"
+   }
+  ]
+ },
+ "lifted": {
+  "gradebook-tests/base": [],
+  "gradebook-tests/cli": [],
+  "gradebook-tests/collection": [],
+  "gradebook-tests/coverage": [],
+  "gradebook-tests/detection": [],
+  "gradebook-tests/git": [],
+  "gradebook-tests/gradebook-tests": [],
+  "gradebook-tests/patterns": [],
+  "gradebook-tests/render": [],
+  "gradebook-tests/score": [],
+  "gradebook-tests/severity": [],
+  "gradebook-tests/substance": [],
+  "gradebook-tests/walking": []
+ },
+ "retired": [
+  "gradebook-tests.external-evidence.coverage-reports.004",
+  "gradebook-tests.reporting.red-flags.001",
+  "gradebook-tests.reporting.red-flags.002",
+  "gradebook-tests.reporting.text-report.004",
+  "gradebook-tests.reporting.text-report.005",
+  "gradebook-tests.repository-scan.config-and-ci-discovery.001",
+  "gradebook-tests.repository-scan.config-and-ci-discovery.004",
+  "gradebook-tests.scoring.baseline-comparison.003"
+ ],
+ "scenarios": {
+  "gradebook-tests.command-line.cli-options.001": {
+   "file": "gradebook-tests/specs/command-line/cli-options/tests-cli-run.feature",
+   "fingerprint": "f578eb12a883",
+   "human": false,
+   "rule": "tests.cli.output-format",
+   "source": "gradebook-tests/gradebook_tests/cli.py#_emit",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_cli_json_output_and_fail_under",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_cli_json_output_and_fail_under"
+   ]
+  },
+  "gradebook-tests.command-line.cli-options.002": {
+   "file": "gradebook-tests/specs/command-line/cli-options/tests-cli-run.feature",
+   "fingerprint": "f9c016f94b2c",
+   "human": false,
+   "rule": "tests.cli.recommendation-count",
+   "source": "gradebook-tests/gradebook_tests/cli.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.command-line.cli-options.003": {
+   "file": "gradebook-tests/specs/command-line/cli-options/tests-cli-run.feature",
+   "fingerprint": "f9c016f94b2c",
+   "human": false,
+   "rule": "tests.cli.rejects-missing-directory",
+   "source": "gradebook-tests/gradebook_tests/cli.py#main",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_missing_path",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_missing_path"
+   ]
+  },
+  "gradebook-tests.command-line.cli-options.004": {
+   "file": "gradebook-tests/specs/command-line/cli-options/tests-cli-run.feature",
+   "fingerprint": "f9c016f94b2c",
+   "human": false,
+   "rule": "tests.cli.rejects-unusable-baseline",
+   "source": "gradebook-tests/gradebook_tests/cli.py#main",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_an_unreadable_baseline",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_an_unreadable_baseline"
+   ]
+  },
+  "gradebook-tests.command-line.cli-options.005": {
+   "file": "gradebook-tests/specs/command-line/cli-options/tests-cli-run.feature",
+   "fingerprint": "f9c016f94b2c",
+   "human": false,
+   "rule": "tests.cli.list-dimensions",
+   "source": "gradebook-tests/gradebook_tests/cli.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.command-line.packaging-entry.001": {
+   "file": "gradebook-tests/specs/command-line/packaging-entry/running-gradebook-tests.feature",
+   "fingerprint": "43c5571b7f5c",
+   "human": false,
+   "rule": "cli.entry.module-run-matches-console-script",
+   "source": "gradebook-tests/gradebook_tests/__main__.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.command-line.quality-gate.001": {
+   "file": "gradebook-tests/specs/command-line/quality-gate/tests-ci-quality-gate.feature",
+   "fingerprint": "4a22e2b013d9",
+   "human": false,
+   "rule": "tests.gate.fail-under-floor",
+   "source": "gradebook-tests/gradebook_tests/cli.py#_gate_failed",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_cli_json_output_and_fail_under",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_cli_json_output_and_fail_under"
+   ]
+  },
+  "gradebook-tests.command-line.quality-gate.002": {
+   "file": "gradebook-tests/specs/command-line/quality-gate/tests-ci-quality-gate.feature",
+   "fingerprint": "4a22e2b013d9",
+   "human": false,
+   "rule": "tests.gate.fail-on-drop-against-baseline",
+   "source": "gradebook-tests/gradebook_tests/cli.py#_gate_failed",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_cli_fail_on_drop_gate",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_cli_fail_on_drop_gate",
+    "gradebook-tests/tests/integration/test_scan_a_git_repo.py#test_a_git_repo_is_scored_from_its_history_coverage_and_ci"
+   ]
+  },
+  "gradebook-tests.command-line.quality-gate.003": {
+   "file": "gradebook-tests/specs/command-line/quality-gate/tests-ci-quality-gate.feature",
+   "fingerprint": "4a22e2b013d9",
+   "human": false,
+   "rule": "tests.gate.drop-gate-ignores-comparability",
+   "source": "gradebook-tests/gradebook_tests/cli.py#_gate_failed",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.command-line.quality-gate.004": {
+   "file": "gradebook-tests/specs/command-line/quality-gate/tests-ci-quality-gate.feature",
+   "fingerprint": "f9c016f94b2c",
+   "human": false,
+   "rule": "tests.gate.drop-gate-requires-baseline",
+   "source": "gradebook-tests/gradebook_tests/cli.py#main",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_drop_gate_without_baseline",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_cli_rejects_drop_gate_without_baseline"
+   ]
+  },
+  "gradebook-tests.external-evidence.change-history.001": {
+   "file": "gradebook-tests/specs/external-evidence/change-history/tdd-signals-from-history.feature",
+   "fingerprint": "7119c679608a",
+   "human": false,
+   "rule": "history.tdd.source-commits-cochanged-with-tests",
+   "source": "gradebook-tests/gradebook_tests/git.py#_tally_log",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_tdd_rewards_tests_shipped_with_source",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_tdd_rewards_tests_shipped_with_source",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_tdd_penalises_untested_source_commits",
+    "gradebook-tests/tests/integration/test_scan_a_git_repo.py#test_a_git_repo_is_scored_from_its_history_coverage_and_ci"
+   ]
+  },
+  "gradebook-tests.external-evidence.change-history.002": {
+   "file": "gradebook-tests/specs/external-evidence/change-history/tdd-signals-from-history.feature",
+   "fingerprint": "7119c679608a",
+   "human": false,
+   "rule": "history.tdd.bugfixes-need-regression-tests",
+   "source": "gradebook-tests/gradebook_tests/git.py#_tally_log",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_bugfixes_without_regression_tests_lower_tdd",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_bugfixes_without_regression_tests_lower_tdd",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_bugfixes_with_tests_do_not_lower_tdd"
+   ]
+  },
+  "gradebook-tests.external-evidence.change-history.003": {
+   "file": "gradebook-tests/specs/external-evidence/change-history/tdd-signals-from-history.feature",
+   "fingerprint": "1195ea7fcf14",
+   "human": false,
+   "rule": "history.tdd.subdirectory-scan-uses-scan-relative-paths",
+   "source": "gradebook-tests/gradebook_tests/git.py#git_history",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_git_paths_are_relative_to_the_scan_not_the_repository",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_git_paths_are_relative_to_the_scan_not_the_repository"
+   ]
+  },
+  "gradebook-tests.external-evidence.change-history.004": {
+   "file": "gradebook-tests/specs/external-evidence/change-history/tdd-signals-from-history.feature",
+   "fingerprint": "1195ea7fcf14",
+   "human": false,
+   "rule": "history.tdd.no-history-leaves-git-dimensions-unscored",
+   "source": "gradebook-tests/gradebook_tests/git.py#git_history",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.external-evidence.coverage-gates.001": {
+   "file": "gradebook-tests/specs/external-evidence/coverage-gates/coverage-gates.feature",
+   "fingerprint": "10639db58e55",
+   "human": false,
+   "rule": "gradebook-tests.gates.highest-declared-threshold",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#find_threshold",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_measured_coverage_beats_declared_only",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_measured_coverage_beats_declared_only",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_detects_ci_running_tests_and_coverage"
+   ]
+  },
+  "gradebook-tests.external-evidence.coverage-gates.002": {
+   "file": "gradebook-tests/specs/external-evidence/coverage-gates/coverage-gates.feature",
+   "fingerprint": "44f97cad6811",
+   "human": false,
+   "rule": "gradebook-tests.gates.ci-runs-tests-and-coverage",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#is_ci_file",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_detects_ci_running_tests_and_coverage",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_detects_ci_running_tests_and_coverage",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_ci_without_tests_scores_low"
+   ]
+  },
+  "gradebook-tests.external-evidence.coverage-reports.001": {
+   "file": "gradebook-tests/specs/external-evidence/coverage-reports/coverage-reports.feature",
+   "fingerprint": "2209f02123db",
+   "human": false,
+   "rule": "gradebook-tests.coverage.report-formats-yield-overall-percent",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#measure_coverage",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_parses_cobertura",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_cobertura",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_lcov",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_jacoco",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_go_coverprofile",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_json_coverage_reports",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_coverage_report_found_inside_artifact_dir",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_measured_coverage_beats_declared_only"
+   ]
+  },
+  "gradebook-tests.external-evidence.coverage-reports.002": {
+   "file": "gradebook-tests/specs/external-evidence/coverage-reports/coverage-reports.feature",
+   "fingerprint": "2209f02123db",
+   "human": false,
+   "rule": "gradebook-tests.coverage.unnamed-jacoco-recognised-by-content",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#measure_coverage",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.external-evidence.coverage-reports.003": {
+   "file": "gradebook-tests/specs/external-evidence/coverage-reports/coverage-reports.feature",
+   "fingerprint": "2209f02123db",
+   "human": false,
+   "rule": "gradebook-tests.coverage.unparseable-report-leaves-coverage-unmeasured",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#measure_coverage",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_parses_json_coverage_reports",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_json_coverage_reports"
+   ]
+  },
+  "gradebook-tests.external-evidence.coverage-reports.005": {
+   "file": "gradebook-tests/specs/external-evidence/coverage-reports/coverage-reports.feature",
+   "fingerprint": "b0d5678d0823",
+   "human": false,
+   "rule": "gradebook-tests.coverage.per-file-by-base-name",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#lcov_files",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_per_file_coverage_parsers",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_per_file_coverage_parsers"
+   ]
+  },
+  "gradebook-tests.external-evidence.mutation-reports.001": {
+   "file": "gradebook-tests/specs/external-evidence/mutation-reports/mutation-reports.feature",
+   "fingerprint": "253d1685b61f",
+   "human": false,
+   "rule": "gradebook-tests.mutation.report-formats-yield-kill-rate",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#measure_mutation",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_parses_stryker_report",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_stryker_report",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_pitest_report",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_parses_cargo_mutants_report",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_mutation_report_is_scored_when_present"
+   ]
+  },
+  "gradebook-tests.external-evidence.mutation-reports.002": {
+   "file": "gradebook-tests/specs/external-evidence/mutation-reports/mutation-reports.feature",
+   "fingerprint": "53dec0dc9957",
+   "human": false,
+   "rule": "gradebook-tests.mutation.generic-score-fallback",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#parse_generic_mutation",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.external-evidence.mutation-reports.003": {
+   "file": "gradebook-tests/specs/external-evidence/mutation-reports/mutation-reports.feature",
+   "fingerprint": "253d1685b61f",
+   "human": false,
+   "rule": "gradebook-tests.mutation.zero-kill-rate-reads-as-no-report",
+   "source": "gradebook-tests/gradebook_tests/coverage.py#measure_mutation",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.external-evidence.risk-hotspots.001": {
+   "file": "gradebook-tests/specs/external-evidence/risk-hotspots/untested-hotspots.feature",
+   "fingerprint": "4aa03be93e14",
+   "human": false,
+   "rule": "risk.hotspots.untested-hot-file-flagged",
+   "source": "gradebook-tests/gradebook_tests/git.py#find_hotspots",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_risk_targeting_flags_untested_hotspots",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_risk_targeting_flags_untested_hotspots",
+    "gradebook-tests/tests/integration/test_scan_a_git_repo.py#test_a_git_repo_is_scored_from_its_history_coverage_and_ci"
+   ]
+  },
+  "gradebook-tests.external-evidence.risk-hotspots.002": {
+   "file": "gradebook-tests/specs/external-evidence/risk-hotspots/untested-hotspots.feature",
+   "fingerprint": "4aa03be93e14",
+   "human": false,
+   "rule": "risk.hotspots.needs-enough-churn",
+   "source": "gradebook-tests/gradebook_tests/git.py#find_hotspots",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.reporting.markdown-report.001": {
+   "file": "gradebook-tests/specs/reporting/markdown-report/markdown-report.feature",
+   "fingerprint": "95a1ed9f9e4a",
+   "human": false,
+   "rule": "reporting.markdown-report.score-heading-and-dimension-table",
+   "source": "gradebook-tests/gradebook_tests/render.py#render_markdown",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_markdown_render_contains_table_and_score",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_markdown_render_contains_table_and_score"
+   ]
+  },
+  "gradebook-tests.reporting.red-flags.003": {
+   "file": "gradebook-tests/specs/reporting/red-flags/repository-findings-list.feature",
+   "fingerprint": "227eb1229fd2",
+   "human": false,
+   "rule": "tests.findings.per-file-caps",
+   "source": "gradebook-tests/gradebook_tests/collection.py#_fold_test_file",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.reporting.red-flags.004": {
+   "file": "gradebook-tests/specs/reporting/red-flags/red-flag-listing.feature",
+   "fingerprint": "aecdc316b545",
+   "human": false,
+   "rule": "reporting.red-flags.listed-with-location",
+   "source": "gradebook-tests/gradebook_tests/render.py#render_flags",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_findings_are_rendered_with_a_location",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_findings_are_rendered_with_a_location"
+   ]
+  },
+  "gradebook-tests.reporting.red-flags.005": {
+   "file": "gradebook-tests/specs/reporting/red-flags/red-flag-listing.feature",
+   "fingerprint": "244ba69210b4",
+   "human": false,
+   "rule": "reporting.red-flags.no-line-shows-file-only",
+   "source": "gradebook-tests/gradebook_tests/render.py#location",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.reporting.red-flags.006": {
+   "file": "gradebook-tests/specs/reporting/red-flags/red-flag-listing.feature",
+   "fingerprint": "d2933e9303f8",
+   "human": false,
+   "rule": "reporting.red-flags.max-flags-caps-the-list",
+   "source": "gradebook-tests/gradebook_tests/render.py#capped",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_flags_can_be_hidden_and_truncated",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_flags_can_be_hidden_and_truncated"
+   ]
+  },
+  "gradebook-tests.reporting.red-flags.007": {
+   "file": "gradebook-tests/specs/reporting/red-flags/red-flag-listing.feature",
+   "fingerprint": "aecdc316b545",
+   "human": false,
+   "rule": "reporting.red-flags.no-section-without-findings",
+   "source": "gradebook-tests/gradebook_tests/render.py#render_flags",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_render_flags_is_empty_without_findings",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_render_flags_is_empty_without_findings"
+   ]
+  },
+  "gradebook-tests.reporting.text-report.001": {
+   "file": "gradebook-tests/specs/reporting/text-report/terminal-report.feature",
+   "fingerprint": "593c4d501812",
+   "human": false,
+   "rule": "reporting.text-report.headline-and-dimension-rows",
+   "source": "gradebook-tests/gradebook_tests/render.py#render_text",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_unscored_rows_line_up_with_scored_ones",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_unscored_rows_line_up_with_scored_ones"
+   ]
+  },
+  "gradebook-tests.reporting.text-report.002": {
+   "file": "gradebook-tests/specs/reporting/text-report/terminal-report.feature",
+   "fingerprint": "593c4d501812",
+   "human": false,
+   "rule": "reporting.report.unscored-dimension-shown-as-not-applicable",
+   "source": "gradebook-tests/gradebook_tests/render.py#render_text",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_unscored_rows_line_up_with_scored_ones",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_unscored_rows_line_up_with_scored_ones"
+   ]
+  },
+  "gradebook-tests.reporting.text-report.003": {
+   "file": "gradebook-tests/specs/reporting/text-report/terminal-report.feature",
+   "fingerprint": "593c4d501812",
+   "human": false,
+   "rule": "reporting.report.baseline-delta-shown",
+   "source": "gradebook-tests/gradebook_tests/render.py#render_text",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.repository-scan.config-and-ci-discovery.002": {
+   "file": "gradebook-tests/specs/repository-scan/config-and-ci-discovery/gathering-suite-evidence.feature",
+   "fingerprint": "9d8494e4e5c4",
+   "human": false,
+   "rule": "tests.evidence.first-coverage-report-wins",
+   "source": "gradebook-tests/gradebook_tests/collection.py#_scrape_config",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.repository-scan.config-and-ci-discovery.003": {
+   "file": "gradebook-tests/specs/repository-scan/config-and-ci-discovery/gathering-suite-evidence.feature",
+   "fingerprint": "9d8494e4e5c4",
+   "human": false,
+   "rule": "tests.evidence.artifact-folders-cannot-declare-config-or-ci",
+   "source": "gradebook-tests/gradebook_tests/collection.py#_scrape_config",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.repository-scan.file-discovery.001": {
+   "file": "gradebook-tests/specs/repository-scan/file-discovery/walking-the-repository.feature",
+   "fingerprint": "6989b0203c52",
+   "human": false,
+   "rule": "repository-scan.file-discovery.tool-directories-never-scanned",
+   "source": "gradebook-tests/gradebook_tests/walking.py#walk",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_build_artifacts_are_not_counted_as_source",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_build_artifacts_are_not_counted_as_source"
+   ]
+  },
+  "gradebook-tests.repository-scan.file-discovery.002": {
+   "file": "gradebook-tests/specs/repository-scan/file-discovery/walking-the-repository.feature",
+   "fingerprint": "6989b0203c52",
+   "human": false,
+   "rule": "repository-scan.file-discovery.build-output-read-for-reports-only",
+   "source": "gradebook-tests/gradebook_tests/walking.py#walk",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_build_artifacts_are_not_counted_as_source",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_build_artifacts_are_not_counted_as_source",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_coverage_report_found_inside_artifact_dir"
+   ]
+  },
+  "gradebook-tests.repository-scan.file-discovery.003": {
+   "file": "gradebook-tests/specs/repository-scan/file-discovery/walking-the-repository.feature",
+   "fingerprint": "680d40324811",
+   "human": false,
+   "rule": "repository-scan.file-discovery.oversized-source-counted-without-lines",
+   "source": "gradebook-tests/gradebook_tests/walking.py#read_text",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.repository-scan.file-discovery.004": {
+   "file": "gradebook-tests/specs/repository-scan/file-discovery/walking-the-repository.feature",
+   "fingerprint": "680d40324811",
+   "human": false,
+   "rule": "repository-scan.file-discovery.oversized-test-file-ignored",
+   "source": "gradebook-tests/gradebook_tests/walking.py#read_text",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.repository-scan.file-discovery.005": {
+   "file": "gradebook-tests/specs/repository-scan/file-discovery/walking-the-repository.feature",
+   "fingerprint": "28e489cd71e7",
+   "human": false,
+   "rule": "repository-scan.file-discovery.unknown-file-types-not-counted",
+   "source": "gradebook-tests/gradebook_tests/walking.py#language_of",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.repository-scan.test-file-recognition.001": {
+   "file": "gradebook-tests/specs/repository-scan/test-file-recognition/recognising-test-files.feature",
+   "fingerprint": "ef6389521a78",
+   "human": false,
+   "rule": "tests.files.recognised-by-ecosystem-convention",
+   "source": "gradebook-tests/gradebook_tests/detection.py#is_test_file",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_recognises_test_files",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_recognises_test_files"
+   ]
+  },
+  "gradebook-tests.repository-scan.test-file-recognition.002": {
+   "file": "gradebook-tests/specs/repository-scan/test-file-recognition/recognising-test-files.feature",
+   "fingerprint": "ef6389521a78",
+   "human": false,
+   "rule": "tests.files.test-directory-makes-a-test",
+   "source": "gradebook-tests/gradebook_tests/detection.py#is_test_file",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_recognises_test_files",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_recognises_test_files"
+   ]
+  },
+  "gradebook-tests.repository-scan.test-file-recognition.003": {
+   "file": "gradebook-tests/specs/repository-scan/test-file-recognition/recognising-test-files.feature",
+   "fingerprint": "ef6389521a78",
+   "human": false,
+   "rule": "tests.files.source-is-not-a-test",
+   "source": "gradebook-tests/gradebook_tests/detection.py#is_test_file",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_ignores_non_test_files",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_ignores_non_test_files",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_source_and_test_files_are_counted_separately"
+   ]
+  },
+  "gradebook-tests.repository-scan.test-kind-classification.001": {
+   "file": "gradebook-tests/specs/repository-scan/test-kind-classification/classifying-test-kinds.feature",
+   "fingerprint": "973a31fa7724",
+   "human": false,
+   "rule": "tests.kinds.folder-decides-kind",
+   "source": "gradebook-tests/gradebook_tests/detection.py#classify_kind",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_classifies_layers_by_directory",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_classifies_layers_by_directory"
+   ]
+  },
+  "gradebook-tests.repository-scan.test-kind-classification.002": {
+   "file": "gradebook-tests/specs/repository-scan/test-kind-classification/classifying-test-kinds.feature",
+   "fingerprint": "973a31fa7724",
+   "human": false,
+   "rule": "tests.kinds.content-decides-when-folder-is-neutral",
+   "source": "gradebook-tests/gradebook_tests/detection.py#classify_kind",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_classifies_layers_by_content_when_path_is_neutral",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_classifies_layers_by_content_when_path_is_neutral"
+   ]
+  },
+  "gradebook-tests.repository-scan.test-kind-classification.003": {
+   "file": "gradebook-tests/specs/repository-scan/test-kind-classification/classifying-test-kinds.feature",
+   "fingerprint": "973a31fa7724",
+   "human": false,
+   "rule": "tests.kinds.unit-test-doing-real-io-is-reported",
+   "source": "gradebook-tests/gradebook_tests/detection.py#classify_kind",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.scoring.baseline-comparison.001": {
+   "file": "gradebook-tests/specs/scoring/baseline-comparison/baseline-comparison.feature",
+   "fingerprint": "ccb479b5b335",
+   "human": false,
+   "rule": "scoring.baseline-comparison.deltas-per-dimension-and-total",
+   "source": "gradebook-tests/gradebook_tests/score.py#compare",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_compare_reports_deltas_per_dimension",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_compare_reports_deltas_per_dimension"
+   ]
+  },
+  "gradebook-tests.scoring.baseline-comparison.002": {
+   "file": "gradebook-tests/specs/scoring/baseline-comparison/baseline-comparison.feature",
+   "fingerprint": "ccb479b5b335",
+   "human": false,
+   "rule": "scoring.baseline-comparison.flags-incomparable-baseline",
+   "source": "gradebook-tests/gradebook_tests/score.py#compare",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_compare_reports_deltas_per_dimension",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_compare_reports_deltas_per_dimension",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_compare_flags_a_baseline_that_scored_other_dimensions"
+   ]
+  },
+  "gradebook-tests.scoring.directory-breakdown.001": {
+   "file": "gradebook-tests/specs/scoring/directory-breakdown/directory-breakdown.feature",
+   "fingerprint": "29f502e0a0ed",
+   "human": false,
+   "rule": "scoring.directory-breakdown.weakest-first-with-top-win",
+   "source": "gradebook-tests/gradebook_tests/score.py#score_directories",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_score_directories_ranks_the_weakest_first",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_score_directories_ranks_the_weakest_first"
+   ]
+  },
+  "gradebook-tests.scoring.directory-breakdown.002": {
+   "file": "gradebook-tests/specs/scoring/directory-breakdown/directory-breakdown.feature",
+   "fingerprint": "29f502e0a0ed",
+   "human": false,
+   "rule": "scoring.directory-breakdown.only-directories-with-code",
+   "source": "gradebook-tests/gradebook_tests/score.py#score_directories",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_score_directories_skips_directories_without_code",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_score_directories_skips_directories_without_code"
+   ]
+  },
+  "gradebook-tests.scoring.grades.001": {
+   "file": "gradebook-tests/specs/scoring/grades/scoring-a-test-suite.feature",
+   "fingerprint": "1fab2958ee14",
+   "human": false,
+   "rule": "scoring.grades.unscored-dimensions-renormalise",
+   "source": "gradebook-tests/gradebook_tests/score.py#evaluate",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_tdd_not_scored_without_git",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_tdd_not_scored_without_git",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_mutation_is_not_scored_without_a_report"
+   ]
+  },
+  "gradebook-tests.scoring.grades.002": {
+   "file": "gradebook-tests/specs/scoring/grades/scoring-a-test-suite.feature",
+   "fingerprint": "78e37805a3ae",
+   "human": false,
+   "rule": "scoring.rubric-dimensions.missing-essentials-score-zero",
+   "source": "gradebook-tests/gradebook_tests/score.py#score_coverage",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.scoring.grades.003": {
+   "file": "gradebook-tests/specs/scoring/grades/scoring-a-test-suite.feature",
+   "fingerprint": "f78a3771ad06",
+   "human": false,
+   "rule": "scoring.rubric-dimensions.mutation-scored-when-reported",
+   "source": "gradebook-tests/gradebook_tests/score.py#score_mutation",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_mutation_report_is_scored_when_present",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_mutation_report_is_scored_when_present"
+   ]
+  },
+  "gradebook-tests.scoring.grades.004": {
+   "file": "gradebook-tests/specs/scoring/grades/scoring-a-test-suite.feature",
+   "fingerprint": "715b20034da9",
+   "human": false,
+   "rule": "scoring.grades.letter-grade-bands",
+   "source": "gradebook-tests/gradebook_tests/score.py#grade_for",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_score_is_bounded_and_ordered",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_score_is_bounded_and_ordered"
+   ]
+  },
+  "gradebook-tests.scoring.recommendations.001": {
+   "file": "gradebook-tests/specs/scoring/recommendations/recommendations.feature",
+   "fingerprint": "bf64c9f4f65a",
+   "human": false,
+   "rule": "scoring.recommendations.ranked-by-points-recoverable",
+   "source": "gradebook-tests/gradebook_tests/score.py#recommendations",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_recommendations_are_ranked_by_points_recoverable",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_recommendations_are_ranked_by_points_recoverable"
+   ]
+  },
+  "gradebook-tests.scoring.recommendations.002": {
+   "file": "gradebook-tests/specs/scoring/recommendations/recommendations.feature",
+   "fingerprint": "bf64c9f4f65a",
+   "human": false,
+   "rule": "scoring.recommendations.only-recoverable-scored-dimensions",
+   "source": "gradebook-tests/gradebook_tests/score.py#recommendations",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.scoring.severity.001": {
+   "file": "gradebook-tests/specs/scoring/severity/finding-severity.feature",
+   "fingerprint": "0c2c294a87e3",
+   "human": false,
+   "rule": "tests.severity.kind-maps-to-fixed-bucket",
+   "source": "gradebook-tests/gradebook_tests/severity.py#severity_for",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_every_finding_carries_a_known_severity",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_every_finding_carries_a_known_severity"
+   ]
+  },
+  "gradebook-tests.scoring.severity.002": {
+   "file": "gradebook-tests/specs/scoring/severity/finding-severity.feature",
+   "fingerprint": "0c2c294a87e3",
+   "human": false,
+   "rule": "tests.severity.unknown-kind-is-low",
+   "source": "gradebook-tests/gradebook_tests/severity.py#severity_for",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.scoring.severity.003": {
+   "file": "gradebook-tests/specs/scoring/severity/finding-severity.feature",
+   "fingerprint": "6adc4e0e0c91",
+   "human": false,
+   "rule": "tests.severity.findings-listed-most-severe-first",
+   "source": "gradebook-tests/gradebook_tests/collection.py#collect",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "gradebook-tests.test-quality-analysis.suppressed-tests.001": {
+   "file": "gradebook-tests/specs/test-quality-analysis/suppressed-tests/flagging-silenced-failures.feature",
+   "fingerprint": "cd942ae229e1",
+   "human": false,
+   "rule": "tests.suppressed.silenced-failure-flagged-with-location",
+   "source": "gradebook-tests/gradebook_tests/detection.py#_suppressed_failures",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_suppressed_failures_are_found",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_suppressed_failures_are_found",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_logged_and_swallowed_failures_are_flagged"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.suppressed-tests.002": {
+   "file": "gradebook-tests/specs/test-quality-analysis/suppressed-tests/flagging-silenced-failures.feature",
+   "fingerprint": "cd942ae229e1",
+   "human": false,
+   "rule": "tests.suppressed.skip-with-reason-not-flagged",
+   "source": "gradebook-tests/gradebook_tests/detection.py#_suppressed_failures",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_skip_with_a_reason_is_not_a_suppressed_failure",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_skip_with_a_reason_is_not_a_suppressed_failure"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-naming.001": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-naming/judging-test-names.feature",
+   "fingerprint": "36ad754975be",
+   "human": false,
+   "rule": "tests.naming.descriptive-vs-placeholder",
+   "source": "gradebook-tests/gradebook_tests/detection.py#classify_name",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_descriptive_names_are_recognised",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_descriptive_names_are_recognised",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_placeholder_names_are_flagged"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-naming.002": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-naming/judging-test-names.feature",
+   "fingerprint": "65250bcedf94",
+   "human": false,
+   "rule": "tests.naming.placeholder-names-listed-in-advice",
+   "source": "gradebook-tests/gradebook_tests/detection.py#_name_tally",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_naming_dimension_separates_good_from_placeholder_names",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_naming_dimension_separates_good_from_placeholder_names"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.001": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/flagging-implementation-coupled-tests.feature",
+   "fingerprint": "8b98e92bca73",
+   "human": false,
+   "rule": "tests.substance.mirrored-expectation-flagged",
+   "source": "gradebook-tests/gradebook_tests/detection.py#_tally_cases",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_mirrored_expectations_are_flagged",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_mirrored_expectations_are_flagged",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_mirrored_expectations_in_matcher_style"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.002": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/flagging-implementation-coupled-tests.feature",
+   "fingerprint": "a330e5a23c59",
+   "human": false,
+   "rule": "tests.substance.private-member-access-flagged",
+   "source": "gradebook-tests/gradebook_tests/detection.py#_brittle_and_private",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_reaching_into_privates_is_flagged",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_reaching_into_privates_is_flagged",
+    "gradebook-tests/tests/test_gradebook_tests.py#test_private_access_lowers_substance"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.003": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/flagging-implementation-coupled-tests.feature",
+   "fingerprint": "a330e5a23c59",
+   "human": false,
+   "rule": "tests.determinism.brittle-locator-flagged",
+   "source": "gradebook-tests/gradebook_tests/detection.py#_brittle_and_private",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_brittle_selectors_are_flagged",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_brittle_selectors_are_flagged"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.004": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/flagging-implementation-coupled-tests.feature",
+   "fingerprint": "a330e5a23c59",
+   "human": false,
+   "rule": "tests.determinism.robust-locator-excuses-file",
+   "source": "gradebook-tests/gradebook_tests/detection.py#_brittle_and_private",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_gradebook_tests.py#test_robust_locators_in_the_same_file_suppress_the_flag",
+   "tests": [
+    "gradebook-tests/tests/test_gradebook_tests.py#test_robust_locators_in_the_same_file_suppress_the_flag"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.005": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/test-substance.feature",
+   "fingerprint": "8b4b84adbfb5",
+   "human": false,
+   "rule": "tests.substance.copy-paste-run-of-three",
+   "source": "gradebook-tests/gradebook_tests/substance.py#find_duplicates",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_substance.py#test_a_pair_of_identical_bodies_is_not_a_cluster",
+   "tests": [
+    "gradebook-tests/tests/test_substance.py#test_a_pair_of_identical_bodies_is_not_a_cluster",
+    "gradebook-tests/tests/test_substance.py#test_duplicate_findings_stop_at_the_limit_but_the_count_does_not"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.006": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/test-substance.feature",
+   "fingerprint": "8b4b84adbfb5",
+   "human": false,
+   "rule": "tests.substance.findings-capped-count-complete",
+   "source": "gradebook-tests/gradebook_tests/substance.py#find_duplicates",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_substance.py#test_duplicate_findings_stop_at_the_limit_but_the_count_does_not",
+   "tests": [
+    "gradebook-tests/tests/test_substance.py#test_duplicate_findings_stop_at_the_limit_but_the_count_does_not"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.007": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/test-substance.feature",
+   "fingerprint": "ed59d4f728c5",
+   "human": false,
+   "rule": "tests.substance.phantom-import-flagged",
+   "source": "gradebook-tests/gradebook_tests/substance.py#find_phantoms",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_substance.py#test_phantoms_count_each_missing_name_once_per_file",
+   "tests": [
+    "gradebook-tests/tests/test_substance.py#test_phantoms_count_each_missing_name_once_per_file",
+    "gradebook-tests/tests/test_substance.py#test_no_phantoms_when_every_import_is_defined"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.008": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/test-substance.feature",
+   "fingerprint": "bba1ce18a91d",
+   "human": false,
+   "rule": "tests.substance.stale-test-flagged",
+   "source": "gradebook-tests/gradebook_tests/substance.py#find_stale",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_substance.py#test_a_test_is_stale_once_its_source_moved_on_enough_times",
+   "tests": [
+    "gradebook-tests/tests/test_substance.py#test_a_test_is_stale_once_its_source_moved_on_enough_times",
+    "gradebook-tests/tests/test_substance.py#test_a_test_changed_alongside_its_source_is_not_stale"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.009": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/test-substance.feature",
+   "fingerprint": "bba1ce18a91d",
+   "human": false,
+   "rule": "tests.substance.stale-needs-history-for-both",
+   "source": "gradebook-tests/gradebook_tests/substance.py#find_stale",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_substance.py#test_stale_is_not_scored_without_history_for_both_files",
+   "tests": [
+    "gradebook-tests/tests/test_substance.py#test_stale_is_not_scored_without_history_for_both_files"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.010": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/test-substance.feature",
+   "fingerprint": "78d070bde7e8",
+   "human": false,
+   "rule": "tests.substance.decorative-test-flagged",
+   "source": "gradebook-tests/gradebook_tests/substance.py#find_decorative",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_substance.py#test_decorative_flags_only_measured_files_under_the_threshold",
+   "tests": [
+    "gradebook-tests/tests/test_substance.py#test_decorative_flags_only_measured_files_under_the_threshold"
+   ]
+  },
+  "gradebook-tests.test-quality-analysis.test-substance.011": {
+   "file": "gradebook-tests/specs/test-quality-analysis/test-substance/test-substance.feature",
+   "fingerprint": "0fdde6129e04",
+   "human": false,
+   "rule": "tests.substance.test-named-after-source",
+   "source": "gradebook-tests/gradebook_tests/substance.py#source_stem",
+   "status": "verified",
+   "test": "gradebook-tests/tests/test_substance.py#test_source_stem_strips_each_language_test_marker",
+   "tests": [
+    "gradebook-tests/tests/test_substance.py#test_source_stem_strips_each_language_test_marker",
+    "gradebook-tests/tests/test_substance.py#test_source_stem_is_none_when_the_name_names_no_source"
+   ]
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "Walks the tree read-only, skips generated, minified and vendored files and reports how many it skipped, and reads text safely.",
+      "slug": "file-discovery",
+      "title": "File discovery"
+     },
+     {
+      "description": "Works out each file's language and blends per-language profiles for repos that mix languages.",
+      "slug": "language-detection",
+      "title": "Language detection"
+     },
+     {
+      "description": "Tells test files from source files using each ecosystem's naming conventions and folder layouts.",
+      "slug": "test-file-recognition",
+      "title": "Test file recognition"
+     },
+     {
+      "description": "Sorts each test as unit, integration or end-to-end so the pyramid can be measured.",
+      "slug": "test-kind-classification",
+      "title": "Test kind classification"
+     },
+     {
+      "description": "Matches tests to the source files and symbols they cover, through file names, mirrored names and project imports.",
+      "slug": "test-source-pairing",
+      "title": "Test-to-source pairing"
+     },
+     {
+      "description": "Finds CI workflows, test-runner configuration and report artifacts in the tree and collects them as evidence.",
+      "slug": "config-and-ci-discovery",
+      "title": "Config and CI discovery"
+     }
+    ],
+    "description": "How gradebook-tests walks a working tree and decides what each file is before anything gets scored.",
+    "slug": "repository-scan",
+    "title": "Repository scan"
+   },
+   {
+    "areas": [
+     {
+      "description": "Counts assertions per test and flags tests with no assertions, bare asserts and conditional logic.",
+      "slug": "assertions",
+      "title": "Assertions"
+     },
+     {
+      "description": "Measures how much of the suite exercises errors and exceptions, not only the happy path.",
+      "slug": "failure-paths",
+      "title": "Failure-path testing"
+     },
+     {
+      "description": "Scores whether test names describe behaviour and expected outcome rather than just repeating the code.",
+      "slug": "test-naming",
+      "title": "Test naming"
+     },
+     {
+      "description": "Measures mock density and flags over-mocking and tests that reach into private internals.",
+      "slug": "test-doubles",
+      "title": "Mocks and test doubles"
+     },
+     {
+      "description": "Flags sleeps, clocks, randomness, network use and brittle patterns that make tests flaky.",
+      "slug": "determinism",
+      "title": "Determinism and flakiness"
+     },
+     {
+      "description": "Finds tests that are skipped, marked expected-to-fail or otherwise silenced, with file and line.",
+      "slug": "suppressed-tests",
+      "title": "Skipped and suppressed tests"
+     },
+     {
+      "description": "Finds duplicate, phantom, stale and decorative tests that pad the count without checking anything.",
+      "slug": "test-substance",
+      "title": "Test substance"
+     },
+     {
+      "description": "Looks at setup bloat, test-file hygiene and behaviour-driven structure such as given/when/then.",
+      "slug": "hygiene-and-bdd",
+      "title": "Hygiene and BDD style"
+     }
+    ],
+    "description": "Checks inside each test file for the habits that make a suite trustworthy or hollow.",
+    "slug": "test-quality-analysis",
+    "title": "Test quality analysis"
+   },
+   {
+    "areas": [
+     {
+      "description": "Parses Cobertura, LCOV, JaCoCo, Go profiles and JSON coverage, overall and per file.",
+      "slug": "coverage-reports",
+      "title": "Coverage reports"
+     },
+     {
+      "description": "Parses Stryker, PIT, cargo-mutants and generic mutation reports into a mutation score.",
+      "slug": "mutation-reports",
+      "title": "Mutation testing reports"
+     },
+     {
+      "description": "Finds coverage thresholds declared in configuration and checks whether CI actually enforces tests.",
+      "slug": "coverage-gates",
+      "title": "Coverage thresholds in CI"
+     },
+     {
+      "description": "Reads git log to see whether tests change together with the code, as evidence of test-first work.",
+      "slug": "change-history",
+      "title": "Change history and TDD signals"
+     },
+     {
+      "description": "Finds files that change often but are poorly tested and ranks them by risk.",
+      "slug": "risk-hotspots",
+      "title": "Risk hotspots"
+     }
+    ],
+    "description": "Reads the results that test tools have already produced, plus the git history, without running anything.",
+    "slug": "external-evidence",
+    "title": "External evidence"
+   },
+   {
+    "areas": [
+     {
+      "description": "Defines the weighted dimensions that add up to 100, scores each one and leaves a dimension unscored when there is no evidence for it.",
+      "slug": "rubric-dimensions",
+      "title": "Rubric dimensions and weights"
+     },
+     {
+      "description": "Renormalises the weights over the dimensions that were scored, combines them into a total and maps the total to a letter grade.",
+      "slug": "grades",
+      "title": "Overall score and grade"
+     },
+     {
+      "description": "Ranks the fixes that would raise the score the most and attaches advice to each one.",
+      "slug": "recommendations",
+      "title": "Recommendations"
+     },
+     {
+      "description": "Compares a run against an earlier report and shows how each dimension and the total changed.",
+      "slug": "baseline-comparison",
+      "title": "Baseline comparison"
+     },
+     {
+      "description": "Scores each top-level directory on its own to show which parts of the repo drag the grade down.",
+      "slug": "directory-breakdown",
+      "title": "Per-directory breakdown"
+     },
+     {
+      "description": "Puts every kind of red flag into a severity bucket using a fixed ranking of flag kinds.",
+      "slug": "severity",
+      "title": "Finding severity"
+     }
+    ],
+    "description": "Turns the evidence into a weighted score and a letter grade, and says which fix is worth the most points.",
+    "slug": "scoring",
+    "title": "Scoring and grading"
+   },
+   {
+    "areas": [
+     {
+      "description": "Prints a plain-text report with score bars, the dimensions table, deltas against a baseline and the top recommendations.",
+      "slug": "text-report",
+      "title": "Terminal report"
+     },
+     {
+      "description": "Writes a Markdown version of the report for pull requests and documentation.",
+      "slug": "markdown-report",
+      "title": "Markdown report"
+     },
+     {
+      "description": "Lists every finding with its file:line location, with an optional cap on how many are shown.",
+      "slug": "red-flags",
+      "title": "Red flag listing"
+     }
+    ],
+    "description": "Shows the score, dimensions and red flags in a form people and tools can act on.",
+    "slug": "reporting",
+    "title": "Reporting"
+   },
+   {
+    "areas": [
+     {
+      "description": "Parses arguments such as output format, number of recommendations, flag limits, baseline file, git opt-out and listing the dimensions.",
+      "slug": "cli-options",
+      "title": "Options and output formats"
+     },
+     {
+      "description": "Exits non-zero when the score or grade falls below a required minimum, so a pipeline can fail on it.",
+      "slug": "quality-gate",
+      "title": "CI quality gate"
+     },
+     {
+      "description": "Provides the console script, running as a module with python -m, the package version and the public API.",
+      "slug": "packaging-entry",
+      "title": "Packaging and entry points"
+     }
+    ],
+    "description": "How people and CI run the tool and use its result.",
+    "slug": "command-line",
+    "title": "Command line"
+   },
+   {
+    "areas": [
+     {
+      "description": "Defines the base types for stats, findings, file info and reports that every stage passes along.",
+      "slug": "shared-types",
+      "title": "Shared data model"
+     },
+     {
+      "description": "Holds the per-language regular expressions for tests, assertions, mocks, skips and imports that detection uses.",
+      "slug": "language-patterns",
+      "title": "Language pattern library"
+     }
+    ],
+    "description": "The shared building blocks that the rest of the tool is built on.",
+    "slug": "developer-tooling",
+    "title": "Developer tooling"
+   }
+  ]
+ }
+}

@@ -1,0 +1,365 @@
+{
+ "excluded": {
+  "docs/stylesheets": [
+   {
+    "candidate": "Translucent blurred header with hairline divider and scroll shadow",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "docs/stylesheets/extra.css#.md-header"
+   },
+   {
+    "candidate": "Heading weights, letter-spacing and font-feature settings",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset h1"
+   },
+   {
+    "candidate": "Rounded, bordered code blocks",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .highlight"
+   },
+   {
+    "candidate": "Tables styled as cards with uppercase headers",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset table:not([class])"
+   },
+   {
+    "candidate": "Pill buttons with hover lift and shadow",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .md-button"
+   },
+   {
+    "candidate": "Hero block layout and tagline sizing",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .hero"
+   },
+   {
+    "candidate": "Feature cards with depth, hover lift and accent-coloured icons",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .grid.cards > ul > li"
+   },
+   {
+    "candidate": "Nav tab opacity, active nav link weight, footer colours",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-tabs__link"
+   },
+   {
+    "candidate": "Smooth scrolling on in-page anchors",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#html"
+   },
+   {
+    "candidate": "Portfolio cluster colour guidance (blue/orange-red/cyan-indigo/green)",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "docs/stylesheets/extra.css#:root"
+   }
+  ],
+  "gradebook/makefile": [
+   {
+    "candidate": "make install pip-installs both tools in turn",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#install"
+   },
+   {
+    "candidate": "make setup does editable installs plus pytest, ruff and the pre-commit hook",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#setup"
+   },
+   {
+    "candidate": "make test / test-tests / test-code run each pytest suite; test-nvim delegates to extensions/nvim",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#test"
+   },
+   {
+    "candidate": "make lint runs pre-commit over all files",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#lint"
+   },
+   {
+    "candidate": "make format runs ruff format in both tools and biome format over the tree",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#format"
+   },
+   {
+    "candidate": "ext-build installs node_modules if absent, typechecks and builds",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#ext-build"
+   },
+   {
+    "candidate": "ext-package deletes old .vsix files and packages a VSIX named after the manifest version",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#ext-package"
+   },
+   {
+    "candidate": "ext-publish pushes the VSIX to the VS Code marketplace and Open VSX using VSCE_PAT and OVSX_PAT (CLAUDE.md mentions only VSCE_PAT)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#ext-publish"
+   },
+   {
+    "candidate": "VSIX file name derived from extension package.json version via node; empty when node is missing",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "Makefile#VSIX"
+   },
+   {
+    "candidate": "make clean removes caches, egg-info, extension build output, copied LICENSE/CHANGELOG and nvim .deps",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#clean"
+   }
+  ]
+ },
+ "lifted": {
+  "docs/stylesheets": [],
+  "gradebook/makefile": []
+ },
+ "retired": [
+  "developer-tooling.task-runner.003",
+  "documentation-site.docs-theme.002",
+  "documentation-site.docs-theme.003",
+  "documentation-site.docs-theme.004"
+ ],
+ "scenarios": {
+  "developer-tooling.task-runner.001": {
+   "file": "specs/developer-tooling/task-runner/make-task-runner.feature",
+   "fingerprint": "60df5cd43911",
+   "human": false,
+   "rule": "tooling.make.bare-make-lists-verbs",
+   "source": "Makefile#help",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "developer-tooling.task-runner.002": {
+   "file": "specs/developer-tooling/task-runner/make-task-runner.feature",
+   "fingerprint": "4680b9e9a46b",
+   "human": false,
+   "rule": "tooling.make.run-tool-from-checkout",
+   "source": "Makefile#run",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "developer-tooling.task-runner.004": {
+   "file": "specs/developer-tooling/task-runner/make-task-runner.feature",
+   "fingerprint": "eee6cffaed8d",
+   "human": false,
+   "rule": "tooling.make.missing-prerequisite-refused-with-guidance",
+   "source": "Makefile#analyze",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "developer-tooling.task-runner.005": {
+   "file": "specs/developer-tooling/task-runner/make-task-runner.feature",
+   "fingerprint": "eee6cffaed8d",
+   "human": false,
+   "rule": "tooling.make.analyze-reports-high-and-critical",
+   "source": "Makefile#analyze",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "documentation-site.docs-theme.001": {
+   "file": "specs/documentation-site/docs-theme/docs-theme.feature",
+   "fingerprint": "d1e8fee7d3b2",
+   "human": false,
+   "rule": "docs.theme.no-external-requests",
+   "source": "docs/stylesheets/extra.css#:root",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "The weighted test-quality dimensions, their weights adding to 100, and how they're listed.",
+      "slug": "test-rubric",
+      "title": "Test rubric and weights"
+     },
+     {
+      "description": "Detectors that report test anti-patterns, each with a file:line location.",
+      "slug": "test-red-flags",
+      "title": "Test red flags"
+     },
+     {
+      "description": "The overall grade, renormalisation over unscored dimensions, and the highest-value-fix recommendation.",
+      "slug": "test-score-report",
+      "title": "Test score and report"
+     }
+    ],
+    "description": "Scoring a repository's test suite against a weighted rubric and naming the fix worth the most points.",
+    "slug": "test-suite-grading",
+    "title": "Test suite grading"
+   },
+   {
+    "areas": [
+     {
+      "description": "The weighted code-quality dimensions and how missing evidence is left unscored.",
+      "slug": "code-rubric",
+      "title": "Code rubric and weights"
+     },
+     {
+      "description": "Detection of god files, overly complex functions, dependency cycles and design smells.",
+      "slug": "complexity-and-design",
+      "title": "Complexity and design findings"
+     },
+     {
+      "description": "Cross-file duplication and git-history change hotspots.",
+      "slug": "duplication-and-hotspots",
+      "title": "Duplication and hotspots"
+     },
+     {
+      "description": "The overall code grade, letter rating and prioritised fixes.",
+      "slug": "code-score-report",
+      "title": "Code score and report"
+     }
+    ],
+    "description": "Scoring the code a test suite covers for complexity, design and maintainability.",
+    "slug": "code-grading",
+    "title": "Code quality grading"
+   },
+   {
+    "areas": [
+     {
+      "description": "Walking the tree and skipping generated or minified files while reporting the count.",
+      "slug": "file-discovery",
+      "title": "File discovery and skipping"
+     },
+     {
+      "description": "Reading git log for history-based signals without writing anything.",
+      "slug": "git-history",
+      "title": "Git history reading"
+     },
+     {
+      "description": "Mapping each finding kind to a severity bucket from the flag order.",
+      "slug": "severity",
+      "title": "Severity levels"
+     }
+    ],
+    "description": "How a working tree is read, read-only, before either tool scores it.",
+    "slug": "repository-scanning",
+    "title": "Repository scanning"
+   },
+   {
+    "areas": [
+     {
+      "description": "Console-script entry points, flags such as listing dimensions, and exit codes.",
+      "slug": "cli-options",
+      "title": "Options and invocation"
+     },
+     {
+      "description": "Human-readable and machine-readable result output.",
+      "slug": "output-formats",
+      "title": "Output formats"
+     }
+    ],
+    "description": "Running each grader from a terminal and consuming its output.",
+    "slug": "command-line",
+    "title": "Command-line usage"
+   },
+   {
+    "areas": [
+     {
+      "description": "Score view, Findings panel and in-editor diagnostics in VS Code.",
+      "slug": "vscode-extension",
+      "title": "VS Code extension"
+     },
+     {
+      "description": "The newline-delimited JSON stdio server that runs whole-repo scans for editors.",
+      "slug": "scan-server",
+      "title": "Scan server"
+     },
+     {
+      "description": "The Neovim plugin that shells out to the CLIs and shows findings.",
+      "slug": "neovim-plugin",
+      "title": "Neovim plugin"
+     }
+    ],
+    "description": "Showing grades and findings inside editors as thin clients over the graders.",
+    "slug": "editor-integrations",
+    "title": "Editor integrations"
+   },
+   {
+    "areas": [
+     {
+      "description": "Getting started, architecture, rubric and anti-pattern documentation.",
+      "slug": "docs-content",
+      "title": "Guides and reference"
+     },
+     {
+      "description": "The offline documentation theme, accent palette and typography shared by docs and splash page.",
+      "slug": "docs-theme",
+      "title": "Site theme and branding"
+     }
+    ],
+    "description": "The published docs and landing page explaining the tools.",
+    "slug": "documentation-site",
+    "title": "Documentation site"
+   },
+   {
+    "areas": [
+     {
+      "description": "Installing both tools, editable dev setup and the pre-commit hook.",
+      "slug": "setup-and-install",
+      "title": "Setup and install"
+     },
+     {
+      "description": "Make verbs that run both test suites, the Neovim specs, the lint gate and formatters.",
+      "slug": "test-and-lint",
+      "title": "Testing, linting and formatting"
+     },
+     {
+      "description": "The Makefile help, run-from-checkout, declared no-ops, security scan and clean verbs.",
+      "slug": "task-runner",
+      "title": "Task runner"
+     }
+    ],
+    "description": "Local workflows for setting up, testing, linting and running the project.",
+    "slug": "developer-tooling",
+    "title": "Developer tooling"
+   },
+   {
+    "areas": [
+     {
+      "description": "Release-please manifest versioning that moves every version string together.",
+      "slug": "versioning",
+      "title": "Versioning and changelog"
+     },
+     {
+      "description": "Building, packaging, side-loading and publishing the VS Code extension.",
+      "slug": "extension-packaging",
+      "title": "Extension packaging and publishing"
+     },
+     {
+      "description": "CI jobs that run the gate, tests and release phases.",
+      "slug": "ci-pipeline",
+      "title": "Continuous integration"
+     }
+    ],
+    "description": "Versioning, packaging and publishing the tools and the editor extension.",
+    "slug": "release-and-distribution",
+    "title": "Release and distribution"
+   }
+  ]
+ }
+}
