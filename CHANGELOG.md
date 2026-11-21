@@ -9,6 +9,13 @@ Generated from Conventional Commit messages by release-please — don't edit it
 by hand. `version.txt` tracks the repo; each package keeps its own version in
 its `pyproject.toml`, and the two are bumped together.
 
+## [0.4.4](https://github.com/fabiocicerchia/gradebook/compare/v0.4.3...v0.4.4) (2026-11-19)
+
+
+### Bug Fixes
+
+* **ci:** quote boneyard release label so the PR number is sent ([#100](https://github.com/fabiocicerchia/gradebook/issues/100)) ([eee923e](https://github.com/fabiocicerchia/gradebook/commit/eee923eee7fcdc0dca455175682b9946a40e211c))
+
 ## [0.4.3](https://github.com/fabiocicerchia/gradebook/compare/v0.4.2...v0.4.3) (2026-11-14)
 
 
